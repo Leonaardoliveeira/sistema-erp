@@ -29,7 +29,7 @@ const UsuarioSchema = new mongoose.Schema({
   nome: { type: String, required: true },
   usuario: { type: String, required: true, unique: true },
   senha: { type: String, required: true },
-  perfil: { type: String, default: "user" }
+  perfil: { type: String, default: "user" } // admin ou user
 });
 
 const ClienteSchema = new mongoose.Schema({
@@ -66,7 +66,7 @@ async function criarAdmin() {
 criarAdmin();
 
 // =======================
-// 🔐 MIDDLEWARE JWT
+// 🔐 MIDDLEWARE TOKEN
 // =======================
 
 function verificarToken(req, res, next) {
@@ -89,7 +89,18 @@ function verificarToken(req, res, next) {
 }
 
 // =======================
-// 🔐 LOGIN COM TOKEN
+// 🔐 MIDDLEWARE ADMIN
+// =======================
+
+function verificarAdmin(req, res, next) {
+  if (req.usuario.perfil !== "admin") {
+    return res.status(403).json({ message: "Acesso negado. Apenas administradores." });
+  }
+  next();
+}
+
+// =======================
+// 🔐 LOGIN COM JWT
 // =======================
 
 app.post('/api/login', async (req, res) => {
@@ -131,10 +142,10 @@ app.post('/api/login', async (req, res) => {
 });
 
 // =======================
-// 👥 USUÁRIOS (PROTEGIDO)
+// 👥 USUÁRIOS (SÓ ADMIN)
 // =======================
 
-app.post('/api/usuarios', verificarToken, async (req, res) => {
+app.post('/api/usuarios', verificarToken, verificarAdmin, async (req, res) => {
   try {
     const { nome, usuario, senha, perfil } = req.body;
 
@@ -155,7 +166,7 @@ app.post('/api/usuarios', verificarToken, async (req, res) => {
 });
 
 // =======================
-// 👤 CLIENTES (PROTEGIDO)
+// 👤 CLIENTES (TOKEN OBRIGATÓRIO)
 // =======================
 
 app.get('/api/clientes', verificarToken, async (req, res) => {
@@ -179,7 +190,7 @@ app.delete('/api/clientes/:id', verificarToken, async (req, res) => {
 });
 
 // =======================
-// 🌍 ROTA CORINGA
+// 🌍 ROTA FRONTEND
 // =======================
 
 app.get('*', (req, res) => {
