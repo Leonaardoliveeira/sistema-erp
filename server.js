@@ -1,8 +1,11 @@
+require('dotenv').config();
+
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 
@@ -11,15 +14,12 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // =======================
-// 🔥 CONEXÃO MONGODB (DIRETO NO CÓDIGO)
+// 🔥 CONEXÃO MONGODB
 // =======================
 
-mongoose.connect(
-  "mongodb+srv://clienteserp:lele123321@clienteserp.de3xysi.mongodb.net/clienteserp?retryWrites=true&w=majority"
-)
-.then(() => console.log("✅ Conectado ao MongoDB"))
-.catch(err => console.log("❌ Erro ao conectar:", err));
-
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ Conectado ao MongoDB"))
+  .catch(err => console.log("❌ Erro ao conectar:", err));
 
 // =======================
 // 📦 SCHEMAS
@@ -41,7 +41,6 @@ const ClienteSchema = new mongoose.Schema({
 
 const Usuario = mongoose.model("Usuario", UsuarioSchema);
 const Cliente = mongoose.model("Cliente", ClienteSchema);
-
 
 // =======================
 // 👑 CRIAR ADMIN AUTOMÁTICO
@@ -66,9 +65,31 @@ async function criarAdmin() {
 
 criarAdmin();
 
+// =======================
+// 🔐 MIDDLEWARE JWT
+// =======================
+
+function verificarToken(req, res, next) {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ message: "Token não enviado" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: "Token inválido" });
+    }
+
+    req.usuario = decoded;
+    next();
+  });
+}
 
 // =======================
-// 🔐 LOGIN SEGURO
+// 🔐 LOGIN COM TOKEN
 // =======================
 
 app.post('/api/login', async (req, res) => {
@@ -87,8 +108,15 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ success: false, message: "Senha incorreta" });
     }
 
+    const token = jwt.sign(
+      { id: user._id, perfil: user.perfil },
+      process.env.JWT_SECRET,
+      { expiresIn: "8h" }
+    );
+
     res.json({
       success: true,
+      token,
       user: {
         id: user._id,
         nome: user.nome,
@@ -102,12 +130,11 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-
 // =======================
-// 👥 USUÁRIOS
+// 👥 USUÁRIOS (PROTEGIDO)
 // =======================
 
-app.post('/api/usuarios', async (req, res) => {
+app.post('/api/usuarios', verificarToken, async (req, res) => {
   try {
     const { nome, usuario, senha, perfil } = req.body;
 
@@ -127,31 +154,29 @@ app.post('/api/usuarios', async (req, res) => {
   }
 });
 
-
 // =======================
-// 👤 CLIENTES (CRUD COMPLETO)
+// 👤 CLIENTES (PROTEGIDO)
 // =======================
 
-app.get('/api/clientes', async (req, res) => {
+app.get('/api/clientes', verificarToken, async (req, res) => {
   const clientes = await Cliente.find();
   res.json(clientes);
 });
 
-app.post('/api/clientes', async (req, res) => {
+app.post('/api/clientes', verificarToken, async (req, res) => {
   const novoCliente = await Cliente.create(req.body);
   res.json(novoCliente);
 });
 
-app.put('/api/clientes/:id', async (req, res) => {
+app.put('/api/clientes/:id', verificarToken, async (req, res) => {
   await Cliente.findByIdAndUpdate(req.params.id, req.body);
   res.json({ message: "Cliente atualizado" });
 });
 
-app.delete('/api/clientes/:id', async (req, res) => {
+app.delete('/api/clientes/:id', verificarToken, async (req, res) => {
   await Cliente.findByIdAndDelete(req.params.id);
   res.json({ message: "Cliente removido" });
 });
-
 
 // =======================
 // 🌍 ROTA CORINGA
@@ -160,7 +185,6 @@ app.delete('/api/clientes/:id', async (req, res) => {
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
 
 const PORT = process.env.PORT || 3000;
 
