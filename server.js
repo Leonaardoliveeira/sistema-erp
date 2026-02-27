@@ -179,25 +179,25 @@ app.put('/api/usuarios/:id', verificarToken, verificarAdmin, async (req, res) =>
 // 👤 CLIENTES
 // =======================
 
-// Ver clientes → qualquer logado
+// Ver clientes → qualquer logado (User e Admin)
 app.get('/api/clientes', verificarToken, async (req, res) => {
   const clientes = await Cliente.find();
   res.json(clientes);
 });
 
-// Criar cliente → qualquer logado
-app.post('/api/clientes', verificarToken, async (req, res) => {
+// Criar cliente → SÓ ADMIN
+app.post('/api/clientes', verificarToken, verificarAdmin, async (req, res) => {
   const novoCliente = await Cliente.create(req.body);
   res.json(novoCliente);
 });
 
-// Editar cliente → qualquer logado
-app.put('/api/clientes/:id', verificarToken, async (req, res) => {
+// Editar cliente → SÓ ADMIN
+app.put('/api/clientes/:id', verificarToken, verificarAdmin, async (req, res) => {
   await Cliente.findByIdAndUpdate(req.params.id, req.body);
   res.json({ message: "Cliente atualizado" });
 });
 
-// Excluir cliente → só admin
+// Excluir cliente → SÓ ADMIN
 app.delete('/api/clientes/:id', verificarToken, verificarAdmin, async (req, res) => {
   await Cliente.findByIdAndDelete(req.params.id);
   res.json({ message: "Cliente removido" });
