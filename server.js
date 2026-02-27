@@ -29,7 +29,7 @@ const UsuarioSchema = new mongoose.Schema({
   nome: { type: String, required: true },
   usuario: { type: String, required: true, unique: true },
   senha: { type: String, required: true },
-  perfil: { type: String, default: "user" } // admin ou user
+  perfil: { type: String, enum: ["admin", "user"], default: "user" }
 });
 
 const ClienteSchema = new mongoose.Schema({
@@ -100,7 +100,7 @@ function verificarAdmin(req, res, next) {
 }
 
 // =======================
-// 🔐 LOGIN COM JWT
+// 🔐 LOGIN
 // =======================
 
 app.post('/api/login', async (req, res) => {
@@ -110,13 +110,13 @@ app.post('/api/login', async (req, res) => {
     const user = await Usuario.findOne({ usuario });
 
     if (!user) {
-      return res.status(401).json({ success: false, message: "Usuário não encontrado" });
+      return res.status(401).json({ message: "Usuário não encontrado" });
     }
 
     const senhaValida = await bcrypt.compare(senha, user.senha);
 
     if (!senhaValida) {
-      return res.status(401).json({ success: false, message: "Senha incorreta" });
+      return res.status(401).json({ message: "Senha incorreta" });
     }
 
     const token = jwt.sign(
@@ -126,9 +126,8 @@ app.post('/api/login', async (req, res) => {
     );
 
     res.json({
-      success: true,
       token,
-      user: {
+      usuario: {
         id: user._id,
         nome: user.nome,
         usuario: user.usuario,
@@ -165,32 +164,47 @@ app.post('/api/usuarios', verificarToken, verificarAdmin, async (req, res) => {
   }
 });
 
+app.delete('/api/usuarios/:id', verificarToken, verificarAdmin, async (req, res) => {
+  await Usuario.findByIdAndDelete(req.params.id);
+  res.json({ message: "Usuário removido" });
+});
+
+app.put('/api/usuarios/:id', verificarToken, verificarAdmin, async (req, res) => {
+  const { nome, perfil } = req.body;
+  await Usuario.findByIdAndUpdate(req.params.id, { nome, perfil });
+  res.json({ message: "Usuário atualizado" });
+});
+
 // =======================
-// 👤 CLIENTES (TOKEN OBRIGATÓRIO)
+// 👤 CLIENTES
 // =======================
 
+// Ver clientes → qualquer logado
 app.get('/api/clientes', verificarToken, async (req, res) => {
   const clientes = await Cliente.find();
   res.json(clientes);
 });
 
+// Criar cliente → qualquer logado
 app.post('/api/clientes', verificarToken, async (req, res) => {
   const novoCliente = await Cliente.create(req.body);
   res.json(novoCliente);
 });
 
+// Editar cliente → qualquer logado
 app.put('/api/clientes/:id', verificarToken, async (req, res) => {
   await Cliente.findByIdAndUpdate(req.params.id, req.body);
   res.json({ message: "Cliente atualizado" });
 });
 
-app.delete('/api/clientes/:id', verificarToken, async (req, res) => {
+// Excluir cliente → só admin
+app.delete('/api/clientes/:id', verificarToken, verificarAdmin, async (req, res) => {
   await Cliente.findByIdAndDelete(req.params.id);
   res.json({ message: "Cliente removido" });
 });
 
 // =======================
-// 🌍 ROTA FRONTEND
+// 🌍 FRONTEND
 // =======================
 
 app.get('*', (req, res) => {
