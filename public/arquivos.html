@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Controle de Arquivos</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body onload="verificarLogin(); listarClientes();">
+
+<div class="topbar">
+  <h2>Geração de Arquivos</h2>
+  <button onclick="logout()">Sair</button>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Nome</th>
+      <th>Status</th>
+      <th>Alterar</th>
+    </tr>
+  </thead>
+  <tbody id="tabelaClientes"></tbody>
+</table>
+
+<script src="js/auth.js"></script>
+<script src="js/clientes.js"></script>
+<script src="js/arquivos.js"></script>
+</body>
+</html>
