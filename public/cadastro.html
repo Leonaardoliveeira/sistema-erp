@@ -5,6 +5,12 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body onload="verificarLogin()">
+  <button class="menu-toggle" onclick="toggleSidebar()">
+  ☰
+</button>
+
+<div class="sidebar" id="sidebar">
+  </div>
 
 <div class="sidebar">
   <h2>Franquia - ERP</h2>
@@ -40,6 +46,19 @@
   </div>
 
 </div>
+<script>
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('active');
+  }
+
+  // Fecha o menu automaticamente ao clicar em um link (opcional)
+  document.querySelectorAll('.sidebar a').forEach(link => {
+    link.addEventListener('click', () => {
+      document.getElementById('sidebar').classList.remove('active');
+    });
+  });
+</script>
 
 <script src="js/auth.js"></script>
 <script src="js/clientes.js"></script>
