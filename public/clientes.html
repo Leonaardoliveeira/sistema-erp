@@ -5,98 +5,45 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body onload="verificarLogin(); listarClientes();">
-  <button class="menu-toggle" onclick="toggleSidebar()">
-  ☰
-</button>
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
 
-<div class="sidebar" id="sidebar">
+  <div class="sidebar" id="sidebar">
+    <h2>Franquia - ERP</h2>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="cadastro.html">Cadastro de Clientes</a>
+    <a href="clientes.html">Lista de Clientes</a>
+    <a href="usuarios.html" id="menuUsuarios">Cadastro de Usuários</a> 
+    <a href="#" onclick="logout()">Sair</a>
   </div>
 
-<div class="sidebar">
-  <h2>Franquia - ERP</h2>
-  <a href="dashboard.html">Dashboard</a>
-  <a href="cadastro.html">Cadastro de Clientes</a>
-  <a href="clientes.html">Lista de Clientes</a>
-  <a href="usuarios.html" id="menuUsuarios">Cadastro de Usuários</a> 
-  <a href="#" onclick="logout()">Sair</a>
-</div>
-
-<div class="main">
-  <div class="topbar">
-    <h2>Clientes</h2>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Nome</th>
-        <th>Documento</th>
-        <th>Regime</th>
-        <th>Status</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody id="tabelaClientes"></tbody>
-  </table>
-</div>
-
-<div id="modalEditar" class="modal">
-  <div class="modal-content">
-    <h3>Editar Cliente</h3>
-
-    <input type="hidden" id="editIndex">
-
-    <div class="form-group">
-      <label>Nome</label>
-      <input type="text" id="modalNome">
+  <div class="main">
+    <div class="topbar">
+      <h2>Clientes</h2>
     </div>
 
-    <div class="form-group">
-      <label>Documento</label>
-      <input type="text" id="modalDocumento">
-    </div>
-
-    <div class="form-group">
-      <label>E-mail</label>
-      <input type="email" id="modalEmail">
-    </div>
-
-    <div class="form-group">
-      <label>Telefone</label>
-      <input type="text" id="modalTelefone">
-    </div>
-
-    <div class="form-group">
-      <label>Regime</label>
-      <select id="modalRegime">
-        <option value="Simples Nacional">Simples Nacional</option>
-        <option value="Lucro Presumido">Lucro Presumido</option>
-        <option value="Lucro Real">Lucro Real</option>
-        <option value="MEI">MEI</option>
-      </select>
-    </div>
-
-    <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: center;">
-      <button class="btn-primary" onclick="salvarEdicao()">Salvar Alterações</button>
-      <button class="btn-secondary" onclick="fecharModal()">Cancelar</button>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Documento</th>
+            <th>Regime</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaClientes"></tbody>
+      </table>
     </div>
   </div>
-</div>
-<script>
-  function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    sidebar.classList.toggle('active');
-  }
 
-  // Fecha o menu automaticamente ao clicar em um link (opcional)
-  document.querySelectorAll('.sidebar a').forEach(link => {
-    link.addEventListener('click', () => {
-      document.getElementById('sidebar').classList.remove('active');
-    });
-  });
-</script>
-
-<script src="js/auth.js"></script>
-<script src="js/clientes.js"></script>
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('active');
+    }
+  </script>
+  <script src="js/auth.js"></script>
+  <script src="js/clientes.js"></script>
 </body>
 </html>
