@@ -117,11 +117,10 @@ body {
 .card h3 { font-size: 14px; color: #6b7280; text-transform: uppercase; }
 .card p { font-size: 32px; font-weight: bold; margin-top: 10px; color: #111827; }
 
-/* Cores dinâmicas dos cards */
-.card:nth-child(1) { border-color: #4f46e5; } 
-.card:nth-child(2) { border-color: #10b981; } 
-.card:nth-child(3) { border-color: #f59e0b; } 
-.card:nth-child(4) { border-color: #ef4444; }
+.card:nth-child(1) { border-color: #4f46e5; } /* Total */
+.card:nth-child(2) { border-color: #10b981; } /* Gerados */
+.card:nth-child(3) { border-color: #f59e0b; } /* Pendentes */
+.card:nth-child(4) { border-color: #ef4444; } /* Erros */
 
 /* ================= TABELAS ================= */
 .table-container {
@@ -133,21 +132,11 @@ body {
 }
 
 table { width: 100%; border-collapse: collapse; }
-
-th {
-  background: #f9fafb;
-  padding: 16px;
-  text-align: left;
-  font-size: 13px;
-  color: #4b5563;
-  text-transform: uppercase;
-  border-bottom: 2px solid #f3f4f6;
-}
-
+th { background: #f9fafb; padding: 16px; text-align: left; font-size: 13px; color: #4b5563; text-transform: uppercase; border-bottom: 2px solid #f3f4f6; }
 td { padding: 16px; border-top: 1px solid #f3f4f6; font-size: 14px; }
 tr:hover { background: #f9fafb; }
 
-/* ================= STATUS E BADGES (ORIGINAIS RECUPERADOS) ================= */
+/* ================= STATUS E BADGES (RESTAURADOS) ================= */
 .status {
   padding: 5px 12px;
   border-radius: 6px;
@@ -161,7 +150,10 @@ tr:hover { background: #f9fafb; }
 .status.gerado    { background: #dcfce7; color: #15803d; }
 .status.erro      { background: #fee2e2; color: #b91c1c; }
 
-.status-botoes { display: flex; gap: 5px; }
+.status-botoes {
+  display: flex;
+  gap: 5px;
+}
 
 .btn-status {
   padding: 6px 10px;
@@ -179,7 +171,7 @@ tr:hover { background: #f9fafb; }
 .btn-status.gerado.ativo   { background: #10b981; color: white; }
 .btn-status.erro.ativo     { background: #ef4444; color: white; }
 
-/* ================= FORMULÁRIOS E BOTÕES (ORIGINAIS RECUPERADOS) ================= */
+/* ================= FORMULÁRIOS E BOTÕES (RESTAURADOS) ================= */
 .form-box {
   background: #ffffff;
   padding: 30px;
@@ -235,11 +227,27 @@ button {
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
-/* ================= RESPONSIVIDADE (HAMBÚRGUER) ================= */
+.table-container {
+  width: 100%;
+  overflow-x: auto; /* Cria o scroll horizontal */
+  -webkit-overflow-scrolling: touch; /* Suaviza o scroll no iPhone */
+  background: #ffffff;
+  border-radius: 12px;
+  margin-top: 20px;
+}
+
+table {
+  min-width: 600px; /* Obriga a tabela a manter um tamanho mínimo para não esmagar o texto */
+  width: 100%;
+}
+
+/* ================= RESPONSIVIDADE ================= */
 @media (max-width: 992px) {
   .menu-toggle { display: block; }
   .sidebar { transform: translateX(-100%); }
   .sidebar.active { transform: translateX(0); }
+  .sidebar h2 { margin-top: 40px; font-size: 1.2rem; }
+  
   .main {
     margin-left: 0;
     width: 100%;
