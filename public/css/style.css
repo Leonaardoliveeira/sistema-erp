@@ -256,3 +256,24 @@ table {
   }
   .topbar { flex-direction: column; gap: 15px; text-align: center; }
 }
+@media (max-width: 480px) {
+  .login-container {
+    padding: 30px 20px;
+    max-width: 100%; /* Ocupa a largura disponível */
+    margin: 10px;
+  }
+
+  .login-container h2 {
+    font-size: 20px;
+  }
+
+  .login-container input {
+    padding: 12px;
+    font-size: 16px; /* Importante para acessibilidade */
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}

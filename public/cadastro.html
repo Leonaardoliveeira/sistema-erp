@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cadastro de Cliente</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -12,7 +14,7 @@
     <a href="dashboard.html">Dashboard</a>
     <a href="cadastro.html">Cadastro de Clientes</a>
     <a href="clientes.html">Lista de Clientes</a>
-    <a href="usuarios.html" id="menuUsuarios">Cadastro de Usuários</a> 
+    <a href="usuarios.html" id="menuUsuarios" style="display:none;">Cadastro de Usuários</a> 
     <a href="#" onclick="logout()">Sair</a>
   </div>
 
@@ -21,13 +23,13 @@
       <h2>Novo Cliente</h2>
     </div>
 
-    <div class="form-box">
-      <input type="text" id="nome" placeholder="Nome">
-      <input type="text" id="documento" placeholder="CPF/CNPJ">
-      <input type="email" id="email" placeholder="Email">
-      <input type="text" id="telefone" placeholder="Telefone">
+    <div class="form-box" style="background:white; padding:25px; border-radius:12px; max-width:600px;">
+      <input type="text" id="nome" placeholder="Nome" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd;">
+      <input type="text" id="documento" placeholder="CPF/CNPJ" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd;">
+      <input type="email" id="email" placeholder="Email" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd;">
+      <input type="text" id="telefone" placeholder="Telefone" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd;">
 
-      <select id="regime">
+      <select id="regime" style="width:100%; padding:12px; margin-bottom:18px; border-radius:8px; border:1px solid #ddd;">
         <option value="">Selecione o Regime</option>
         <option value="Simples Nacional">Simples Nacional</option>
         <option value="Lucro Presumido">Lucro Presumido</option>
@@ -35,14 +37,13 @@
         <option value="MEI">MEI</option>
       </select>
 
-      <button class="btn-primary" onclick="salvarCliente()">Salvar</button>
+      <button class="btn-primary" style="width:100%; padding:15px; background:#4f46e5; color:white; border:none; border-radius:8px; cursor:pointer;" onclick="salvarCliente()">Salvar Cliente</button>
     </div>
   </div>
 
   <script>
     function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      sidebar.classList.toggle('active');
+      document.getElementById('sidebar').classList.toggle('active');
     }
   </script>
   <script src="js/auth.js"></script>
