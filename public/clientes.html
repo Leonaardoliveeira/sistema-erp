@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clientes</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body onload="verificarLogin(); listarClientes();">
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+  <div class="sidebar" id="sidebar">
+    <h2>Franquia - ERP</h2>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="cadastro.html">Cadastro de Clientes</a>
+    <a href="clientes.html">Lista de Clientes</a>
+    <a href="usuarios.html" id="menuUsuarios" style="display:none;">Cadastro de Usuários</a> 
+    <a href="#" onclick="logout()">Sair</a>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <h2>Lista de Clientes</h2>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Documento</th>
+            <th>Regime</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaClientes"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('active');
+    }
+  </script>
+  <script src="js/auth.js"></script>
+  <script src="js/clientes.js"></script>
+</body>
+</html>
