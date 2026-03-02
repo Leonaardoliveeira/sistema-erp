@@ -1,44 +1,50 @@
-async function login() {
-    const usuario = document.getElementById("usuario").value;
-    const senha = document.getElementById("senha").value;
-
-    try {
-        const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ usuario, senha })
+// Função para criar o admin inicial se o sistema for novo
+(function inicializarAdmin() {
+    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+    if (usuarios.length === 0) {
+        usuarios.push({
+            nome: "Administrador",
+            usuario: "admin",
+            senha: "123",
+            perfil: "admin"
         });
+        localStorage.setItem("usuarios", JSON.stringify(usuarios));
+    }
+})();
 
-        const data = await response.json();
+function login() {
+    const usuarioInput = document.getElementById("usuario").value;
+    const senhaInput = document.getElementById("senha").value;
+    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+    const userFound = usuarios.find(u => u.usuario === usuarioInput && u.senha === senhaInput);
 
-        if (response.ok) {
-            localStorage.setItem("token", data.token);
-            localStorage.setItem("usuarioAtivo", JSON.stringify(data.usuario));
-            localStorage.setItem("logado", "true");
-            window.location.href = "dashboard.html";
-        } else {
-            alert(data.message || "Usuário ou senha inválidos!");
-        }
-    } catch (error) {
-        alert("Erro ao conectar com o servidor.");
+    if (userFound) {
+        localStorage.setItem("logado", "true");
+        localStorage.setItem("usuarioAtivo", JSON.stringify(userFound));
+        window.location.href = "dashboard.html";
+    } else {
+        alert("Usuário ou senha inválidos!");
     }
 }
 
 function verificarLogin() {
     const logado = localStorage.getItem("logado");
-    const token = localStorage.getItem("token");
-    if (logado !== "true" || !token) {
+    const usuarioAtivo = JSON.parse(localStorage.getItem("usuarioAtivo"));
+
+    if (logado !== "true" || !usuarioAtivo) {
         window.location.href = "index.html";
         return;
     }
-    const user = JSON.parse(localStorage.getItem("usuarioAtivo"));
+
+    // TRAVA DE MENU: Esconde "Cadastro de Usuários" para quem não é admin
     const menuAdmin = document.getElementById("menuUsuarios");
     if (menuAdmin) {
-        menuAdmin.style.display = (user.perfil === "admin") ? "block" : "none";
+        menuAdmin.style.display = (usuarioAtivo.perfil === "admin") ? "block" : "none";
     }
 }
 
 function logout() {
-    localStorage.clear();
+    localStorage.removeItem("logado");
+    localStorage.removeItem("usuarioAtivo");
     window.location.href = "index.html";
 }

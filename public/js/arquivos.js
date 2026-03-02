@@ -1,32 +1,36 @@
-async function listarClientes() {
+function listarClientes() {
     const tabela = document.getElementById("tabelaClientes");
     if (!tabela) return;
 
-    const response = await fetch('/api/clientes', { headers: getHeaders() });
-    const clientes = await response.json();
+    let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+    const usuarioAtivo = JSON.parse(localStorage.getItem("usuarioAtivo"));
+    const isAdmin = usuarioAtivo.perfil === "admin";
 
     tabela.innerHTML = "";
-    clientes.forEach(cliente => {
+
+    clientes.forEach((cliente, index) => {
         tabela.innerHTML += `
             <tr>
                 <td>${cliente.nome}</td>
                 <td><span class="status ${cliente.status.toLowerCase()}">${cliente.status}</span></td>
                 <td>
-                    <select onchange="alterarStatus('${cliente._id}', this.value)">
-                        <option value="Pendente" ${cliente.status === "Pendente" ? "selected" : ""}>Pendente</option>
-                        <option value="Gerado" ${cliente.status === "Gerado" ? "selected" : ""}>Gerado</option>
-                        <option value="Erro" ${cliente.status === "Erro" ? "selected" : ""}>Erro</option>
+                    <select ${!isAdmin ? 'disabled' : ''} onchange="alterarStatus(${index}, this.value)" 
+                            style="${!isAdmin ? 'opacity: 0.6; cursor: not-allowed;' : ''}">
+                        <option ${cliente.status === "Pendente" ? "selected" : ""}>Pendente</option>
+                        <option ${cliente.status === "Gerado" ? "selected" : ""}>Gerado</option>
+                        <option ${cliente.status === "Erro" ? "selected" : ""}>Erro</option>
                     </select>
                 </td>
             </tr>`;
     });
 }
 
-async function alterarStatus(id, novoStatus) {
-    await fetch(`/api/clientes/${id}`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: JSON.stringify({ status: novoStatus })
-    });
-    listarClientes(); // Atualiza a cor do status na hora
+function alterarStatus(index, novoStatus) {
+    const usuarioAtivo = JSON.parse(localStorage.getItem("usuarioAtivo"));
+    if (usuarioAtivo.perfil !== "admin") return;
+
+    let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+    clientes[index].status = novoStatus;
+    localStorage.setItem("clientes", JSON.stringify(clientes));
+    listarClientes();
 }
