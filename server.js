@@ -1,5 +1,4 @@
 require('dotenv').config();
-
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
@@ -9,6 +8,7 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 
+// Middlewares
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -16,15 +16,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 // =======================
 // 🔥 CONEXÃO MONGODB
 // =======================
+// No Render, você deve criar a variável MONGO_URI nas configurações de Environment
+const MONGO_URI = process.env.MONGO_URI;
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ Conectado ao MongoDB"))
-  .catch(err => console.log("❌ Erro ao conectar:", err));
+mongoose.connect(MONGO_URI)
+  .then(() => console.log("✅ Conectado ao MongoDB Atlas"))
+  .catch(err => console.error("❌ Erro ao conectar ao MongoDB:", err));
 
 // =======================
-// 📦 SCHEMAS
+// 📦 SCHEMAS (Modelos de Dados)
 // =======================
-
 const UsuarioSchema = new mongoose.Schema({
   nome: { type: String, required: true },
   usuario: { type: String, required: true, unique: true },
@@ -33,7 +34,7 @@ const UsuarioSchema = new mongoose.Schema({
 });
 
 const ClienteSchema = new mongoose.Schema({
-  nome: String,
+  nome: { type: String, required: true },
   email: String,
   telefone: String,
   criadoEm: { type: Date, default: Date.now }
@@ -43,54 +44,41 @@ const Usuario = mongoose.model("Usuario", UsuarioSchema);
 const Cliente = mongoose.model("Cliente", ClienteSchema);
 
 // =======================
-// 👑 CRIAR ADMIN AUTOMÁTICO
+// 👑 ADMIN INICIAL (Cria se não existir)
 // =======================
-
 async function criarAdmin() {
-  const existe = await Usuario.findOne({ usuario: "admin" });
-
-  if (!existe) {
-    const senhaHash = await bcrypt.hash("123", 10);
-
-    await Usuario.create({
-      nome: "Administrador",
-      usuario: "admin",
-      senha: senhaHash,
-      perfil: "admin"
-    });
-
-    console.log("👑 Admin criado -> usuario: admin | senha: 123");
+  try {
+    const existe = await Usuario.findOne({ usuario: "admin" });
+    if (!existe) {
+      const senhaHash = await bcrypt.hash("123", 10);
+      await Usuario.create({
+        nome: "Administrador",
+        usuario: "admin",
+        senha: senhaHash,
+        perfil: "admin"
+      });
+      console.log("👑 Admin padrão criado: admin | 123");
+    }
+  } catch (err) {
+    console.error("Erro ao criar admin inicial:", err);
   }
 }
-
 criarAdmin();
 
 // =======================
-// 🔐 MIDDLEWARE TOKEN
+// 🔐 MIDDLEWARES DE SEGURANÇA
 // =======================
-
 function verificarToken(req, res, next) {
   const authHeader = req.headers.authorization;
-
-  if (!authHeader) {
-    return res.status(401).json({ message: "Token não enviado" });
-  }
+  if (!authHeader) return res.status(401).json({ message: "Token não enviado" });
 
   const token = authHeader.split(" ")[1];
-
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(401).json({ message: "Token inválido" });
-    }
-
+    if (err) return res.status(401).json({ message: "Token inválido ou expirado" });
     req.usuario = decoded;
     next();
   });
 }
-
-// =======================
-// 🔐 MIDDLEWARE ADMIN
-// =======================
 
 function verificarAdmin(req, res, next) {
   if (req.usuario.perfil !== "admin") {
@@ -100,23 +88,15 @@ function verificarAdmin(req, res, next) {
 }
 
 // =======================
-// 🔐 LOGIN
+// 🔑 ROTAS DE AUTENTICAÇÃO
 // =======================
-
 app.post('/api/login', async (req, res) => {
   try {
     const { usuario, senha } = req.body;
-
     const user = await Usuario.findOne({ usuario });
 
-    if (!user) {
-      return res.status(401).json({ message: "Usuário não encontrado" });
-    }
-
-    const senhaValida = await bcrypt.compare(senha, user.senha);
-
-    if (!senhaValida) {
-      return res.status(401).json({ message: "Senha incorreta" });
+    if (!user || !(await bcrypt.compare(senha, user.senha))) {
+      return res.status(401).json({ message: "Usuário ou senha incorretos" });
     }
 
     const token = jwt.sign(
@@ -127,90 +107,53 @@ app.post('/api/login', async (req, res) => {
 
     res.json({
       token,
-      usuario: {
-        id: user._id,
-        nome: user.nome,
-        usuario: user.usuario,
-        perfil: user.perfil
-      }
+      usuario: { nome: user.nome, usuario: user.usuario, perfil: user.perfil }
     });
-
   } catch (error) {
-    res.status(500).json({ error: "Erro no servidor" });
+    res.status(500).json({ error: "Erro interno no servidor" });
   }
 });
 
 // =======================
-// 👥 USUÁRIOS (SÓ ADMIN)
+// 👤 ROTAS DE CLIENTES (Persistência no MongoDB)
 // =======================
 
-app.post('/api/usuarios', verificarToken, verificarAdmin, async (req, res) => {
-  try {
-    const { nome, usuario, senha, perfil } = req.body;
-
-    const senhaHash = await bcrypt.hash(senha, 10);
-
-    const novoUsuario = await Usuario.create({
-      nome,
-      usuario,
-      senha: senhaHash,
-      perfil
-    });
-
-    res.json(novoUsuario);
-
-  } catch (error) {
-    res.status(500).json({ error: "Erro ao criar usuário" });
-  }
-});
-
-app.delete('/api/usuarios/:id', verificarToken, verificarAdmin, async (req, res) => {
-  await Usuario.findByIdAndDelete(req.params.id);
-  res.json({ message: "Usuário removido" });
-});
-
-app.put('/api/usuarios/:id', verificarToken, verificarAdmin, async (req, res) => {
-  const { nome, perfil } = req.body;
-  await Usuario.findByIdAndUpdate(req.params.id, { nome, perfil });
-  res.json({ message: "Usuário atualizado" });
-});
-
-// =======================
-// 👤 CLIENTES
-// =======================
-
-// Ver clientes → qualquer logado (User e Admin)
+// Listar todos (Usuários e Admins podem ver)
 app.get('/api/clientes', verificarToken, async (req, res) => {
-  const clientes = await Cliente.find();
-  res.json(clientes);
+  try {
+    const clientes = await Cliente.find().sort({ criadoEm: -1 });
+    res.json(clientes);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar clientes" });
+  }
 });
 
-// Criar cliente → SÓ ADMIN
+// Criar (Apenas Admin)
 app.post('/api/clientes', verificarToken, verificarAdmin, async (req, res) => {
-  const novoCliente = await Cliente.create(req.body);
-  res.json(novoCliente);
+  try {
+    const novoCliente = await Cliente.create(req.body);
+    res.status(201).json(novoCliente);
+  } catch (err) {
+    res.status(400).json({ error: "Erro ao salvar cliente" });
+  }
 });
 
-// Editar cliente → SÓ ADMIN
-app.put('/api/clientes/:id', verificarToken, verificarAdmin, async (req, res) => {
-  await Cliente.findByIdAndUpdate(req.params.id, req.body);
-  res.json({ message: "Cliente atualizado" });
-});
-
-// Excluir cliente → SÓ ADMIN
+// Deletar (Apenas Admin)
 app.delete('/api/clientes/:id', verificarToken, verificarAdmin, async (req, res) => {
-  await Cliente.findByIdAndDelete(req.params.id);
-  res.json({ message: "Cliente removido" });
+  try {
+    await Cliente.findByIdAndDelete(req.params.id);
+    res.json({ message: "Cliente removido com sucesso" });
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao deletar" });
+  }
 });
 
 // =======================
-// 🌍 FRONTEND
+// 🌍 SERVIR FRONTEND
 // =======================
-
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => console.log(`🚀 Rodando na porta ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Servidor online na porta ${PORT}`));
