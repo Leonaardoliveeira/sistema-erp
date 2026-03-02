@@ -18,8 +18,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 // =======================
 
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ Conectado ao MongoDB"))
-  .catch(err => console.log("❌ Erro ao conectar:", err));
+  .then(() => {
+    console.log("✅ Conectado ao MongoDB");
+    criarAdmin(); // só cria admin depois que conectar
+  })
+  .catch(err => {
+    console.log("❌ Erro ao conectar:", err);
+    process.exit(1);
+  });
 
 // =======================
 // 📦 SCHEMAS
@@ -43,27 +49,25 @@ const Usuario = mongoose.model("Usuario", UsuarioSchema);
 const Cliente = mongoose.model("Cliente", ClienteSchema);
 
 // =======================
-// 👑 CRIAR ADMIN AUTOMÁTICO
+// 👑 CRIAR ADMIN AUTOMÁTICO SE NÃO EXISTIR
 // =======================
 
 async function criarAdmin() {
-  const existe = await Usuario.findOne({ usuario: "admin" });
+  const existe = await Usuario.findOne({ usuario: process.env.ADMIN_USER });
 
   if (!existe) {
-    const senhaHash = await bcrypt.hash("123", 10);
+    const senhaHash = await bcrypt.hash(process.env.ADMIN_PASS, 10);
 
     await Usuario.create({
       nome: "Administrador",
-      usuario: "admin",
+      usuario: process.env.ADMIN_USER,
       senha: senhaHash,
       perfil: "admin"
     });
 
-    console.log("👑 Admin criado -> usuario: admin | senha: 123");
+    console.log("👑 Admin criado automaticamente");
   }
 }
-
-criarAdmin();
 
 // =======================
 // 🔐 MIDDLEWARE TOKEN
@@ -141,7 +145,7 @@ app.post('/api/login', async (req, res) => {
 });
 
 // =======================
-// 👥 USUÁRIOS (SÓ ADMIN)
+// 👥 USUÁRIOS (ADMIN)
 // =======================
 
 app.post('/api/usuarios', verificarToken, verificarAdmin, async (req, res) => {
@@ -164,40 +168,25 @@ app.post('/api/usuarios', verificarToken, verificarAdmin, async (req, res) => {
   }
 });
 
-app.delete('/api/usuarios/:id', verificarToken, verificarAdmin, async (req, res) => {
-  await Usuario.findByIdAndDelete(req.params.id);
-  res.json({ message: "Usuário removido" });
-});
-
-app.put('/api/usuarios/:id', verificarToken, verificarAdmin, async (req, res) => {
-  const { nome, perfil } = req.body;
-  await Usuario.findByIdAndUpdate(req.params.id, { nome, perfil });
-  res.json({ message: "Usuário atualizado" });
-});
-
 // =======================
 // 👤 CLIENTES
 // =======================
 
-// Ver clientes → qualquer logado (User e Admin)
 app.get('/api/clientes', verificarToken, async (req, res) => {
   const clientes = await Cliente.find();
   res.json(clientes);
 });
 
-// Criar cliente → SÓ ADMIN
 app.post('/api/clientes', verificarToken, verificarAdmin, async (req, res) => {
   const novoCliente = await Cliente.create(req.body);
   res.json(novoCliente);
 });
 
-// Editar cliente → SÓ ADMIN
 app.put('/api/clientes/:id', verificarToken, verificarAdmin, async (req, res) => {
   await Cliente.findByIdAndUpdate(req.params.id, req.body);
   res.json({ message: "Cliente atualizado" });
 });
 
-// Excluir cliente → SÓ ADMIN
 app.delete('/api/clientes/:id', verificarToken, verificarAdmin, async (req, res) => {
   await Cliente.findByIdAndDelete(req.params.id);
   res.json({ message: "Cliente removido" });
