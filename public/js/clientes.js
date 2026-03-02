@@ -1,16 +1,35 @@
-// Função auxiliar para simplificar as chamadas com Token
-const apiFetch = async (url, options = {}) => {
-    const token = localStorage.getItem('token');
-    const defaultHeaders = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-    };
-    
-    options.headers = { ...defaultHeaders, ...options.headers };
-    const response = await fetch(url, options);
-    if (response.status === 401) logout(); // Se o token expirou, desloga
-    return response;
-};
+const getHeaders = () => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+});
+
+async function listarClientes() {
+    const tabela = document.getElementById("tabelaClientes");
+    if (!tabela) return;
+
+    try {
+        const response = await fetch('/api/clientes', { headers: getHeaders() });
+        const clientes = await response.json();
+
+        tabela.innerHTML = "";
+        clientes.forEach(cliente => {
+            const statusClass = cliente.status ? cliente.status.toLowerCase() : "pendente";
+            tabela.innerHTML += `
+                <tr>
+                    <td>${cliente.nome}</td>
+                    <td>${cliente.documento || "-"}</td>
+                    <td>${cliente.regime || "-"}</td>
+                    <td><span class="status ${statusClass}">${cliente.status || 'Pendente'}</span></td>
+                    <td>
+                        <button class="btn-primary" style="background-color: #f59e0b;" onclick="prepararEdicao('${cliente._id}')">Editar</button>
+                        <button class="btn-danger" onclick="excluirCliente('${cliente._id}')">Excluir</button>
+                    </td>
+                </tr>`;
+        });
+    } catch (err) {
+        console.error("Erro ao carregar clientes:", err);
+    }
+}
 
 async function salvarCliente() {
     const dados = {
@@ -22,43 +41,20 @@ async function salvarCliente() {
         status: "Pendente"
     };
 
-    if (!dados.nome) return alert("Nome é obrigatório");
-
-    const res = await apiFetch('/api/clientes', {
+    const res = await fetch('/api/clientes', {
         method: 'POST',
+        headers: getHeaders(),
         body: JSON.stringify(dados)
     });
 
     if (res.ok) {
-        alert("Cliente salvo no Banco de Dados!");
+        alert("Cliente salvo!");
         window.location.href = "clientes.html";
     }
 }
 
-async function listarClientes() {
-    const tabela = document.getElementById("tabelaClientes");
-    if (!tabela) return;
-
-    const res = await apiFetch('/api/clientes');
-    const clientes = await res.json();
-
-    tabela.innerHTML = "";
-    clientes.forEach(c => {
-        tabela.innerHTML += `
-            <tr>
-                <td>${c.nome}</td>
-                <td>${c.documento || '-'}</td>
-                <td>${c.regime || '-'}</td>
-                <td><span class="status ${c.status.toLowerCase()}">${c.status}</span></td>
-                <td>
-                    <button class="btn-danger" onclick="excluirCliente('${c._id}')">Excluir</button>
-                </td>
-            </tr>`;
-    });
-}
-
 async function excluirCliente(id) {
-    if (!confirm("Deseja excluir?")) return;
-    const res = await apiFetch(`/api/clientes/${id}`, { method: 'DELETE' });
-    if (res.ok) listarClientes();
+    if (!confirm("Excluir este cliente?")) return;
+    await fetch(`/api/clientes/${id}`, { method: 'DELETE', headers: getHeaders() });
+    listarClientes();
 }

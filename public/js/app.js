@@ -1,13 +1,18 @@
 async function carregarDashboard() {
-    const res = await apiFetch('/api/clientes');
-    const clientes = await res.json();
+    try {
+        const response = await fetch('/api/clientes', { headers: getHeaders() });
+        const clientes = await response.json();
 
-    document.getElementById("totalClientes").innerText = clientes.length;
-    document.getElementById("gerados").innerText = clientes.filter(c => c.status === "Gerado").length;
-    document.getElementById("pendentes").innerText = clientes.filter(c => c.status === "Pendente").length;
-    document.getElementById("erros").innerText = clientes.filter(c => c.status === "Erro").length;
+        // Atualiza os números nos cards
+        document.getElementById("totalClientes").innerText = clientes.length;
+        document.getElementById("gerados").innerText = clientes.filter(c => c.status === "Gerado").length;
+        document.getElementById("pendentes").innerText = clientes.filter(c => c.status === "Pendente").length;
+        document.getElementById("erros").innerText = clientes.filter(c => c.status === "Erro").length;
 
-    renderizarTabelaDashboard(clientes);
+        renderizarTabelaDashboard(clientes);
+    } catch (err) {
+        console.error("Erro no dashboard:", err);
+    }
 }
 
 function renderizarTabelaDashboard(lista) {
