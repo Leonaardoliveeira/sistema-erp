@@ -1,5 +1,5 @@
 // =======================================
-// 🔐 LOGIN USANDO API (AJUSTADO)
+// 🔐 LOGIN
 // =======================================
 
 async function login() {
@@ -14,7 +14,7 @@ async function login() {
 
     try {
 
-        const response = await fetch("/api/login", {
+        const response = await apiFetch("/api/login", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -25,15 +25,21 @@ async function login() {
             })
         });
 
-        const data = await response.json();
-
-        // 🔴 Corrigido: backend usa "erro"
-        if (!response.ok) {
-            alert(data.erro || "Usuário ou senha inválidos");
+        // ⚠️ Verifica se a resposta é JSON válida
+        let data;
+        try {
+            data = await response.json();
+        } catch {
+            alert("Erro inesperado no servidor.");
             return;
         }
 
-        // ✅ Salva token e usuário logado
+        if (!response.ok) {
+            alert(data.erro || "Usuário ou senha inválidos.");
+            return;
+        }
+
+        // ✅ Salva token e dados do usuário
         localStorage.setItem("token", data.token);
         localStorage.setItem("usuario", JSON.stringify(data.usuario));
 
@@ -47,7 +53,7 @@ async function login() {
 
 
 // =======================================
-// 🔎 VERIFICAR SE ESTÁ LOGADO
+// 🔎 VERIFICAR LOGIN
 // =======================================
 
 function verificarLogin() {
@@ -60,13 +66,33 @@ function verificarLogin() {
         return;
     }
 
-    // 🔐 Mostrar menu apenas para admin
+    // 🔐 Controle de menu admin
     const menuAdmin = document.getElementById("menuUsuarios");
 
     if (menuAdmin) {
         menuAdmin.style.display =
             usuario.perfil === "admin" ? "block" : "none";
     }
+}
+
+
+// =======================================
+// 📡 FUNÇÃO AUXILIAR PARA REQUISIÇÕES
+// (USE NOS OUTROS JS)
+// =======================================
+
+function apiFetch(url, options = {}) {
+
+    const token = localStorage.getItem("token");
+
+    return fetch(url, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token,
+            ...options.headers
+        }
+    });
 }
 
 
