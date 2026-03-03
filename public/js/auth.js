@@ -4,8 +4,13 @@
 
 async function login() {
 
-    const usuarioInput = document.getElementById("usuario").value;
-    const senhaInput = document.getElementById("senha").value;
+    const usuarioInput = document.getElementById("usuario").value.trim();
+    const senhaInput = document.getElementById("senha").value.trim();
+
+    if (!usuarioInput || !senhaInput) {
+        alert("Preencha usuário e senha.");
+        return;
+    }
 
     try {
 
@@ -23,42 +28,46 @@ async function login() {
         const data = await response.json();
 
         if (!response.ok) {
-            alert(data.message || "Erro ao fazer login");
+            alert(data.message || "Usuário ou senha inválidos");
             return;
         }
 
-        // Salva token e dados do usuário
+        // 🔐 Salva token e usuário logado
         localStorage.setItem("token", data.token);
         localStorage.setItem("usuario", JSON.stringify(data.usuario));
 
+        // Redireciona
         window.location.href = "dashboard.html";
 
     } catch (error) {
         console.error("Erro no login:", error);
-        alert("Erro ao conectar ao servidor");
+        alert("Erro ao conectar ao servidor.");
     }
 }
 
 
 // =======================================
-// 🔎 VERIFICAR SE ESTÁ LOGADO
+// 🔎 VERIFICAR LOGIN EM PÁGINAS PROTEGIDAS
 // =======================================
 
 function verificarLogin() {
 
     const token = localStorage.getItem("token");
-    const usuario = JSON.parse(localStorage.getItem("usuario"));
+    const usuarioString = localStorage.getItem("usuario");
 
-    if (!token || !usuario) {
+    if (!token || !usuarioString) {
         window.location.href = "index.html";
         return;
     }
 
-    // Esconde menu de usuários se não for admin
+    const usuario = JSON.parse(usuarioString);
+
+    // 🔐 Controla menu admin
     const menuAdmin = document.getElementById("menuUsuarios");
 
     if (menuAdmin) {
-        menuAdmin.style.display = (usuario.perfil === "admin") ? "block" : "none";
+        menuAdmin.style.display =
+            usuario.perfil === "admin" ? "block" : "none";
     }
 }
 
@@ -68,7 +77,7 @@ function verificarLogin() {
 // =======================================
 
 function logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("usuario");
+
+    localStorage.clear();
     window.location.href = "index.html";
 }
