@@ -1,50 +1,13 @@
 // =======================================
-// 🔐 VERIFICAR TOKEN
+// 🔐 PEGAR TOKEN
 // =======================================
-
 function getToken() {
     return localStorage.getItem("token");
 }
 
-function verificarAutenticacao() {
-    if (!getToken()) {
-        window.location.href = "index.html";
-    }
-}
-
-verificarAutenticacao();
-
-
-// =======================================
-// 📡 FUNÇÃO PADRÃO DE REQUISIÇÃO
-// =======================================
-
-async function apiRequest(url, options = {}) {
-
-    const response = await fetch(url, {
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + getToken(),
-            ...options.headers
-        }
-    });
-
-    if (response.status === 401) {
-        alert("Sessão expirada. Faça login novamente.");
-        localStorage.clear();
-        window.location.href = "index.html";
-        return null;
-    }
-
-    return response;
-}
-
-
 // =======================================
 // 📡 SALVAR NOVO CLIENTE
 // =======================================
-
 async function salvarCliente() {
 
     const nome = document.getElementById("nome").value;
@@ -58,33 +21,40 @@ async function salvarCliente() {
         return;
     }
 
-    const response = await apiRequest("/api/clientes", {
-        method: "POST",
-        body: JSON.stringify({
-            nome,
-            documento,
-            email,
-            telefone,
-            regime
-        })
-    });
+    try {
 
-    if (!response) return;
+        const response = await fetch("/api/clientes", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + getToken()
+            },
+            body: JSON.stringify({
+                nome,
+                documento,
+                email,
+                telefone,
+                regime
+            })
+        });
 
-    if (!response.ok) {
-        alert("Erro ao salvar cliente");
-        return;
+        if (!response.ok) {
+            alert("Erro ao salvar cliente");
+            return;
+        }
+
+        alert("Cliente cadastrado com sucesso!");
+        window.location.href = "clientes.html";
+
+    } catch (error) {
+        console.error("Erro:", error);
+        alert("Erro ao conectar ao servidor");
     }
-
-    alert("Cliente cadastrado com sucesso!");
-    window.location.href = "clientes.html";
 }
-
 
 // =======================================
 // 📋 LISTAR CLIENTES
 // =======================================
-
 async function listarClientes() {
 
     const tabela = document.getElementById("tabelaClientes");
@@ -92,50 +62,56 @@ async function listarClientes() {
 
     tabela.innerHTML = "";
 
-    const response = await apiRequest("/api/clientes");
+    try {
 
-    if (!response) return;
+        const response = await fetch("/api/clientes", {
+            headers: {
+                "Authorization": "Bearer " + getToken()
+            }
+        });
 
-    const clientes = await response.json();
+        const clientes = await response.json();
 
-    clientes.forEach((cliente) => {
+        clientes.forEach((cliente) => {
 
-        const st = cliente.status?.toLowerCase() || "pendente";
+            const st = cliente.status?.toLowerCase() || "pendente";
 
-        tabela.innerHTML += `
-            <tr>
-                <td>${cliente.nome}</td>
-                <td>${cliente.documento || "-"}</td>
-                <td>${cliente.regime || "-"}</td>
-                <td>
-                    <div class="status-botoes">
-                        <button class="btn-status pendente ${st === 'pendente' ? 'ativo' : ''}" 
-                            onclick="alterarStatusCliente('${cliente._id}', 'Pendente')">Pendente</button>
+            tabela.innerHTML += `
+                <tr>
+                    <td>${cliente.nome}</td>
+                    <td>${cliente.documento || "-"}</td>
+                    <td>${cliente.regime || "-"}</td>
+                    <td>
+                        <div class="status-botoes">
+                            <button class="btn-status pendente ${st === 'pendente' ? 'ativo' : ''}" 
+                                onclick="alterarStatusCliente('${cliente._id}', 'Pendente')">Pendente</button>
 
-                        <button class="btn-status gerado ${st === 'gerado' ? 'ativo' : ''}" 
-                            onclick="alterarStatusCliente('${cliente._id}', 'Gerado')">Gerado</button>
+                            <button class="btn-status gerado ${st === 'gerado' ? 'ativo' : ''}" 
+                                onclick="alterarStatusCliente('${cliente._id}', 'Gerado')">Gerado</button>
 
-                        <button class="btn-status erro ${st === 'erro' ? 'ativo' : ''}" 
-                            onclick="alterarStatusCliente('${cliente._id}', 'Erro')">Erro</button>
-                    </div>
-                </td>
-                <td>
-                    <button class="btn-primary" style="background-color: #f59e0b; margin-right: 5px;" 
-                        onclick="abrirModalEdicao('${cliente._id}', '${cliente.nome}', '${cliente.documento || ""}', '${cliente.email || ""}', '${cliente.telefone || ""}', '${cliente.regime || ""}')">Editar</button>
+                            <button class="btn-status erro ${st === 'erro' ? 'ativo' : ''}" 
+                                onclick="alterarStatusCliente('${cliente._id}', 'Erro')">Erro</button>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn-primary" style="background-color: #f59e0b; margin-right: 5px;" 
+                            onclick="abrirModalEdicao('${cliente._id}', '${cliente.nome}', '${cliente.documento || ""}', '${cliente.email || ""}', '${cliente.telefone || ""}', '${cliente.regime || ""}')">Editar</button>
 
-                    <button class="btn-danger" 
-                        onclick="excluirCliente('${cliente._id}')">Excluir</button>
-                </td>
-            </tr>
-        `;
-    });
+                        <button class="btn-danger" 
+                            onclick="excluirCliente('${cliente._id}')">Excluir</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+    } catch (error) {
+        console.error("Erro ao listar clientes:", error);
+    }
 }
 
-
 // =======================================
-// ✏️ ABRIR MODAL
+// ✏️ ABRIR MODAL EDIÇÃO
 // =======================================
-
 function abrirModalEdicao(id, nome, documento, email, telefone, regime) {
 
     document.getElementById("editId").value = id;
@@ -148,11 +124,9 @@ function abrirModalEdicao(id, nome, documento, email, telefone, regime) {
     document.getElementById("modalEdicao").style.display = "flex";
 }
 
-
 // =======================================
 // 💾 SALVAR EDIÇÃO
 // =======================================
-
 async function salvarEdicao() {
 
     const id = document.getElementById("editId").value;
@@ -165,49 +139,56 @@ async function salvarEdicao() {
         regime: document.getElementById("editRegime").value
     };
 
-    const response = await apiRequest(`/api/clientes/${id}`, {
-        method: "PUT",
-        body: JSON.stringify(dadosAtualizados)
-    });
+    try {
 
-    if (!response) return;
+        await fetch(`/api/clientes/${id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + getToken()
+            },
+            body: JSON.stringify(dadosAtualizados)
+        });
 
-    alert("Cliente atualizado!");
-    fecharModal();
-    listarClientes();
+        alert("Cliente atualizado!");
+        fecharModal();
+        listarClientes();
+
+    } catch (error) {
+        console.error("Erro ao atualizar:", error);
+    }
 }
-
 
 // =======================================
 // 🔄 ALTERAR STATUS
 // =======================================
-
 async function alterarStatusCliente(id, novoStatus) {
 
-    const response = await apiRequest(`/api/clientes/${id}`, {
+    await fetch(`/api/clientes/${id}`, {
         method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + getToken()
+        },
         body: JSON.stringify({ status: novoStatus })
     });
-
-    if (!response) return;
 
     listarClientes();
 }
 
-
 // =======================================
 // 🗑 EXCLUIR
 // =======================================
-
 async function excluirCliente(id) {
 
     if (!confirm("Deseja excluir este cliente?")) return;
 
-    const response = await apiRequest(`/api/clientes/${id}`, {
-        method: "DELETE"
+    await fetch(`/api/clientes/${id}`, {
+        method: "DELETE",
+        headers: {
+            "Authorization": "Bearer " + getToken()
+        }
     });
-
-    if (!response) return;
 
     listarClientes();
 }
