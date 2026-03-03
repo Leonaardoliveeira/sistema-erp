@@ -1,30 +1,36 @@
-function listarClientes() {
-    const tabela = document.getElementById("tabelaClientes");
-    if (!tabela) return;
+const API_URL = "https://sistema-erp-32e0.onrender.com";
 
-    const todosClientes = JSON.parse(localStorage.getItem("clientes")) || [];
+async function listarClientesArquivos() {
+    const tabela = document.getElementById("tabelaClientes");
     const usuarioAtivo = JSON.parse(localStorage.getItem("usuarioAtivo"));
 
-    // Exibe apenas os que pertencem ao usuário logado
-    const meusClientes = todosClientes.filter(c => c.usuarioDono === usuarioAtivo.usuario);
+    try {
+        const res = await fetch(`${API_URL}/clientes?usuarioDono=${usuarioAtivo.usuario}`);
+        const clientes = await res.json();
+        tabela.innerHTML = "";
 
-    tabela.innerHTML = "";
+        clientes.forEach(c => {
+            tabela.innerHTML += `
+                <tr>
+                    <td>${c.nome}</td>
+                    <td><span class="status ${c.status.toLowerCase()}">${c.status}</span></td>
+                    <td>
+                        <select onchange="atualizarStatusBanco('${c._id}', this.value)">
+                            <option value="Pendente" ${c.status==='Pendente'?'selected':''}>Pendente</option>
+                            <option value="Gerado" ${c.status==='Gerado'?'selected':''}>Gerado</option>
+                            <option value="Erro" ${c.status==='Erro'?'selected':''}>Erro</option>
+                        </select>
+                    </td>
+                </tr>`;
+        });
+    } catch (e) { console.error(e); }
+}
 
-    meusClientes.forEach((cliente) => {
-        // Encontra o index real no banco de dados para salvar a alteração corretamente
-        const indexOriginal = todosClientes.findIndex(c => c.codigo === cliente.codigo);
-        
-        tabela.innerHTML += `
-            <tr>
-                <td>${cliente.nome}</td>
-                <td><span class="status ${cliente.status.toLowerCase()}">${cliente.status}</span></td>
-                <td>
-                    <select onchange="alterarStatus(${indexOriginal}, this.value)">
-                        <option ${cliente.status === "Pendente" ? "selected" : ""}>Pendente</option>
-                        <option ${cliente.status === "Gerado" ? "selected" : ""}>Gerado</option>
-                        <option ${cliente.status === "Erro" ? "selected" : ""}>Erro</option>
-                    </select>
-                </td>
-            </tr>`;
+async function atualizarStatusBanco(id, novoStatus) {
+    await fetch(`${API_URL}/clientes/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: novoStatus })
     });
+    listarClientesArquivos();
 }
