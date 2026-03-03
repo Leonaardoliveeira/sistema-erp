@@ -1,28 +1,48 @@
+document.addEventListener("DOMContentLoaded", function () {
+
+    document.getElementById("mesSelecionado")
+        .addEventListener("change", renderSped);
+
+});
+
+function getToken() {
+    return localStorage.getItem("token");
+}
+
 async function renderSped() {
+
     const mes = document.getElementById("mesSelecionado").value;
     const tabela = document.getElementById("tabelaSped");
-    const uId = getUsuarioId();
 
-    if (!mes) return;
+    if (!mes) {
+        tabela.innerHTML = "<tr><td colspan='3'>Selecione um mês</td></tr>";
+        return;
+    }
 
     try {
-        // Busca apenas clientes deste utilizador
-        const clientesResp = await fetch(`/api/clientes?usuarioId=${uId}`, {
+
+        // Buscar clientes
+        const clientesResp = await fetch("/api/clientes", {
             headers: { "Authorization": "Bearer " + getToken() }
         });
+
         const clientes = await clientesResp.json();
 
-        // Busca registros do SPED para este utilizador
-        const spedResp = await fetch(`/api/sped/${mes}?usuarioId=${uId}`, {
+        // Buscar status SPED do mês
+        const spedResp = await fetch(`/api/sped/${mes}`, {
             headers: { "Authorization": "Bearer " + getToken() }
         });
+
         const speds = await spedResp.json();
 
-        tabela.innerHTML = clientes.map(cliente => {
-            const registro = speds.find(s => (s.clienteId?._id || s.clienteId) === cliente._id);
+        tabela.innerHTML = "";
+
+        clientes.forEach(cliente => {
+
+            const registro = speds.find(s => s.clienteId._id === cliente._id);
             const statusAtual = registro ? registro.status : "nao";
 
-            return `
+            tabela.innerHTML += `
             <tr>
                 <td>${cliente.nome}</td>
                 <td>${cliente.documento || "-"}</td>
@@ -34,6 +54,21 @@ async function renderSped() {
                     </select>
                 </td>
             </tr>`;
-        }).join("");
-    } catch (error) { console.error(error); }
+        });
+
+    } catch (error) {
+        console.error("Erro SPED:", error);
+    }
+}
+
+async function alterarStatusSped(clienteId, mes, status) {
+
+    await fetch("/api/sped", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + getToken()
+        },
+        body: JSON.stringify({ clienteId, mes, status })
+    });
 }
