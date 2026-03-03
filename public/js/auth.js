@@ -1,11 +1,16 @@
 // =======================================
-// 🔐 LOGIN USANDO API
+// 🔐 LOGIN USANDO API (AJUSTADO)
 // =======================================
 
 async function login() {
 
-    const usuarioInput = document.getElementById("usuario").value;
-    const senhaInput = document.getElementById("senha").value;
+    const usuarioInput = document.getElementById("usuario").value.trim();
+    const senhaInput = document.getElementById("senha").value.trim();
+
+    if (!usuarioInput || !senhaInput) {
+        alert("Preencha usuário e senha.");
+        return;
+    }
 
     try {
 
@@ -22,12 +27,13 @@ async function login() {
 
         const data = await response.json();
 
+        // 🔴 Corrigido: backend usa "erro"
         if (!response.ok) {
-            alert(data.message || "Erro ao fazer login");
+            alert(data.erro || "Usuário ou senha inválidos");
             return;
         }
 
-        // Salva token e dados do usuário
+        // ✅ Salva token e usuário logado
         localStorage.setItem("token", data.token);
         localStorage.setItem("usuario", JSON.stringify(data.usuario));
 
@@ -35,7 +41,7 @@ async function login() {
 
     } catch (error) {
         console.error("Erro no login:", error);
-        alert("Erro ao conectar ao servidor");
+        alert("Erro ao conectar com o servidor.");
     }
 }
 
@@ -54,11 +60,12 @@ function verificarLogin() {
         return;
     }
 
-    // Esconde menu de usuários se não for admin
+    // 🔐 Mostrar menu apenas para admin
     const menuAdmin = document.getElementById("menuUsuarios");
 
     if (menuAdmin) {
-        menuAdmin.style.display = (usuario.perfil === "admin") ? "block" : "none";
+        menuAdmin.style.display =
+            usuario.perfil === "admin" ? "block" : "none";
     }
 }
 
