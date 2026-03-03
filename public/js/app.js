@@ -6,22 +6,32 @@ function carregarDashboard() {
         verificarViradaDeMes();
     }
 
-    let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+    const usuarioAtivo = JSON.parse(localStorage.getItem("usuarioAtivo"));
+    const todosClientes = JSON.parse(localStorage.getItem("clientes")) || [];
 
-    document.getElementById("totalClientes").innerText = clientes.length;
-    document.getElementById("gerados").innerText = clientes.filter(c => c.status === "Gerado").length;
-    document.getElementById("pendentes").innerText = clientes.filter(c => c.status === "Pendente").length;
-    document.getElementById("erros").innerText = clientes.filter(c => c.status === "Erro").length;
+    // FILTRO: Pega apenas os clientes que pertencem ao usuário logado
+    const meusClientes = todosClientes.filter(c => c.usuarioDono === usuarioAtivo.usuario);
 
-    listarClientesDashboard();
+    // Atualiza os cards numéricos usando apenas os meus clientes
+    document.getElementById("totalClientes").innerText = meusClientes.length;
+    document.getElementById("gerados").innerText = meusClientes.filter(c => c.status === "Gerado").length;
+    document.getElementById("pendentes").innerText = meusClientes.filter(c => c.status === "Pendente").length;
+    document.getElementById("erros").innerText = meusClientes.filter(c => c.status === "Erro").length;
+
+    // Chama a listagem passando apenas os meus clientes para a tabela
+    renderizarTabelaDashboard(meusClientes);
 }
 
 // =======================================
 // LISTAGEM PADRÃO NO DASHBOARD
 // =======================================
 function listarClientesDashboard() {
-    let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
-    renderizarTabelaDashboard(clientes);
+    const usuarioAtivo = JSON.parse(localStorage.getItem("usuarioAtivo"));
+    const todosClientes = JSON.parse(localStorage.getItem("clientes")) || [];
+    
+    // Filtra para garantir que a tabela inicial mostre apenas os do usuário
+    const meusClientes = todosClientes.filter(c => c.usuarioDono === usuarioAtivo.usuario);
+    renderizarTabelaDashboard(meusClientes);
 }
 
 // =======================================
@@ -29,15 +39,18 @@ function listarClientesDashboard() {
 // =======================================
 function filtrarClientes() {
     const termo = document.getElementById("campoPesquisa").value.toLowerCase();
-    let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+    const usuarioAtivo = JSON.parse(localStorage.getItem("usuarioAtivo"));
+    const todosClientes = JSON.parse(localStorage.getItem("clientes")) || [];
 
-    const clientesFiltrados = clientes.filter(c => 
-        (c.nome && c.nome.toLowerCase().includes(termo)) || 
-        (c.documento && c.documento.toLowerCase().includes(termo)) ||
-        (c.telefone && c.telefone.toLowerCase().includes(termo))
-    );
+    // Primeiro filtra por dono, depois pelo termo de pesquisa
+    const filtrados = todosClientes.filter(c => {
+        const ehMeu = c.usuarioDono === usuarioAtivo.usuario;
+        const bateComBusca = (c.nome && c.nome.toLowerCase().includes(termo)) || 
+                             (c.documento && c.documento.toLowerCase().includes(termo));
+        return ehMeu && bateComBusca;
+    });
 
-    renderizarTabelaDashboard(clientesFiltrados);
+    renderizarTabelaDashboard(filtrados);
 }
 
 // =======================================
@@ -50,10 +63,11 @@ function renderizarTabelaDashboard(lista) {
     tabela.innerHTML = "";
 
     if (lista.length === 0) {
-        tabela.innerHTML = "<tr><td colspan='5' style='text-align:center;'>Nenhum cliente encontrado.</td></tr>";
+        tabela.innerHTML = "<tr><td colspan='5' style='text-align:center;'>Nenhum cliente cadastrado por você.</td></tr>";
         return;
     }
 
+    // O visual permanece o mesmo do seu arquivo original
     lista.forEach(cliente => {
         const stClasse = cliente.status ? cliente.status.toLowerCase() : "pendente";
         

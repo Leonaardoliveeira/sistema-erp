@@ -2,20 +2,24 @@ function listarClientes() {
     const tabela = document.getElementById("tabelaClientes");
     if (!tabela) return;
 
-    let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+    const todosClientes = JSON.parse(localStorage.getItem("clientes")) || [];
     const usuarioAtivo = JSON.parse(localStorage.getItem("usuarioAtivo"));
-    const isAdmin = usuarioAtivo.perfil === "admin";
+
+    // Exibe apenas os que pertencem ao usuário logado
+    const meusClientes = todosClientes.filter(c => c.usuarioDono === usuarioAtivo.usuario);
 
     tabela.innerHTML = "";
 
-    clientes.forEach((cliente, index) => {
+    meusClientes.forEach((cliente) => {
+        // Encontra o index real no banco de dados para salvar a alteração corretamente
+        const indexOriginal = todosClientes.findIndex(c => c.codigo === cliente.codigo);
+        
         tabela.innerHTML += `
             <tr>
                 <td>${cliente.nome}</td>
                 <td><span class="status ${cliente.status.toLowerCase()}">${cliente.status}</span></td>
                 <td>
-                    <select ${!isAdmin ? 'disabled' : ''} onchange="alterarStatus(${index}, this.value)" 
-                            style="${!isAdmin ? 'opacity: 0.6; cursor: not-allowed;' : ''}">
+                    <select onchange="alterarStatus(${indexOriginal}, this.value)">
                         <option ${cliente.status === "Pendente" ? "selected" : ""}>Pendente</option>
                         <option ${cliente.status === "Gerado" ? "selected" : ""}>Gerado</option>
                         <option ${cliente.status === "Erro" ? "selected" : ""}>Erro</option>
@@ -23,14 +27,4 @@ function listarClientes() {
                 </td>
             </tr>`;
     });
-}
-
-function alterarStatus(index, novoStatus) {
-    const usuarioAtivo = JSON.parse(localStorage.getItem("usuarioAtivo"));
-    if (usuarioAtivo.perfil !== "admin") return;
-
-    let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
-    clientes[index].status = novoStatus;
-    localStorage.setItem("clientes", JSON.stringify(clientes));
-    listarClientes();
 }

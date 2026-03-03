@@ -4,8 +4,8 @@
 function salvarCliente() {
     const usuarioAtivo = JSON.parse(localStorage.getItem("usuarioAtivo"));
     
-    if (usuarioAtivo.perfil !== "admin") {
-        alert("Apenas administradores podem cadastrar novos clientes.");
+    if (!usuarioAtivo) {
+        alert("Sessão inválida. Faça login novamente.");
         return;
     }
 
@@ -20,20 +20,21 @@ function salvarCliente() {
         return;
     }
 
-    let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+    let todosClientes = JSON.parse(localStorage.getItem("clientes")) || [];
 
-    // Cria o novo objeto cliente
-    clientes.push({
+    // O SEGREDO: Adicionamos o 'usuarioDono' para amarrar ao ID de quem cadastrou
+    todosClientes.push({
+        codigo: Date.now(), // ID único do cliente
         nome,
         documento,
         email,
         telefone,
         regime,
         status: "Pendente",
-        codigo: Date.now()
+        usuarioDono: usuarioAtivo.usuario // AMARRAÇÃO AQUI
     });
 
-    localStorage.setItem("clientes", JSON.stringify(clientes));
+    localStorage.setItem("clientes", JSON.stringify(todosClientes));
     alert("Cliente cadastrado com sucesso!");
     window.location.href = "clientes.html";
 }
@@ -45,13 +46,17 @@ function listarClientes() {
     const tabela = document.getElementById("tabelaClientes");
     if (!tabela) return;
 
-    const clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+    const todosClientes = JSON.parse(localStorage.getItem("clientes")) || [];
     const usuarioAtivo = JSON.parse(localStorage.getItem("usuarioAtivo"));
-    const isAdmin = usuarioAtivo.perfil === "admin";
+
+    // FILTRO: Só exibe o que pertence ao usuário logado
+    const meusClientes = todosClientes.filter(c => c.usuarioDono === usuarioAtivo.usuario);
 
     tabela.innerHTML = "";
 
-    clientes.forEach((cliente, index) => {
+    meusClientes.forEach((cliente) => {
+        // Buscamos o index real na lista completa para que as funções de editar/excluir funcionem
+        const indexOriginal = todosClientes.findIndex(c => c.codigo === cliente.codigo);
         const st = cliente.status ? cliente.status.toLowerCase() : "pendente";
 
         tabela.innerHTML += `
@@ -60,32 +65,27 @@ function listarClientes() {
                 <td>${cliente.documento || "-"}</td>
                 <td>${cliente.regime || "-"}</td>
                 <td>
-                    ${isAdmin ? `
-                        <div class="status-botoes">
-                            <button class="btn-status pendente ${st === 'pendente' ? 'ativo' : ''}" 
-                                onclick="alterarStatusCliente(${index}, 'Pendente')">Pendente</button>
-                            <button class="btn-status gerado ${st === 'gerado' ? 'ativo' : ''}" 
-                                onclick="alterarStatusCliente(${index}, 'Gerado')">Gerado</button>
-                            <button class="btn-status erro ${st === 'erro' ? 'ativo' : ''}" 
-                                onclick="alterarStatusCliente(${index}, 'Erro')">Erro</button>
-                        </div>
-                    ` : `
-                        <span class="status ${st}">${cliente.status}</span>
-                    `}
+                    <div class="status-botoes">
+                        <button class="btn-status pendente ${st === 'pendente' ? 'ativo' : ''}" 
+                            onclick="alterarStatusCliente(${indexOriginal}, 'Pendente')">Pendente</button>
+                        <button class="btn-status gerado ${st === 'gerado' ? 'ativo' : ''}" 
+                            onclick="alterarStatusCliente(${indexOriginal}, 'Gerado')">Gerado</button>
+                        <button class="btn-status erro ${st === 'erro' ? 'ativo' : ''}" 
+                            onclick="alterarStatusCliente(${indexOriginal}, 'Erro')">Erro</button>
+                    </div>
                 </td>
                 <td>
-                    ${isAdmin ? `
-                        <button class="btn-primary" style="background-color: #f59e0b; margin-right: 5px;" 
-                            onclick="abrirModalEdicao(${index})">Editar</button>
-                        <button class="btn-danger" 
-                            onclick="excluirCliente(${index})">Excluir</button>
-                    ` : `
-                        <span style="color: #6b7280; font-size: 12px;">Visualização</span>
-                    `}
+                    <button class="btn-primary" style="background-color: #f59e0b; margin-right: 5px;" 
+                        onclick="abrirModalEdicao(${indexOriginal})">Editar</button>
+                    <button class="btn-danger" 
+                        onclick="excluirCliente(${indexOriginal})">Excluir</button>
                 </td>
             </tr>`;
     });
 }
+
+// As funções abrirModalEdicao, salvarEdicao, alterarStatusCliente e excluirCliente 
+// permanecem iguais às originais, pois agora recebem o indexOriginal da lista total.
 
 // =======================================
 // LÓGICA DO MODAL DE EDIÇÃO (Página clientes.html)
