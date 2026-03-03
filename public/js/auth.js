@@ -1,23 +1,15 @@
 // =======================================
 // 🔐 LOGIN USANDO API
 // =======================================
-
 async function login() {
-
     const usuarioInput = document.getElementById("usuario").value;
     const senhaInput = document.getElementById("senha").value;
 
     try {
-
         const response = await fetch("/api/login", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                usuario: usuarioInput,
-                senha: senhaInput
-            })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ usuario: usuarioInput, senha: senhaInput })
         });
 
         const data = await response.json();
@@ -32,20 +24,19 @@ async function login() {
         localStorage.setItem("usuario", JSON.stringify(data.usuario));
 
         window.location.href = "dashboard.html";
-
     } catch (error) {
         console.error("Erro no login:", error);
         alert("Erro ao conectar ao servidor");
     }
 }
 
-
-// =======================================
-// 🔎 VERIFICAR SE ESTÁ LOGADO
-// =======================================
+// Retorna o ID do utilizador logado
+function getUsuarioId() {
+    const usuario = JSON.parse(localStorage.getItem("usuario"));
+    return usuario ? usuario._id : null;
+}
 
 function verificarLogin() {
-
     const token = localStorage.getItem("token");
     const usuario = JSON.parse(localStorage.getItem("usuario"));
 
@@ -54,18 +45,11 @@ function verificarLogin() {
         return;
     }
 
-    // Esconde menu de usuários se não for admin
     const menuAdmin = document.getElementById("menuUsuarios");
-
     if (menuAdmin) {
         menuAdmin.style.display = (usuario.perfil === "admin") ? "block" : "none";
     }
 }
-
-
-// =======================================
-// 🚪 LOGOUT
-// =======================================
 
 function logout() {
     localStorage.removeItem("token");
