@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 /* ===============================
-   SERVIR FRONTEND (PASTA PUBLIC)
+   SERVIR FRONTEND
 ================================ */
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -70,6 +70,34 @@ const Cliente = mongoose.model("Cliente", ClienteSchema);
 const TarefaSped = mongoose.model("TarefaSped", TarefaSpedSchema);
 
 /* ===============================
+   CRIAR ADMIN GARANTIDO
+================================ */
+
+async function garantirAdmin() {
+  try {
+    const admin = await Usuario.findOne({ usuario: "admin" });
+
+    if (!admin) {
+      await Usuario.create({
+        nome: "Administrador",
+        usuario: "admin",
+        senha: "123",
+        perfil: "admin"
+      });
+      console.log("👑 Admin criado com sucesso (admin/123)");
+    } else {
+      console.log("👑 Admin já existe");
+    }
+  } catch (err) {
+    console.log("Erro ao verificar/criar admin:", err);
+  }
+}
+
+mongoose.connection.once("open", async () => {
+  await garantirAdmin();
+});
+
+/* ===============================
    MIDDLEWARE TOKEN
 ================================ */
 
@@ -97,33 +125,21 @@ function verificarAdmin(req, res, next) {
 }
 
 /* ===============================
-   CRIAR ADMIN AUTOMÁTICO
-================================ */
-async function criarAdminInicial() {
-  const admin = await Usuario.findOne({ usuario: "admin" });
-  if (!admin) {
-    await Usuario.create({
-      nome: "Administrador",
-      usuario: "admin",
-      senha: "123",
-      perfil: "admin"
-    });
-    console.log("👑 Admin criado automaticamente");
-  }
-}
-criarAdminInicial();
-
-/* ===============================
-   LOGIN
+   LOGIN CORRIGIDO
 ================================ */
 
 app.post("/api/login", async (req, res) => {
   try {
     const { usuario, senha } = req.body;
 
-    const user = await Usuario.findOne({ usuario, senha });
-    if (!user)
+    if (!usuario || !senha)
+      return res.status(400).json({ erro: "Preencha usuário e senha" });
+
+    const user = await Usuario.findOne({ usuario });
+
+    if (!user || user.senha !== senha) {
       return res.status(400).json({ erro: "Usuário ou senha inválidos" });
+    }
 
     const token = jwt.sign(
       { id: user._id, perfil: user.perfil },
@@ -132,7 +148,8 @@ app.post("/api/login", async (req, res) => {
     );
 
     res.json({ token, usuario: user });
-  } catch {
+
+  } catch (err) {
     res.status(500).json({ erro: "Erro no login" });
   }
 });
@@ -142,12 +159,8 @@ app.post("/api/login", async (req, res) => {
 ================================ */
 
 app.get("/api/usuarios", verificarToken, verificarAdmin, async (req, res) => {
-  try {
-    const usuarios = await Usuario.find();
-    res.json(usuarios);
-  } catch {
-    res.status(500).json({ erro: "Erro ao buscar usuários" });
-  }
+  const usuarios = await Usuario.find();
+  res.json(usuarios);
 });
 
 app.post("/api/usuarios", verificarToken, verificarAdmin, async (req, res) => {
@@ -174,97 +187,46 @@ app.put("/api/usuarios/:id", verificarToken, verificarAdmin, async (req, res) =>
 });
 
 app.delete("/api/usuarios/:id", verificarToken, verificarAdmin, async (req, res) => {
-  try {
-    await Usuario.findByIdAndDelete(req.params.id);
-    res.json({ msg: "Usuário removido" });
-  } catch {
-    res.status(400).json({ erro: "Erro ao excluir usuário" });
-  }
+  await Usuario.findByIdAndDelete(req.params.id);
+  res.json({ msg: "Usuário removido" });
 });
 
 /* ===============================
-   CLIENTES (ISOLADO POR USUÁRIO)
+   CLIENTES (MULTIUSUÁRIO)
 ================================ */
 
 app.get("/api/clientes", verificarToken, async (req, res) => {
-  try {
-    const clientes = await Cliente.find({ usuario: req.usuario.id });
-    res.json(clientes);
-  } catch {
-    res.status(500).json({ erro: "Erro ao buscar clientes" });
-  }
+  const clientes = await Cliente.find({ usuario: req.usuario.id });
+  res.json(clientes);
 });
 
 app.post("/api/clientes", verificarToken, async (req, res) => {
-  try {
-    const cliente = new Cliente({
-      ...req.body,
-      usuario: req.usuario.id
-    });
+  const cliente = new Cliente({
+    ...req.body,
+    usuario: req.usuario.id
+  });
 
-    await cliente.save();
-    res.json(cliente);
-  } catch {
-    res.status(400).json({ erro: "Erro ao criar cliente" });
-  }
+  await cliente.save();
+  res.json(cliente);
 });
 
 app.put("/api/clientes/:id", verificarToken, async (req, res) => {
-  try {
-    const cliente = await Cliente.findOneAndUpdate(
-      { _id: req.params.id, usuario: req.usuario.id },
-      req.body,
-      { new: true }
-    );
+  const cliente = await Cliente.findOneAndUpdate(
+    { _id: req.params.id, usuario: req.usuario.id },
+    req.body,
+    { new: true }
+  );
 
-    res.json(cliente);
-  } catch {
-    res.status(400).json({ erro: "Erro ao atualizar cliente" });
-  }
+  res.json(cliente);
 });
 
 app.delete("/api/clientes/:id", verificarToken, async (req, res) => {
-  try {
-    await Cliente.findOneAndDelete({
-      _id: req.params.id,
-      usuario: req.usuario.id
-    });
+  await Cliente.findOneAndDelete({
+    _id: req.params.id,
+    usuario: req.usuario.id
+  });
 
-    res.json({ msg: "Cliente removido" });
-  } catch {
-    res.status(400).json({ erro: "Erro ao excluir cliente" });
-  }
-});
-
-/* ===============================
-   TAREFAS SPED
-================================ */
-
-app.get("/api/sped/:mes", verificarToken, async (req, res) => {
-  try {
-    const tarefas = await TarefaSped.find({
-      mes: req.params.mes,
-      usuario: req.usuario.id
-    }).populate("cliente");
-
-    res.json(tarefas);
-  } catch {
-    res.status(500).json({ erro: "Erro ao buscar tarefas" });
-  }
-});
-
-app.post("/api/sped", verificarToken, async (req, res) => {
-  try {
-    const tarefa = new TarefaSped({
-      ...req.body,
-      usuario: req.usuario.id
-    });
-
-    await tarefa.save();
-    res.json(tarefa);
-  } catch {
-    res.status(400).json({ erro: "Erro ao salvar tarefa" });
-  }
+  res.json({ msg: "Cliente removido" });
 });
 
 /* ===============================
