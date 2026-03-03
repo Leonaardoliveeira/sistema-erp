@@ -23,7 +23,7 @@ async function salvarCliente() {
 
     try {
 
-        const response = await apiFetch("/api/clientes", {
+        const response = await fetch("/api/clientes", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -64,7 +64,7 @@ async function listarClientes() {
 
     try {
 
-        const response = await apiFetch("/api/clientes", {
+        const response = await fetch("/api/clientes", {
             headers: {
                 "Authorization": "Bearer " + getToken()
             }
@@ -141,7 +141,7 @@ async function salvarEdicao() {
 
     try {
 
-        await apiFetch(`/api/clientes/${id}`, {
+        await fetch(`/api/clientes/${id}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
@@ -164,7 +164,7 @@ async function salvarEdicao() {
 // =======================================
 async function alterarStatusCliente(id, novoStatus) {
 
-    await apiFetch(`/api/clientes/${id}`, {
+    await fetch(`/api/clientes/${id}`, {
         method: "PUT",
         headers: {
             "Content-Type": "application/json",
@@ -183,7 +183,7 @@ async function excluirCliente(id) {
 
     if (!confirm("Deseja excluir este cliente?")) return;
 
-    await apiFetch(`/api/clientes/${id}`, {
+    await fetch(`/api/clientes/${id}`, {
         method: "DELETE",
         headers: {
             "Authorization": "Bearer " + getToken()
