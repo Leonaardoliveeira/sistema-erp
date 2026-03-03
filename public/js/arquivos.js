@@ -9,7 +9,7 @@ async function listarClientes() {
     tabela.innerHTML = "";
 
     try {
-        const response = await fetch("/api/clientes", {
+        const response = await apiFetch("/api/clientes", {
             headers: {
                 "Authorization": "Bearer " + localStorage.getItem("token")
             }
@@ -47,7 +47,7 @@ async function listarClientes() {
 async function alterarStatus(id, novoStatus) {
 
     try {
-        await fetch(`/api/clientes/${id}`, {
+        await apiFetch(`/api/clientes/${id}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",

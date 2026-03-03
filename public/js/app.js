@@ -10,7 +10,7 @@ function getToken() {
 // =======================================
 async function buscarClientes() {
     try {
-        const response = await fetch("/api/clientes", {
+        const response = await apiFetch("/api/clientes", {
             headers: {
                 "Authorization": "Bearer " + getToken()
             }
