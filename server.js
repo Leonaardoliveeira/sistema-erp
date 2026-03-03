@@ -39,7 +39,7 @@ const SpedSchema = new mongoose.Schema({
   clienteId: { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
   mes: { type: String, required: true },
   status: { type: String, enum: ["nao", "gerado", "ok"], default: "nao" },
-  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario" } // Opcional: para filtros rápidos no SPED
+  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario" } 
 });
 
 const Usuario = mongoose.model("Usuario", UsuarioSchema);
@@ -53,7 +53,7 @@ function verificarToken(req, res, next) {
   const token = authHeader.split(" ")[1];
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) return res.status(401).json({ message: "Token inválido" });
-    req.usuario = decoded; // Aqui pegamos o ID do usuário logado
+    req.usuario = decoded; 
     next();
   });
 }
@@ -63,7 +63,7 @@ function verificarAdmin(req, res, next) {
   next();
 }
 
-// ROTAS DE LOGIN E USUÁRIOS (MANTIDAS)
+// ROTAS DE LOGIN
 app.post("/api/login", async (req, res) => {
   const { usuario, senha } = req.body;
   const user = await Usuario.findOne({ usuario });
@@ -74,16 +74,78 @@ app.post("/api/login", async (req, res) => {
   res.json({ token, usuario: { nome: user.nome, usuario: user.usuario, perfil: user.perfil } });
 });
 
-// ROTAS DE CLIENTES (AGORA POR USUÁRIO)
+// =======================================
+// 👥 ROTAS DE USUÁRIOS (ADMIN APENAS)
+// =======================================
+
+// Listar Usuários
+app.get("/api/usuarios", verificarToken, verificarAdmin, async (req, res) => {
+    const usuarios = await Usuario.find().select("-senha");
+    res.json(usuarios);
+});
+
+// Incluir Usuário
+app.post("/api/usuarios", verificarToken, verificarAdmin, async (req, res) => {
+  try {
+    const { nome, usuario, senha, perfil } = req.body;
+    const salt = await bcrypt.genSalt(10);
+    const senhaCripto = await bcrypt.hash(senha, salt);
+    
+    const novoUsuario = await Usuario.create({
+      nome,
+      usuario,
+      senha: senhaCripto,
+      perfil
+    });
+    res.status(201).json({ message: "Usuário criado com sucesso!" });
+  } catch (error) {
+    res.status(400).json({ message: "Erro ao criar usuário. O login pode já existir." });
+  }
+});
+
+// Alterar Usuário
+app.put("/api/usuarios/:id", verificarToken, verificarAdmin, async (req, res) => {
+  try {
+    const { nome, usuario, perfil, senha } = req.body;
+    let dadosParaAtualizar = { nome, usuario, perfil };
+
+    // Se o admin enviou uma nova senha, criptografamos ela
+    if (senha && senha.trim() !== "") {
+      const salt = await bcrypt.genSalt(10);
+      dadosParaAtualizar.senha = await bcrypt.hash(senha, salt);
+    }
+
+    await Usuario.findByIdAndUpdate(req.params.id, dadosParaAtualizar);
+    res.json({ message: "Usuário atualizado com sucesso!" });
+  } catch (error) {
+    res.status(400).json({ message: "Erro ao atualizar usuário." });
+  }
+});
+
+// Excluir Usuário
+app.delete("/api/usuarios/:id", verificarToken, verificarAdmin, async (req, res) => {
+  try {
+    const userParaDeletar = await Usuario.findById(req.params.id);
+    if (userParaDeletar.usuario === 'admin') {
+      return res.status(400).json({ message: "O administrador mestre não pode ser removido." });
+    }
+    await Usuario.findByIdAndDelete(req.params.id);
+    res.json({ message: "Usuário removido com sucesso!" });
+  } catch (error) {
+    res.status(400).json({ message: "Erro ao excluir usuário." });
+  }
+});
+
+// =======================================
+// 📁 ROTAS DE CLIENTES (FILTRO POR USUÁRIO)
+// =======================================
 app.get("/api/clientes", verificarToken, async (req, res) => {
-  // Se for admin, vê tudo. Se for user, vê só os dele.
   const filtro = req.usuario.perfil === "admin" ? {} : { usuarioId: req.usuario.id };
   const clientes = await Cliente.find(filtro).sort({ nome: 1 });
   res.json(clientes);
 });
 
 app.post("/api/clientes", verificarToken, async (req, res) => {
-  // Injeta automaticamente o ID do usuário logado no novo cliente
   const dadosCliente = { ...req.body, usuarioId: req.usuario.id };
   const novoCliente = await Cliente.create(dadosCliente);
   res.status(201).json(novoCliente);
@@ -103,7 +165,9 @@ app.delete("/api/clientes/:id", verificarToken, async (req, res) => {
   res.json({ message: "Cliente removido" });
 });
 
-// SPED (Filtrado por clientes do usuário)
+// =======================================
+// 📑 SPED (FILTRO POR USUÁRIO)
+// =======================================
 app.get("/api/sped/:mes", verificarToken, async (req, res) => {
   const clientesMeus = await Cliente.find(req.usuario.perfil === "admin" ? {} : { usuarioId: req.usuario.id });
   const idsMeus = clientesMeus.map(c => c._id);
@@ -113,7 +177,6 @@ app.get("/api/sped/:mes", verificarToken, async (req, res) => {
 
 app.post("/api/sped", verificarToken, async (req, res) => {
   const { clienteId, mes, status } = req.body;
-  // Verifica se o cliente pertence ao usuário antes de salvar o SPED
   const cliente = await Cliente.findOne({ _id: clienteId, usuarioId: req.usuario.id });
   if (!cliente && req.usuario.perfil !== "admin") return res.status(403).json({ message: "Não autorizado" });
 
@@ -125,12 +188,6 @@ app.post("/api/sped", verificarToken, async (req, res) => {
     registro = await Sped.create({ clienteId, mes, status });
   }
   res.json(registro);
-});
-
-// Restante das rotas de usuários (Admin apenas)...
-app.get("/api/usuarios", verificarToken, verificarAdmin, async (req, res) => {
-    const usuarios = await Usuario.find().select("-senha");
-    res.json(usuarios);
 });
 
 const PORT = process.env.PORT || 3000;
