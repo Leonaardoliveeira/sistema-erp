@@ -1,68 +1,74 @@
-/* ==========================================
-   LOGIN
-========================================== */
+// =======================================
+// 🔐 LOGIN USANDO API
+// =======================================
+
 async function login() {
-  const usuario = document.getElementById("usuario").value;
-  const senha = document.getElementById("senha").value;
 
-  if (!usuario || !senha) {
-    alert("Preencha usuário e senha.");
-    return;
-  }
+    const usuarioInput = document.getElementById("usuario").value;
+    const senhaInput = document.getElementById("senha").value;
 
-  try {
-    const resposta = await fetch("/api/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ usuario, senha })
-    });
+    try {
 
-    const dados = await resposta.json();
+        const response = await fetch("/api/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                usuario: usuarioInput,
+                senha: senhaInput
+            })
+        });
 
-    if (!resposta.ok) {
-      alert(dados.erro || "Erro no login");
-      return;
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.message || "Erro ao fazer login");
+            return;
+        }
+
+        // Salva token e dados do usuário
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("usuario", JSON.stringify(data.usuario));
+
+        window.location.href = "dashboard.html";
+
+    } catch (error) {
+        console.error("Erro no login:", error);
+        alert("Erro ao conectar ao servidor");
+    }
+}
+
+
+// =======================================
+// 🔎 VERIFICAR SE ESTÁ LOGADO
+// =======================================
+
+function verificarLogin() {
+
+    const token = localStorage.getItem("token");
+    const usuario = JSON.parse(localStorage.getItem("usuario"));
+
+    if (!token || !usuario) {
+        window.location.href = "index.html";
+        return;
     }
 
-    // 🔐 Salva token e usuário
-    localStorage.setItem("token", dados.token);
-    localStorage.setItem("usuarioLogado", JSON.stringify(dados.usuario));
+    // Esconde menu de usuários se não for admin
+    const menuAdmin = document.getElementById("menuUsuarios");
 
-    window.location.href = "dashboard.html";
-
-  } catch (erro) {
-    alert("Erro ao conectar com o servidor.");
-  }
+    if (menuAdmin) {
+        menuAdmin.style.display = (usuario.perfil === "admin") ? "block" : "none";
+    }
 }
 
-/* ==========================================
-   VERIFICAR LOGIN (PROTEÇÃO DE PÁGINAS)
-========================================== */
-function verificarLogin() {
-  const token = localStorage.getItem("token");
 
-  if (!token) {
-    window.location.href = "index.html";
-    return;
-  }
+// =======================================
+// 🚪 LOGOUT
+// =======================================
 
-  const usuario = JSON.parse(localStorage.getItem("usuarioLogado"));
-
-  // 🔒 Esconde menu de usuários se não for admin
-  const menuAdmin = document.getElementById("menuUsuarios");
-  if (menuAdmin && usuario) {
-    menuAdmin.style.display =
-      usuario.perfil === "admin" ? "block" : "none";
-  }
-}
-
-/* ==========================================
-   LOGOUT
-========================================== */
 function logout() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("usuarioLogado");
-  window.location.href = "index.html";
+    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
+    window.location.href = "index.html";
 }
