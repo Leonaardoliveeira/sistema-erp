@@ -20,13 +20,6 @@ app.get("/", (req, res) => {
 });
 
 /* ===============================
-   CONEXÃO MONGODB
-================================ */
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB conectado"))
-  .catch(err => console.log("❌ Erro MongoDB:", err));
-
-/* ===============================
    SCHEMAS
 ================================ */
 
@@ -51,51 +44,8 @@ const ClienteSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-const TarefaSpedSchema = new mongoose.Schema({
-  mes: String,
-  status: String,
-  cliente: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Cliente"
-  },
-  usuario: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Usuario",
-    required: true
-  }
-});
-
 const Usuario = mongoose.model("Usuario", UsuarioSchema);
 const Cliente = mongoose.model("Cliente", ClienteSchema);
-const TarefaSped = mongoose.model("TarefaSped", TarefaSpedSchema);
-
-/* ===============================
-   CRIAR ADMIN GARANTIDO
-================================ */
-
-async function garantirAdmin() {
-  try {
-    const admin = await Usuario.findOne({ usuario: "admin" });
-
-    if (!admin) {
-      await Usuario.create({
-        nome: "Administrador",
-        usuario: "admin",
-        senha: "123",
-        perfil: "admin"
-      });
-      console.log("👑 Admin criado com sucesso (admin/123)");
-    } else {
-      console.log("👑 Admin já existe");
-    }
-  } catch (err) {
-    console.log("Erro ao verificar/criar admin:", err);
-  }
-}
-
-mongoose.connection.once("open", async () => {
-  await garantirAdmin();
-});
 
 /* ===============================
    MIDDLEWARE TOKEN
@@ -125,7 +75,7 @@ function verificarAdmin(req, res, next) {
 }
 
 /* ===============================
-   LOGIN CORRIGIDO
+   LOGIN
 ================================ */
 
 app.post("/api/login", async (req, res) => {
@@ -137,9 +87,11 @@ app.post("/api/login", async (req, res) => {
 
     const user = await Usuario.findOne({ usuario });
 
-    if (!user || user.senha !== senha) {
-      return res.status(400).json({ erro: "Usuário ou senha inválidos" });
-    }
+    if (!user)
+      return res.status(400).json({ erro: "Usuário não encontrado" });
+
+    if (user.senha !== senha)
+      return res.status(400).json({ erro: "Senha incorreta" });
 
     const token = jwt.sign(
       { id: user._id, perfil: user.perfil },
@@ -150,6 +102,7 @@ app.post("/api/login", async (req, res) => {
     res.json({ token, usuario: user });
 
   } catch (err) {
+    console.log("Erro login:", err);
     res.status(500).json({ erro: "Erro no login" });
   }
 });
@@ -168,31 +121,13 @@ app.post("/api/usuarios", verificarToken, verificarAdmin, async (req, res) => {
     const usuario = new Usuario(req.body);
     await usuario.save();
     res.json(usuario);
-  } catch {
+  } catch (err) {
     res.status(400).json({ erro: "Erro ao criar usuário" });
   }
 });
 
-app.put("/api/usuarios/:id", verificarToken, verificarAdmin, async (req, res) => {
-  try {
-    const usuario = await Usuario.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    res.json(usuario);
-  } catch {
-    res.status(400).json({ erro: "Erro ao atualizar usuário" });
-  }
-});
-
-app.delete("/api/usuarios/:id", verificarToken, verificarAdmin, async (req, res) => {
-  await Usuario.findByIdAndDelete(req.params.id);
-  res.json({ msg: "Usuário removido" });
-});
-
 /* ===============================
-   CLIENTES (MULTIUSUÁRIO)
+   CLIENTES
 ================================ */
 
 app.get("/api/clientes", verificarToken, async (req, res) => {
@@ -210,31 +145,39 @@ app.post("/api/clientes", verificarToken, async (req, res) => {
   res.json(cliente);
 });
 
-app.put("/api/clientes/:id", verificarToken, async (req, res) => {
-  const cliente = await Cliente.findOneAndUpdate(
-    { _id: req.params.id, usuario: req.usuario.id },
-    req.body,
-    { new: true }
-  );
-
-  res.json(cliente);
-});
-
-app.delete("/api/clientes/:id", verificarToken, async (req, res) => {
-  await Cliente.findOneAndDelete({
-    _id: req.params.id,
-    usuario: req.usuario.id
-  });
-
-  res.json({ msg: "Cliente removido" });
-});
-
 /* ===============================
-   START
+   CONEXÃO E START GARANTIDO
 ================================ */
 
-const PORT = process.env.PORT || 10000;
+async function startServer() {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("✅ MongoDB conectado");
 
-app.listen(PORT, () => {
-  console.log("🚀 Servidor rodando na porta", PORT);
-});
+    // 🔥 GARANTE ADMIN SEMPRE
+    let admin = await Usuario.findOne({ usuario: "admin" });
+
+    if (!admin) {
+      await Usuario.create({
+        nome: "Administrador",
+        usuario: "admin",
+        senha: "123",
+        perfil: "admin"
+      });
+      console.log("👑 Admin criado: admin / 123");
+    } else {
+      console.log("👑 Admin já existe");
+    }
+
+    const PORT = process.env.PORT || 10000;
+
+    app.listen(PORT, () => {
+      console.log("🚀 Servidor rodando na porta", PORT);
+    });
+
+  } catch (err) {
+    console.log("❌ Erro ao iniciar servidor:", err);
+  }
+}
+
+startServer();
