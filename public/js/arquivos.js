@@ -1,36 +1,64 @@
-const API_URL = "https://sistema-erp-32e0.onrender.com";
+// =======================================
+// LISTAR CLIENTES (VINDO DO BACKEND)
+// =======================================
+async function listarClientes() {
 
-async function listarClientesArquivos() {
     const tabela = document.getElementById("tabelaClientes");
-    const usuarioAtivo = JSON.parse(localStorage.getItem("usuarioAtivo"));
+    if (!tabela) return;
+
+    tabela.innerHTML = "";
 
     try {
-        const res = await fetch(`${API_URL}/clientes?usuarioDono=${usuarioAtivo.usuario}`);
-        const clientes = await res.json();
-        tabela.innerHTML = "";
+        const response = await fetch("/api/clientes", {
+            headers: {
+                "Authorization": "Bearer " + localStorage.getItem("token")
+            }
+        });
 
-        clientes.forEach(c => {
+        const clientes = await response.json();
+
+        clientes.forEach((cliente) => {
+
             tabela.innerHTML += `
                 <tr>
-                    <td>${c.nome}</td>
-                    <td><span class="status ${c.status.toLowerCase()}">${c.status}</span></td>
+                    <td>${cliente.nome}</td>
+                    <td><span class="status ${cliente.status?.toLowerCase() || "pendente"}">
+                        ${cliente.status || "Pendente"}
+                    </span></td>
                     <td>
-                        <select onchange="atualizarStatusBanco('${c._id}', this.value)">
-                            <option value="Pendente" ${c.status==='Pendente'?'selected':''}>Pendente</option>
-                            <option value="Gerado" ${c.status==='Gerado'?'selected':''}>Gerado</option>
-                            <option value="Erro" ${c.status==='Erro'?'selected':''}>Erro</option>
+                        <select onchange="alterarStatus('${cliente._id}', this.value)">
+                            <option ${cliente.status === "Pendente" ? "selected" : ""}>Pendente</option>
+                            <option ${cliente.status === "Gerado" ? "selected" : ""}>Gerado</option>
+                            <option ${cliente.status === "Erro" ? "selected" : ""}>Erro</option>
                         </select>
                     </td>
-                </tr>`;
+                </tr>
+            `;
         });
-    } catch (e) { console.error(e); }
+
+    } catch (error) {
+        console.error("Erro ao listar clientes:", error);
+    }
 }
 
-async function atualizarStatusBanco(id, novoStatus) {
-    await fetch(`${API_URL}/clientes/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: novoStatus })
-    });
-    listarClientesArquivos();
+// =======================================
+// ALTERAR STATUS NO BANCO
+// =======================================
+async function alterarStatus(id, novoStatus) {
+
+    try {
+        await fetch(`/api/clientes/${id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem("token")
+            },
+            body: JSON.stringify({ status: novoStatus })
+        });
+
+        listarClientes(); // Atualiza tabela
+
+    } catch (error) {
+        console.error("Erro ao atualizar status:", error);
+    }
 }

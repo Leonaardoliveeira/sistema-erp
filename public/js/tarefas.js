@@ -5,49 +5,70 @@ document.addEventListener("DOMContentLoaded", function () {
 
 });
 
-function renderSped() {
+function getToken() {
+    return localStorage.getItem("token");
+}
+
+async function renderSped() {
 
     const mes = document.getElementById("mesSelecionado").value;
     const tabela = document.getElementById("tabelaSped");
-    let tarefasSped = JSON.parse(localStorage.getItem("tarefasSped")) || {};
 
     if (!mes) {
         tabela.innerHTML = "<tr><td colspan='3'>Selecione um mês</td></tr>";
         return;
     }
 
-    const clientes = JSON.parse(localStorage.getItem("clientes")) || [];
-    const clientesSped = clientes.filter(c => c.geraSped === true);
+    try {
 
-    tabela.innerHTML = "";
+        // Buscar clientes
+        const clientesResp = await fetch("/api/clientes", {
+            headers: { "Authorization": "Bearer " + getToken() }
+        });
 
-    clientesSped.forEach(c => {
+        const clientes = await clientesResp.json();
 
-        const chave = mes + "_" + c.codigo;
+        // Buscar status SPED do mês
+        const spedResp = await fetch(`/api/sped/${mes}`, {
+            headers: { "Authorization": "Bearer " + getToken() }
+        });
 
-        if (!tarefasSped[chave]) {
-            tarefasSped[chave] = "nao";
-        }
+        const speds = await spedResp.json();
 
-        tabela.innerHTML += `
-        <tr>
-            <td>${c.razao}</td>
-            <td>${c.cnpj}</td>
-            <td>
-                <select onchange="alterarStatus('${chave}', this.value)">
-                    <option value="nao" ${tarefasSped[chave]=="nao"?"selected":""}>Não Gerado</option>
-                    <option value="gerado" ${tarefasSped[chave]=="gerado"?"selected":""}>Gerado</option>
-                    <option value="ok" ${tarefasSped[chave]=="ok"?"selected":""}>OK</option>
-                </select>
-            </td>
-        </tr>`;
-    });
+        tabela.innerHTML = "";
 
-    localStorage.setItem("tarefasSped", JSON.stringify(tarefasSped));
+        clientes.forEach(cliente => {
+
+            const registro = speds.find(s => s.clienteId._id === cliente._id);
+            const statusAtual = registro ? registro.status : "nao";
+
+            tabela.innerHTML += `
+            <tr>
+                <td>${cliente.nome}</td>
+                <td>${cliente.documento || "-"}</td>
+                <td>
+                    <select onchange="alterarStatusSped('${cliente._id}', '${mes}', this.value)">
+                        <option value="nao" ${statusAtual=="nao"?"selected":""}>Não Gerado</option>
+                        <option value="gerado" ${statusAtual=="gerado"?"selected":""}>Gerado</option>
+                        <option value="ok" ${statusAtual=="ok"?"selected":""}>OK</option>
+                    </select>
+                </td>
+            </tr>`;
+        });
+
+    } catch (error) {
+        console.error("Erro SPED:", error);
+    }
 }
 
-function alterarStatus(chave, status) {
-    let tarefasSped = JSON.parse(localStorage.getItem("tarefasSped")) || {};
-    tarefasSped[chave] = status;
-    localStorage.setItem("tarefasSped", JSON.stringify(tarefasSped));
+async function alterarStatusSped(clienteId, mes, status) {
+
+    await fetch("/api/sped", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + getToken()
+        },
+        body: JSON.stringify({ clienteId, mes, status })
+    });
 }

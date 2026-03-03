@@ -1,13 +1,14 @@
 // =======================================
-// SALVAR NOVO CLIENTE (Página cadastro.html)
+// 🔐 PEGAR TOKEN
 // =======================================
-function salvarCliente() {
-    const usuarioAtivo = JSON.parse(localStorage.getItem("usuarioAtivo"));
-    
-    if (!usuarioAtivo) {
-        alert("Sessão inválida. Faça login novamente.");
-        return;
-    }
+function getToken() {
+    return localStorage.getItem("token");
+}
+
+// =======================================
+// 📡 SALVAR NOVO CLIENTE
+// =======================================
+async function salvarCliente() {
 
     const nome = document.getElementById("nome").value;
     const documento = document.getElementById("documento").value;
@@ -20,122 +21,174 @@ function salvarCliente() {
         return;
     }
 
-    let todosClientes = JSON.parse(localStorage.getItem("clientes")) || [];
+    try {
 
-    // O SEGREDO: Adicionamos o 'usuarioDono' para amarrar ao ID de quem cadastrou
-    todosClientes.push({
-        codigo: Date.now(), // ID único do cliente
-        nome,
-        documento,
-        email,
-        telefone,
-        regime,
-        status: "Pendente",
-        usuarioDono: usuarioAtivo.usuario // AMARRAÇÃO AQUI
-    });
+        const response = await fetch("/api/clientes", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + getToken()
+            },
+            body: JSON.stringify({
+                nome,
+                documento,
+                email,
+                telefone,
+                regime
+            })
+        });
 
-    localStorage.setItem("clientes", JSON.stringify(todosClientes));
-    alert("Cliente cadastrado com sucesso!");
-    window.location.href = "clientes.html";
+        if (!response.ok) {
+            alert("Erro ao salvar cliente");
+            return;
+        }
+
+        alert("Cliente cadastrado com sucesso!");
+        window.location.href = "clientes.html";
+
+    } catch (error) {
+        console.error("Erro:", error);
+        alert("Erro ao conectar ao servidor");
+    }
 }
 
 // =======================================
-// LISTAR CLIENTES (Página clientes.html)
+// 📋 LISTAR CLIENTES
 // =======================================
-function listarClientes() {
+async function listarClientes() {
+
     const tabela = document.getElementById("tabelaClientes");
     if (!tabela) return;
 
-    const todosClientes = JSON.parse(localStorage.getItem("clientes")) || [];
-    const usuarioAtivo = JSON.parse(localStorage.getItem("usuarioAtivo"));
-
-    // FILTRO: Só exibe o que pertence ao usuário logado
-    const meusClientes = todosClientes.filter(c => c.usuarioDono === usuarioAtivo.usuario);
-
     tabela.innerHTML = "";
 
-    meusClientes.forEach((cliente) => {
-        // Buscamos o index real na lista completa para que as funções de editar/excluir funcionem
-        const indexOriginal = todosClientes.findIndex(c => c.codigo === cliente.codigo);
-        const st = cliente.status ? cliente.status.toLowerCase() : "pendente";
+    try {
 
-        tabela.innerHTML += `
-            <tr>
-                <td>${cliente.nome}</td>
-                <td>${cliente.documento || "-"}</td>
-                <td>${cliente.regime || "-"}</td>
-                <td>
-                    <div class="status-botoes">
-                        <button class="btn-status pendente ${st === 'pendente' ? 'ativo' : ''}" 
-                            onclick="alterarStatusCliente(${indexOriginal}, 'Pendente')">Pendente</button>
-                        <button class="btn-status gerado ${st === 'gerado' ? 'ativo' : ''}" 
-                            onclick="alterarStatusCliente(${indexOriginal}, 'Gerado')">Gerado</button>
-                        <button class="btn-status erro ${st === 'erro' ? 'ativo' : ''}" 
-                            onclick="alterarStatusCliente(${indexOriginal}, 'Erro')">Erro</button>
-                    </div>
-                </td>
-                <td>
-                    <button class="btn-primary" style="background-color: #f59e0b; margin-right: 5px;" 
-                        onclick="abrirModalEdicao(${indexOriginal})">Editar</button>
-                    <button class="btn-danger" 
-                        onclick="excluirCliente(${indexOriginal})">Excluir</button>
-                </td>
-            </tr>`;
-    });
+        const response = await fetch("/api/clientes", {
+            headers: {
+                "Authorization": "Bearer " + getToken()
+            }
+        });
+
+        const clientes = await response.json();
+
+        clientes.forEach((cliente) => {
+
+            const st = cliente.status?.toLowerCase() || "pendente";
+
+            tabela.innerHTML += `
+                <tr>
+                    <td>${cliente.nome}</td>
+                    <td>${cliente.documento || "-"}</td>
+                    <td>${cliente.regime || "-"}</td>
+                    <td>
+                        <div class="status-botoes">
+                            <button class="btn-status pendente ${st === 'pendente' ? 'ativo' : ''}" 
+                                onclick="alterarStatusCliente('${cliente._id}', 'Pendente')">Pendente</button>
+
+                            <button class="btn-status gerado ${st === 'gerado' ? 'ativo' : ''}" 
+                                onclick="alterarStatusCliente('${cliente._id}', 'Gerado')">Gerado</button>
+
+                            <button class="btn-status erro ${st === 'erro' ? 'ativo' : ''}" 
+                                onclick="alterarStatusCliente('${cliente._id}', 'Erro')">Erro</button>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn-primary" style="background-color: #f59e0b; margin-right: 5px;" 
+                            onclick="abrirModalEdicao('${cliente._id}', '${cliente.nome}', '${cliente.documento || ""}', '${cliente.email || ""}', '${cliente.telefone || ""}', '${cliente.regime || ""}')">Editar</button>
+
+                        <button class="btn-danger" 
+                            onclick="excluirCliente('${cliente._id}')">Excluir</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+    } catch (error) {
+        console.error("Erro ao listar clientes:", error);
+    }
 }
 
-// As funções abrirModalEdicao, salvarEdicao, alterarStatusCliente e excluirCliente 
-// permanecem iguais às originais, pois agora recebem o indexOriginal da lista total.
-
 // =======================================
-// LÓGICA DO MODAL DE EDIÇÃO (Página clientes.html)
+// ✏️ ABRIR MODAL EDIÇÃO
 // =======================================
-function abrirModalEdicao(index) {
-    const clientes = JSON.parse(localStorage.getItem("clientes")) || [];
-    const cliente = clientes[index];
+function abrirModalEdicao(id, nome, documento, email, telefone, regime) {
 
-    document.getElementById("editIndex").value = index;
-    document.getElementById("editNome").value = cliente.nome;
-    document.getElementById("editDocumento").value = cliente.documento || "";
-    document.getElementById("editEmail").value = cliente.email || "";
-    document.getElementById("editTelefone").value = cliente.telefone || "";
-    document.getElementById("editRegime").value = cliente.regime || "";
+    document.getElementById("editId").value = id;
+    document.getElementById("editNome").value = nome;
+    document.getElementById("editDocumento").value = documento;
+    document.getElementById("editEmail").value = email;
+    document.getElementById("editTelefone").value = telefone;
+    document.getElementById("editRegime").value = regime;
 
     document.getElementById("modalEdicao").style.display = "flex";
 }
 
-function salvarEdicao() {
-    const index = document.getElementById("editIndex").value;
-    let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
-
-    clientes[index].nome = document.getElementById("editNome").value;
-    clientes[index].documento = document.getElementById("editDocumento").value;
-    clientes[index].email = document.getElementById("editEmail").value;
-    clientes[index].telefone = document.getElementById("editTelefone").value;
-    clientes[index].regime = document.getElementById("editRegime").value;
-
-    localStorage.setItem("clientes", JSON.stringify(clientes));
-    
-    alert("Cliente atualizado!");
-    fecharModal();
-    listarClientes();
-}
-
 // =======================================
-// STATUS E EXCLUSÃO
+// 💾 SALVAR EDIÇÃO
 // =======================================
-function alterarStatusCliente(index, novoStatus) {
-    let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
-    clientes[index].status = novoStatus;
-    localStorage.setItem("clientes", JSON.stringify(clientes));
-    listarClientes();
-}
+async function salvarEdicao() {
 
-function excluirCliente(index) {
-    if (confirm("Deseja excluir este cliente?")) {
-        let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
-        clientes.splice(index, 1);
-        localStorage.setItem("clientes", JSON.stringify(clientes));
+    const id = document.getElementById("editId").value;
+
+    const dadosAtualizados = {
+        nome: document.getElementById("editNome").value,
+        documento: document.getElementById("editDocumento").value,
+        email: document.getElementById("editEmail").value,
+        telefone: document.getElementById("editTelefone").value,
+        regime: document.getElementById("editRegime").value
+    };
+
+    try {
+
+        await fetch(`/api/clientes/${id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + getToken()
+            },
+            body: JSON.stringify(dadosAtualizados)
+        });
+
+        alert("Cliente atualizado!");
+        fecharModal();
         listarClientes();
+
+    } catch (error) {
+        console.error("Erro ao atualizar:", error);
     }
+}
+
+// =======================================
+// 🔄 ALTERAR STATUS
+// =======================================
+async function alterarStatusCliente(id, novoStatus) {
+
+    await fetch(`/api/clientes/${id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + getToken()
+        },
+        body: JSON.stringify({ status: novoStatus })
+    });
+
+    listarClientes();
+}
+
+// =======================================
+// 🗑 EXCLUIR
+// =======================================
+async function excluirCliente(id) {
+
+    if (!confirm("Deseja excluir este cliente?")) return;
+
+    await fetch(`/api/clientes/${id}`, {
+        method: "DELETE",
+        headers: {
+            "Authorization": "Bearer " + getToken()
+        }
+    });
+
+    listarClientes();
 }
