@@ -1,6 +1,7 @@
 // =======================================
-// 🔐 LOGIN USANDO API
+// 🔐 LOGIN E GESTÃO DE ACESSO
 // =======================================
+
 async function login() {
     const usuarioInput = document.getElementById("usuario").value;
     const senhaInput = document.getElementById("senha").value;
@@ -19,7 +20,7 @@ async function login() {
             return;
         }
 
-        // Salva token e dados do usuário
+        // Importante: O objeto data.usuario deve conter o _id do banco de dados
         localStorage.setItem("token", data.token);
         localStorage.setItem("usuario", JSON.stringify(data.usuario));
 
@@ -30,7 +31,7 @@ async function login() {
     }
 }
 
-// Retorna o ID do utilizador logado
+// Função utilitária global para obter o ID do utilizador logado
 function getUsuarioId() {
     const usuario = JSON.parse(localStorage.getItem("usuario"));
     return usuario ? usuario._id : null;
@@ -52,7 +53,6 @@ function verificarLogin() {
 }
 
 function logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("usuario");
+    localStorage.clear();
     window.location.href = "index.html";
 }

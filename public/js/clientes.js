@@ -1,8 +1,4 @@
 function getToken() { return localStorage.getItem("token"); }
-function getUsuarioId() {
-    const usuario = JSON.parse(localStorage.getItem("usuario"));
-    return usuario ? usuario._id : null;
-}
 
 async function salvarCliente() {
     const nome = document.getElementById("nome").value;
@@ -10,12 +6,12 @@ async function salvarCliente() {
     const email = document.getElementById("email").value;
     const telefone = document.getElementById("telefone").value;
     const regime = document.getElementById("regime").value;
-    const usuarioId = getUsuarioId();
+    const usuarioId = getUsuarioId(); // Pega o ID do utilizador logado
 
     if (!nome) { alert("O nome é obrigatório!"); return; }
 
     try {
-        await fetch("/api/clientes", {
+        const response = await fetch("/api/clientes", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -24,11 +20,11 @@ async function salvarCliente() {
             body: JSON.stringify({ nome, documento, email, telefone, regime, usuarioId })
         });
 
-        alert("Cliente cadastrado com sucesso!");
-        window.location.href = "clientes.html";
-    } catch (error) {
-        console.error("Erro:", error);
-    }
+        if (response.ok) {
+            alert("Cliente cadastrado com sucesso!");
+            window.location.href = "clientes.html";
+        }
+    } catch (error) { console.error("Erro:", error); }
 }
 
 async function listarClientes() {
@@ -37,6 +33,7 @@ async function listarClientes() {
     tabela.innerHTML = "";
 
     try {
+        // Filtra os clientes enviando o usuarioId como parâmetro
         const response = await fetch(`/api/clientes?usuarioId=${getUsuarioId()}`, {
             headers: { "Authorization": "Bearer " + getToken() }
         });
@@ -64,13 +61,4 @@ async function listarClientes() {
                 </tr>`;
         });
     } catch (error) { console.error("Erro:", error); }
-}
-
-async function excluirCliente(id) {
-    if (!confirm("Deseja excluir este cliente?")) return;
-    await fetch(`/api/clientes/${id}`, {
-        method: "DELETE",
-        headers: { "Authorization": "Bearer " + getToken() }
-    });
-    listarClientes();
 }
