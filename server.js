@@ -3,10 +3,21 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+const path = require("path");
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
+
+/* ===============================
+   SERVIR FRONTEND (PASTA PUBLIC)
+================================ */
+app.use(express.static(path.join(__dirname, "public")));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 /* ===============================
    CONEXÃO MONGODB
@@ -33,8 +44,6 @@ const ClienteSchema = new mongoose.Schema({
   telefone: String,
   regime: String,
   status: { type: String, default: "Pendente" },
-
-  // 🔐 VÍNCULO REAL COM O USUÁRIO
   usuario: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Usuario",
@@ -65,14 +74,17 @@ const TarefaSped = mongoose.model("TarefaSped", TarefaSpedSchema);
 ================================ */
 
 function verificarToken(req, res, next) {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ erro: "Token não fornecido" });
+  const authHeader = req.headers.authorization;
+  if (!authHeader)
+    return res.status(401).json({ erro: "Token não fornecido" });
+
+  const token = authHeader.split(" ")[1];
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.usuario = decoded;
     next();
-  } catch (err) {
+  } catch {
     return res.status(401).json({ erro: "Token inválido" });
   }
 }
@@ -85,18 +97,18 @@ function verificarAdmin(req, res, next) {
 }
 
 /* ===============================
-   CRIAR ADMIN INICIAL AUTOMÁTICO
+   CRIAR ADMIN AUTOMÁTICO
 ================================ */
 async function criarAdminInicial() {
-  const adminExiste = await Usuario.findOne({ usuario: "admin" });
-  if (!adminExiste) {
+  const admin = await Usuario.findOne({ usuario: "admin" });
+  if (!admin) {
     await Usuario.create({
       nome: "Administrador",
       usuario: "admin",
       senha: "123",
       perfil: "admin"
     });
-    console.log("👑 Admin inicial criado");
+    console.log("👑 Admin criado automaticamente");
   }
 }
 criarAdminInicial();
@@ -110,7 +122,8 @@ app.post("/api/login", async (req, res) => {
     const { usuario, senha } = req.body;
 
     const user = await Usuario.findOne({ usuario, senha });
-    if (!user) return res.status(400).json({ erro: "Credenciais inválidas" });
+    if (!user)
+      return res.status(400).json({ erro: "Usuário ou senha inválidos" });
 
     const token = jwt.sign(
       { id: user._id, perfil: user.perfil },
@@ -119,7 +132,7 @@ app.post("/api/login", async (req, res) => {
     );
 
     res.json({ token, usuario: user });
-  } catch (err) {
+  } catch {
     res.status(500).json({ erro: "Erro no login" });
   }
 });
@@ -129,8 +142,12 @@ app.post("/api/login", async (req, res) => {
 ================================ */
 
 app.get("/api/usuarios", verificarToken, verificarAdmin, async (req, res) => {
-  const usuarios = await Usuario.find();
-  res.json(usuarios);
+  try {
+    const usuarios = await Usuario.find();
+    res.json(usuarios);
+  } catch {
+    res.status(500).json({ erro: "Erro ao buscar usuários" });
+  }
 });
 
 app.post("/api/usuarios", verificarToken, verificarAdmin, async (req, res) => {
@@ -138,32 +155,44 @@ app.post("/api/usuarios", verificarToken, verificarAdmin, async (req, res) => {
     const usuario = new Usuario(req.body);
     await usuario.save();
     res.json(usuario);
-  } catch (err) {
+  } catch {
     res.status(400).json({ erro: "Erro ao criar usuário" });
   }
 });
 
 app.put("/api/usuarios/:id", verificarToken, verificarAdmin, async (req, res) => {
   try {
-    const usuario = await Usuario.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const usuario = await Usuario.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
     res.json(usuario);
-  } catch (err) {
+  } catch {
     res.status(400).json({ erro: "Erro ao atualizar usuário" });
   }
 });
 
 app.delete("/api/usuarios/:id", verificarToken, verificarAdmin, async (req, res) => {
-  await Usuario.findByIdAndDelete(req.params.id);
-  res.json({ msg: "Usuário removido" });
+  try {
+    await Usuario.findByIdAndDelete(req.params.id);
+    res.json({ msg: "Usuário removido" });
+  } catch {
+    res.status(400).json({ erro: "Erro ao excluir usuário" });
+  }
 });
 
 /* ===============================
-   CLIENTES (MULTIUSUÁRIO REAL)
+   CLIENTES (ISOLADO POR USUÁRIO)
 ================================ */
 
 app.get("/api/clientes", verificarToken, async (req, res) => {
-  const clientes = await Cliente.find({ usuario: req.usuario.id });
-  res.json(clientes);
+  try {
+    const clientes = await Cliente.find({ usuario: req.usuario.id });
+    res.json(clientes);
+  } catch {
+    res.status(500).json({ erro: "Erro ao buscar clientes" });
+  }
 });
 
 app.post("/api/clientes", verificarToken, async (req, res) => {
@@ -175,7 +204,7 @@ app.post("/api/clientes", verificarToken, async (req, res) => {
 
     await cliente.save();
     res.json(cliente);
-  } catch (err) {
+  } catch {
     res.status(400).json({ erro: "Erro ao criar cliente" });
   }
 });
@@ -187,18 +216,24 @@ app.put("/api/clientes/:id", verificarToken, async (req, res) => {
       req.body,
       { new: true }
     );
+
     res.json(cliente);
-  } catch (err) {
+  } catch {
     res.status(400).json({ erro: "Erro ao atualizar cliente" });
   }
 });
 
 app.delete("/api/clientes/:id", verificarToken, async (req, res) => {
-  await Cliente.findOneAndDelete({
-    _id: req.params.id,
-    usuario: req.usuario.id
-  });
-  res.json({ msg: "Cliente removido" });
+  try {
+    await Cliente.findOneAndDelete({
+      _id: req.params.id,
+      usuario: req.usuario.id
+    });
+
+    res.json({ msg: "Cliente removido" });
+  } catch {
+    res.status(400).json({ erro: "Erro ao excluir cliente" });
+  }
 });
 
 /* ===============================
@@ -206,12 +241,16 @@ app.delete("/api/clientes/:id", verificarToken, async (req, res) => {
 ================================ */
 
 app.get("/api/sped/:mes", verificarToken, async (req, res) => {
-  const tarefas = await TarefaSped.find({
-    mes: req.params.mes,
-    usuario: req.usuario.id
-  }).populate("cliente");
+  try {
+    const tarefas = await TarefaSped.find({
+      mes: req.params.mes,
+      usuario: req.usuario.id
+    }).populate("cliente");
 
-  res.json(tarefas);
+    res.json(tarefas);
+  } catch {
+    res.status(500).json({ erro: "Erro ao buscar tarefas" });
+  }
 });
 
 app.post("/api/sped", verificarToken, async (req, res) => {
@@ -220,9 +259,10 @@ app.post("/api/sped", verificarToken, async (req, res) => {
       ...req.body,
       usuario: req.usuario.id
     });
+
     await tarefa.save();
     res.json(tarefa);
-  } catch (err) {
+  } catch {
     res.status(400).json({ erro: "Erro ao salvar tarefa" });
   }
 });
@@ -232,6 +272,7 @@ app.post("/api/sped", verificarToken, async (req, res) => {
 ================================ */
 
 const PORT = process.env.PORT || 10000;
+
 app.listen(PORT, () => {
   console.log("🚀 Servidor rodando na porta", PORT);
 });
