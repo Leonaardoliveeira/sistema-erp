@@ -29,12 +29,18 @@ async function salvarCliente() {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + getToken()
             },
-            body: JSON.stringify({ nome, documento, email, telefone, regime })
+            body: JSON.stringify({
+                nome,
+                documento,
+                email,
+                telefone,
+                regime
+            })
         });
 
         if (!response.ok) {
-            const msg = await response.json().catch(()=>({message:"Erro ao salvar cliente"}));
-            throw new Error(msg.message);
+            alert("Erro ao salvar cliente");
+            return;
         }
 
         alert("Cliente cadastrado com sucesso!");
@@ -42,7 +48,7 @@ async function salvarCliente() {
 
     } catch (error) {
         console.error("Erro:", error);
-        alert("Erro: " + error.message);
+        alert("Erro ao conectar ao servidor");
     }
 }
 
@@ -59,10 +65,10 @@ async function listarClientes() {
     try {
 
         const response = await fetch("/api/clientes", {
-            headers: { "Authorization": "Bearer " + getToken() }
+            headers: {
+                "Authorization": "Bearer " + getToken()
+            }
         });
-
-        if (!response.ok) throw new Error("Erro ao buscar clientes");
 
         const clientes = await response.json();
 
@@ -135,7 +141,7 @@ async function salvarEdicao() {
 
     try {
 
-        const response = await fetch(`/api/clientes/${id}`, {
+        await fetch(`/api/clientes/${id}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
@@ -144,15 +150,12 @@ async function salvarEdicao() {
             body: JSON.stringify(dadosAtualizados)
         });
 
-        if (!response.ok) throw new Error("Erro ao atualizar cliente");
-
         alert("Cliente atualizado!");
         fecharModal();
         listarClientes();
 
     } catch (error) {
         console.error("Erro ao atualizar:", error);
-        alert("Erro ao atualizar cliente");
     }
 }
 

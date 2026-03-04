@@ -1,96 +1,64 @@
 // =======================================
-// 🔐 PEGAR TOKEN
+// LISTAR CLIENTES (VINDO DO BACKEND)
 // =======================================
-function getToken() {
-    return localStorage.getItem("token");
-}
+async function listarClientes() {
 
-// =======================================
-// 📡 BUSCAR CLIENTES DO BACKEND
-// =======================================
-async function buscarClientes() {
-    try {
-        const response = await fetch("/api/clientes", {
-            headers: { "Authorization": "Bearer " + getToken() }
-        });
-        if (!response.ok) throw new Error("Erro ao buscar clientes");
-        return await response.json();
-    } catch (error) {
-        console.error("Erro:", error);
-        return [];
-    }
-}
-
-// =======================================
-// 📊 CARREGAR DASHBOARD
-// =======================================
-async function carregarDashboard() {
-
-    if (typeof verificarViradaDeMes === "function") {
-        verificarViradaDeMes();
-    }
-
-    const clientes = await buscarClientes();
-
-    document.getElementById("totalClientes").innerText = clientes.length;
-    document.getElementById("gerados").innerText = clientes.filter(c => c.status === "Gerado").length;
-    document.getElementById("pendentes").innerText = clientes.filter(c => c.status === "Pendente").length;
-    document.getElementById("erros").innerText = clientes.filter(c => c.status === "Erro").length;
-
-    renderizarTabelaDashboard(clientes);
-}
-
-// =======================================
-// 📋 LISTAGEM PADRÃO
-// =======================================
-async function listarClientesDashboard() {
-    const clientes = await buscarClientes();
-    renderizarTabelaDashboard(clientes);
-}
-
-// =======================================
-// 🔍 FILTRO DE PESQUISA
-// =======================================
-async function filtrarClientes() {
-
-    const termo = document.getElementById("campoPesquisa").value.toLowerCase();
-    const clientes = await buscarClientes();
-
-    const filtrados = clientes.filter(c =>
-        (c.nome && c.nome.toLowerCase().includes(termo)) ||
-        (c.documento && c.documento.toLowerCase().includes(termo))
-    );
-
-    renderizarTabelaDashboard(filtrados);
-}
-
-// =======================================
-// 🧱 RENDERIZAR TABELA
-// =======================================
-function renderizarTabelaDashboard(lista) {
-
-    const tabela = document.getElementById("tabelaDashboard");
+    const tabela = document.getElementById("tabelaClientes");
     if (!tabela) return;
 
     tabela.innerHTML = "";
 
-    if (lista.length === 0) {
-        tabela.innerHTML = "<tr><td colspan='5' style='text-align:center;'>Nenhum cliente cadastrado.</td></tr>";
-        return;
+    try {
+        const response = await fetch("/api/clientes", {
+            headers: {
+                "Authorization": "Bearer " + localStorage.getItem("token")
+            }
+        });
+
+        const clientes = await response.json();
+
+        clientes.forEach((cliente) => {
+
+            tabela.innerHTML += `
+                <tr>
+                    <td>${cliente.nome}</td>
+                    <td><span class="status ${cliente.status?.toLowerCase() || "pendente"}">
+                        ${cliente.status || "Pendente"}
+                    </span></td>
+                    <td>
+                        <select onchange="alterarStatus('${cliente._id}', this.value)">
+                            <option ${cliente.status === "Pendente" ? "selected" : ""}>Pendente</option>
+                            <option ${cliente.status === "Gerado" ? "selected" : ""}>Gerado</option>
+                            <option ${cliente.status === "Erro" ? "selected" : ""}>Erro</option>
+                        </select>
+                    </td>
+                </tr>
+            `;
+        });
+
+    } catch (error) {
+        console.error("Erro ao listar clientes:", error);
     }
+}
 
-    lista.forEach(cliente => {
+// =======================================
+// ALTERAR STATUS NO BANCO
+// =======================================
+async function alterarStatus(id, novoStatus) {
 
-        const stClasse = cliente.status ? cliente.status.toLowerCase() : "pendente";
+    try {
+        await fetch(`/api/clientes/${id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem("token")
+            },
+            body: JSON.stringify({ status: novoStatus })
+        });
 
-        tabela.innerHTML += `
-            <tr>
-                <td>${cliente.nome}</td>
-                <td>${cliente.documento || "-"}</td>
-                <td>${cliente.regime || "-"}</td>
-                <td>${cliente.telefone || "-"}</td>
-                <td><span class="status ${stClasse}">${cliente.status || "Pendente"}</span></td>
-            </tr>
-        `;
-    });
+        listarClientes(); // Atualiza tabela
+
+    } catch (error) {
+        console.error("Erro ao atualizar status:", error);
+    }
 }

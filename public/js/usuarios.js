@@ -1,13 +1,10 @@
-// =======================================
-// 🔐 PEGAR TOKEN
-// =======================================
 function getToken() {
     return localStorage.getItem("token");
 }
 
-// =======================================
-// 📋 LISTAR USUÁRIOS
-// =======================================
+// =======================
+// LISTAR USUÁRIOS
+// =======================
 async function listarUsuarios() {
 
     const tabela = document.getElementById("tabelaUsuarios");
@@ -15,24 +12,17 @@ async function listarUsuarios() {
 
     tabela.innerHTML = "";
 
-    try {
-
-        const response = await fetch("/api/usuarios", {
-            headers: { "Authorization": "Bearer " + getToken() }
-        });
-
-        if (!response.ok) throw new Error("Não autorizado ou rota inexistente");
-
-        const usuarios = await response.json();
-
-        if (usuarios.length === 0) {
-            tabela.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Nenhum usuário cadastrado.</td></tr>";
-            return;
+    const response = await fetch("/api/usuarios", {
+        headers: {
+            "Authorization": "Bearer " + getToken()
         }
+    });
 
-        usuarios.forEach((user) => {
+    const usuarios = await response.json();
 
-            tabela.innerHTML += `
+    usuarios.forEach((user) => {
+
+        tabela.innerHTML += `
             <tr>
                 <td>${user.nome}</td>
                 <td>${user.usuario}</td>
@@ -46,17 +36,12 @@ async function listarUsuarios() {
                         : '<small>Sistema (Mestre)</small>'}
                 </td>
             </tr>`;
-        });
-
-    } catch (error) {
-        console.error("Erro ao listar usuários:", error);
-        tabela.innerHTML = `<tr><td colspan='4' style='text-align:center;'>${error.message}</td></tr>`;
-    }
+    });
 }
 
-// =======================================
-// ABRIR MODAL NOVO USUÁRIO
-// =======================================
+// =======================
+// ABRIR MODAL NOVO
+// =======================
 function abrirModal() {
 
     document.getElementById("modalUsuario").style.display = "flex";
@@ -69,9 +54,9 @@ function abrirModal() {
     document.getElementById("uPerfil").value = "user";
 }
 
-// =======================================
+// =======================
 // PREPARAR EDIÇÃO
-// =======================================
+// =======================
 function prepararEdicao(id, nome, login, perfil) {
 
     document.getElementById("editId").value = id;
@@ -88,9 +73,9 @@ function fecharModal() {
     document.getElementById("modalUsuario").style.display = "none";
 }
 
-// =======================================
+// =======================
 // SALVAR USUÁRIO
-// =======================================
+// =======================
 async function salvarUsuario() {
 
     const id = document.getElementById("editId").value;
@@ -105,61 +90,48 @@ async function salvarUsuario() {
     }
 
     const dados = { nome, usuario: login, perfil };
+
     if (senha) dados.senha = senha;
 
-    try {
-
-        let response;
-        if (id === "") {
-            // Novo usuário
-            response = await fetch("/api/usuarios", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + getToken() },
-                body: JSON.stringify(dados)
-            });
-        } else {
-            // Editar usuário
-            response = await fetch(`/api/usuarios/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + getToken() },
-                body: JSON.stringify(dados)
-            });
-        }
-
-        if (!response.ok) {
-            const msg = await response.json().catch(() => ({ message: "Erro ao salvar usuário" }));
-            throw new Error(msg.message);
-        }
-
-        fecharModal();
-        listarUsuarios();
-
-    } catch (error) {
-        console.error("Erro ao salvar usuário:", error);
-        alert("Erro ao salvar usuário: " + error.message);
+    if (id === "") {
+        // NOVO
+        await fetch("/api/usuarios", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + getToken()
+            },
+            body: JSON.stringify(dados)
+        });
+    } else {
+        // EDITAR
+        await fetch(`/api/usuarios/${id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + getToken()
+            },
+            body: JSON.stringify(dados)
+        });
     }
+
+    fecharModal();
+    listarUsuarios();
 }
 
-// =======================================
-// EXCLUIR USUÁRIO
-// =======================================
+// =======================
+// EXCLUIR
+// =======================
 async function excluirUsuario(id) {
 
     if (!confirm("Tem certeza que deseja remover este usuário?")) return;
 
-    try {
+    await fetch(`/api/usuarios/${id}`, {
+        method: "DELETE",
+        headers: {
+            "Authorization": "Bearer " + getToken()
+        }
+    });
 
-        const response = await fetch(`/api/usuarios/${id}`, {
-            method: "DELETE",
-            headers: { "Authorization": "Bearer " + getToken() }
-        });
-
-        if (!response.ok) throw new Error("Erro ao excluir usuário");
-
-        listarUsuarios();
-
-    } catch (error) {
-        console.error("Erro ao excluir usuário:", error);
-        alert("Erro ao excluir usuário: " + error.message);
-    }
+    listarUsuarios();
 }
