@@ -29,17 +29,12 @@ async function salvarCliente() {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + getToken()
             },
-            body: JSON.stringify({
-                nome,
-                documento,
-                email,
-                telefone,
-                regime
-            })
+            body: JSON.stringify({ nome, documento, email, telefone, regime })
         });
 
         if (!response.ok) {
-            alert("Erro ao salvar cliente");
+            const msg = await response.json();
+            alert(msg.message || "Erro ao salvar cliente");
             return;
         }
 
@@ -53,7 +48,7 @@ async function salvarCliente() {
 }
 
 // =======================================
-// 📋 LISTAR CLIENTES
+// 📋 LISTAR CLIENTES (apenas do usuário logado)
 // =======================================
 async function listarClientes() {
 
@@ -65,12 +60,15 @@ async function listarClientes() {
     try {
 
         const response = await fetch("/api/clientes", {
-            headers: {
-                "Authorization": "Bearer " + getToken()
-            }
+            headers: { "Authorization": "Bearer " + getToken() }
         });
 
         const clientes = await response.json();
+
+        if (clientes.length === 0) {
+            tabela.innerHTML = `<tr><td colspan="5" style="text-align:center;">Nenhum cliente cadastrado.</td></tr>`;
+            return;
+        }
 
         clientes.forEach((cliente) => {
 
@@ -113,7 +111,6 @@ async function listarClientes() {
 // ✏️ ABRIR MODAL EDIÇÃO
 // =======================================
 function abrirModalEdicao(id, nome, documento, email, telefone, regime) {
-
     document.getElementById("editId").value = id;
     document.getElementById("editNome").value = nome;
     document.getElementById("editDocumento").value = documento;
@@ -156,6 +153,7 @@ async function salvarEdicao() {
 
     } catch (error) {
         console.error("Erro ao atualizar:", error);
+        alert("Não foi possível atualizar o cliente");
     }
 }
 
@@ -164,31 +162,38 @@ async function salvarEdicao() {
 // =======================================
 async function alterarStatusCliente(id, novoStatus) {
 
-    await fetch(`/api/clientes/${id}`, {
-        method: "PUT",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + getToken()
-        },
-        body: JSON.stringify({ status: novoStatus })
-    });
+    try {
+        await fetch(`/api/clientes/${id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + getToken()
+            },
+            body: JSON.stringify({ status: novoStatus })
+        });
 
-    listarClientes();
+        listarClientes();
+    } catch (error) {
+        console.error("Erro ao atualizar status:", error);
+    }
 }
 
 // =======================================
-// 🗑 EXCLUIR
+// 🗑 EXCLUIR CLIENTE
 // =======================================
 async function excluirCliente(id) {
 
     if (!confirm("Deseja excluir este cliente?")) return;
 
-    await fetch(`/api/clientes/${id}`, {
-        method: "DELETE",
-        headers: {
-            "Authorization": "Bearer " + getToken()
-        }
-    });
+    try {
+        await fetch(`/api/clientes/${id}`, {
+            method: "DELETE",
+            headers: { "Authorization": "Bearer " + getToken() }
+        });
 
-    listarClientes();
+        listarClientes();
+    } catch (error) {
+        console.error("Erro ao excluir cliente:", error);
+        alert("Não foi possível excluir o cliente");
+    }
 }

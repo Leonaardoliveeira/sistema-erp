@@ -1,8 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
-
     document.getElementById("mesSelecionado")
         .addEventListener("change", renderSped);
-
 });
 
 function getToken() {
@@ -20,15 +18,19 @@ async function renderSped() {
     }
 
     try {
-
-        // Buscar clientes
+        // Buscar clientes do usuário logado
         const clientesResp = await fetch("/api/clientes", {
             headers: { "Authorization": "Bearer " + getToken() }
         });
 
         const clientes = await clientesResp.json();
 
-        // Buscar status SPED do mês
+        if (clientes.length === 0) {
+            tabela.innerHTML = "<tr><td colspan='3'>Nenhum cliente cadastrado.</td></tr>";
+            return;
+        }
+
+        // Buscar status SPED do mês (filtrado por usuário no backend)
         const spedResp = await fetch(`/api/sped/${mes}`, {
             headers: { "Authorization": "Bearer " + getToken() }
         });
@@ -48,9 +50,9 @@ async function renderSped() {
                 <td>${cliente.documento || "-"}</td>
                 <td>
                     <select onchange="alterarStatusSped('${cliente._id}', '${mes}', this.value)">
-                        <option value="nao" ${statusAtual=="nao"?"selected":""}>Não Gerado</option>
-                        <option value="gerado" ${statusAtual=="gerado"?"selected":""}>Gerado</option>
-                        <option value="ok" ${statusAtual=="ok"?"selected":""}>OK</option>
+                        <option value="nao" ${statusAtual === "nao" ? "selected" : ""}>Não Gerado</option>
+                        <option value="gerado" ${statusAtual === "gerado" ? "selected" : ""}>Gerado</option>
+                        <option value="ok" ${statusAtual === "ok" ? "selected" : ""}>OK</option>
                     </select>
                 </td>
             </tr>`;
@@ -58,17 +60,27 @@ async function renderSped() {
 
     } catch (error) {
         console.error("Erro SPED:", error);
+        tabela.innerHTML = "<tr><td colspan='3'>Erro ao carregar dados do SPED.</td></tr>";
     }
 }
 
 async function alterarStatusSped(clienteId, mes, status) {
 
-    await fetch("/api/sped", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + getToken()
-        },
-        body: JSON.stringify({ clienteId, mes, status })
-    });
+    try {
+        await fetch("/api/sped", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + getToken()
+            },
+            body: JSON.stringify({ clienteId, mes, status })
+        });
+
+        // Atualiza a tabela após alteração
+        renderSped();
+
+    } catch (error) {
+        console.error("Erro ao alterar status SPED:", error);
+        alert("Não foi possível atualizar o status do SPED.");
+    }
 }

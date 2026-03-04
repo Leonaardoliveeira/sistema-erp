@@ -31,7 +31,7 @@ const ClienteSchema = new mongoose.Schema({
   telefone: String,
   regime: String,
   status: { type: String, default: "Pendente" },
-  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true }, // VINCULA AO USUÁRIO
+  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true }, // vinculado ao usuário
   criadoEm: { type: Date, default: Date.now }
 });
 
@@ -39,7 +39,7 @@ const SpedSchema = new mongoose.Schema({
   clienteId: { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
   mes: { type: String, required: true },
   status: { type: String, enum: ["nao", "gerado", "ok"], default: "nao" },
-  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario" } // Opcional: para filtros rápidos no SPED
+  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario" } // opcional
 });
 
 const Usuario = mongoose.model("Usuario", UsuarioSchema);
@@ -53,7 +53,7 @@ function verificarToken(req, res, next) {
   const token = authHeader.split(" ")[1];
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) return res.status(401).json({ message: "Token inválido" });
-    req.usuario = decoded; // Aqui pegamos o ID do usuário logado
+    req.usuario = decoded; // ID e perfil do usuário logado
     next();
   });
 }
@@ -63,7 +63,7 @@ function verificarAdmin(req, res, next) {
   next();
 }
 
-// ROTAS DE LOGIN E USUÁRIOS (MANTIDAS)
+// LOGIN
 app.post("/api/login", async (req, res) => {
   const { usuario, senha } = req.body;
   const user = await Usuario.findOne({ usuario });
@@ -74,17 +74,15 @@ app.post("/api/login", async (req, res) => {
   res.json({ token, usuario: { nome: user.nome, usuario: user.usuario, perfil: user.perfil } });
 });
 
-// ROTAS DE CLIENTES (AGORA POR USUÁRIO)
+// CLIENTES (usuários comuns podem cadastrar, editar e deletar, cada um só vê os seus)
 app.get("/api/clientes", verificarToken, async (req, res) => {
-  // Se for admin, vê tudo. Se for user, vê só os dele.
   const filtro = req.usuario.perfil === "admin" ? {} : { usuarioId: req.usuario.id };
   const clientes = await Cliente.find(filtro).sort({ nome: 1 });
   res.json(clientes);
 });
 
 app.post("/api/clientes", verificarToken, async (req, res) => {
-  // Injeta automaticamente o ID do usuário logado no novo cliente
-  const dadosCliente = { ...req.body, usuarioId: req.usuario.id };
+  const dadosCliente = { ...req.body, usuarioId: req.usuario.id }; // associa ao usuário logado
   const novoCliente = await Cliente.create(dadosCliente);
   res.status(201).json(novoCliente);
 });
@@ -103,7 +101,7 @@ app.delete("/api/clientes/:id", verificarToken, async (req, res) => {
   res.json({ message: "Cliente removido" });
 });
 
-// SPED (Filtrado por clientes do usuário)
+// SPED (apenas para clientes do usuário)
 app.get("/api/sped/:mes", verificarToken, async (req, res) => {
   const clientesMeus = await Cliente.find(req.usuario.perfil === "admin" ? {} : { usuarioId: req.usuario.id });
   const idsMeus = clientesMeus.map(c => c._id);
@@ -113,7 +111,6 @@ app.get("/api/sped/:mes", verificarToken, async (req, res) => {
 
 app.post("/api/sped", verificarToken, async (req, res) => {
   const { clienteId, mes, status } = req.body;
-  // Verifica se o cliente pertence ao usuário antes de salvar o SPED
   const cliente = await Cliente.findOne({ _id: clienteId, usuarioId: req.usuario.id });
   if (!cliente && req.usuario.perfil !== "admin") return res.status(403).json({ message: "Não autorizado" });
 
@@ -127,10 +124,10 @@ app.post("/api/sped", verificarToken, async (req, res) => {
   res.json(registro);
 });
 
-// Restante das rotas de usuários (Admin apenas)...
+// USUÁRIOS (somente admin pode manipular)
 app.get("/api/usuarios", verificarToken, verificarAdmin, async (req, res) => {
-    const usuarios = await Usuario.find().select("-senha");
-    res.json(usuarios);
+  const usuarios = await Usuario.find().select("-senha");
+  res.json(usuarios);
 });
 
 const PORT = process.env.PORT || 3000;

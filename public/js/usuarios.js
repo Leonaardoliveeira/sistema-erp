@@ -12,17 +12,25 @@ async function listarUsuarios() {
 
     tabela.innerHTML = "";
 
-    const response = await fetch("/api/usuarios", {
-        headers: {
-            "Authorization": "Bearer " + getToken()
+    try {
+        const response = await fetch("/api/usuarios", {
+            headers: { "Authorization": "Bearer " + getToken() }
+        });
+
+        if (!response.ok) {
+            throw new Error("Não autorizado ou erro ao buscar usuários");
         }
-    });
 
-    const usuarios = await response.json();
+        const usuarios = await response.json();
 
-    usuarios.forEach((user) => {
+        if (usuarios.length === 0) {
+            tabela.innerHTML = `<tr><td colspan="4" style="text-align:center;">Nenhum usuário cadastrado.</td></tr>`;
+            return;
+        }
 
-        tabela.innerHTML += `
+        usuarios.forEach((user) => {
+
+            tabela.innerHTML += `
             <tr>
                 <td>${user.nome}</td>
                 <td>${user.usuario}</td>
@@ -36,14 +44,18 @@ async function listarUsuarios() {
                         : '<small>Sistema (Mestre)</small>'}
                 </td>
             </tr>`;
-    });
+        });
+
+    } catch (error) {
+        console.error("Erro ao listar usuários:", error);
+        tabela.innerHTML = `<tr><td colspan="4" style="text-align:center;">${error.message}</td></tr>`;
+    }
 }
 
 // =======================
 // ABRIR MODAL NOVO
 // =======================
 function abrirModal() {
-
     document.getElementById("modalUsuario").style.display = "flex";
     document.getElementById("uTitulo").innerText = "Novo Acesso";
 
@@ -90,48 +102,71 @@ async function salvarUsuario() {
     }
 
     const dados = { nome, usuario: login, perfil };
-
     if (senha) dados.senha = senha;
 
-    if (id === "") {
-        // NOVO
-        await fetch("/api/usuarios", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + getToken()
-            },
-            body: JSON.stringify(dados)
-        });
-    } else {
-        // EDITAR
-        await fetch(`/api/usuarios/${id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + getToken()
-            },
-            body: JSON.stringify(dados)
-        });
-    }
+    try {
 
-    fecharModal();
-    listarUsuarios();
+        let response;
+        if (id === "") {
+            // NOVO USUÁRIO
+            response = await fetch("/api/usuarios", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + getToken()
+                },
+                body: JSON.stringify(dados)
+            });
+        } else {
+            // EDITAR USUÁRIO
+            response = await fetch(`/api/usuarios/${id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + getToken()
+                },
+                body: JSON.stringify(dados)
+            });
+        }
+
+        if (!response.ok) {
+            const msg = await response.json();
+            throw new Error(msg.message || "Erro ao salvar usuário");
+        }
+
+        fecharModal();
+        listarUsuarios();
+
+    } catch (error) {
+        console.error("Erro ao salvar usuário:", error);
+        alert("Não foi possível salvar o usuário: " + error.message);
+    }
 }
 
 // =======================
-// EXCLUIR
+// EXCLUIR USUÁRIO
 // =======================
 async function excluirUsuario(id) {
 
     if (!confirm("Tem certeza que deseja remover este usuário?")) return;
 
-    await fetch(`/api/usuarios/${id}`, {
-        method: "DELETE",
-        headers: {
-            "Authorization": "Bearer " + getToken()
-        }
-    });
+    try {
+        const response = await fetch(`/api/usuarios/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": "Bearer " + getToken()
+            }
+        });
 
-    listarUsuarios();
+        if (!response.ok) {
+            const msg = await response.json();
+            throw new Error(msg.message || "Erro ao excluir usuário");
+        }
+
+        listarUsuarios();
+
+    } catch (error) {
+        console.error("Erro ao excluir usuário:", error);
+        alert("Não foi possível excluir o usuário: " + error.message);
+    }
 }
