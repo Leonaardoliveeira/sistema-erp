@@ -1,10 +1,13 @@
+// =======================================
+// 🔐 PEGAR TOKEN
+// =======================================
 function getToken() {
     return localStorage.getItem("token");
 }
 
-// =======================
-// LISTAR USUÁRIOS
-// =======================
+// =======================================
+// 📋 LISTAR USUÁRIOS
+// =======================================
 async function listarUsuarios() {
 
     const tabela = document.getElementById("tabelaUsuarios");
@@ -13,18 +16,17 @@ async function listarUsuarios() {
     tabela.innerHTML = "";
 
     try {
+
         const response = await fetch("/api/usuarios", {
             headers: { "Authorization": "Bearer " + getToken() }
         });
 
-        if (!response.ok) {
-            throw new Error("Não autorizado ou erro ao buscar usuários");
-        }
+        if (!response.ok) throw new Error("Não autorizado ou rota inexistente");
 
         const usuarios = await response.json();
 
         if (usuarios.length === 0) {
-            tabela.innerHTML = `<tr><td colspan="4" style="text-align:center;">Nenhum usuário cadastrado.</td></tr>`;
+            tabela.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Nenhum usuário cadastrado.</td></tr>";
             return;
         }
 
@@ -48,14 +50,15 @@ async function listarUsuarios() {
 
     } catch (error) {
         console.error("Erro ao listar usuários:", error);
-        tabela.innerHTML = `<tr><td colspan="4" style="text-align:center;">${error.message}</td></tr>`;
+        tabela.innerHTML = `<tr><td colspan='4' style='text-align:center;'>${error.message}</td></tr>`;
     }
 }
 
-// =======================
-// ABRIR MODAL NOVO
-// =======================
+// =======================================
+// ABRIR MODAL NOVO USUÁRIO
+// =======================================
 function abrirModal() {
+
     document.getElementById("modalUsuario").style.display = "flex";
     document.getElementById("uTitulo").innerText = "Novo Acesso";
 
@@ -66,9 +69,9 @@ function abrirModal() {
     document.getElementById("uPerfil").value = "user";
 }
 
-// =======================
+// =======================================
 // PREPARAR EDIÇÃO
-// =======================
+// =======================================
 function prepararEdicao(id, nome, login, perfil) {
 
     document.getElementById("editId").value = id;
@@ -85,9 +88,9 @@ function fecharModal() {
     document.getElementById("modalUsuario").style.display = "none";
 }
 
-// =======================
+// =======================================
 // SALVAR USUÁRIO
-// =======================
+// =======================================
 async function salvarUsuario() {
 
     const id = document.getElementById("editId").value;
@@ -108,30 +111,24 @@ async function salvarUsuario() {
 
         let response;
         if (id === "") {
-            // NOVO USUÁRIO
+            // Novo usuário
             response = await fetch("/api/usuarios", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer " + getToken()
-                },
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + getToken() },
                 body: JSON.stringify(dados)
             });
         } else {
-            // EDITAR USUÁRIO
+            // Editar usuário
             response = await fetch(`/api/usuarios/${id}`, {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer " + getToken()
-                },
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + getToken() },
                 body: JSON.stringify(dados)
             });
         }
 
         if (!response.ok) {
-            const msg = await response.json();
-            throw new Error(msg.message || "Erro ao salvar usuário");
+            const msg = await response.json().catch(() => ({ message: "Erro ao salvar usuário" }));
+            throw new Error(msg.message);
         }
 
         fecharModal();
@@ -139,34 +136,30 @@ async function salvarUsuario() {
 
     } catch (error) {
         console.error("Erro ao salvar usuário:", error);
-        alert("Não foi possível salvar o usuário: " + error.message);
+        alert("Erro ao salvar usuário: " + error.message);
     }
 }
 
-// =======================
+// =======================================
 // EXCLUIR USUÁRIO
-// =======================
+// =======================================
 async function excluirUsuario(id) {
 
     if (!confirm("Tem certeza que deseja remover este usuário?")) return;
 
     try {
+
         const response = await fetch(`/api/usuarios/${id}`, {
             method: "DELETE",
-            headers: {
-                "Authorization": "Bearer " + getToken()
-            }
+            headers: { "Authorization": "Bearer " + getToken() }
         });
 
-        if (!response.ok) {
-            const msg = await response.json();
-            throw new Error(msg.message || "Erro ao excluir usuário");
-        }
+        if (!response.ok) throw new Error("Erro ao excluir usuário");
 
         listarUsuarios();
 
     } catch (error) {
         console.error("Erro ao excluir usuário:", error);
-        alert("Não foi possível excluir o usuário: " + error.message);
+        alert("Erro ao excluir usuário: " + error.message);
     }
 }

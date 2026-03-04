@@ -33,9 +33,8 @@ async function salvarCliente() {
         });
 
         if (!response.ok) {
-            const msg = await response.json();
-            alert(msg.message || "Erro ao salvar cliente");
-            return;
+            const msg = await response.json().catch(()=>({message:"Erro ao salvar cliente"}));
+            throw new Error(msg.message);
         }
 
         alert("Cliente cadastrado com sucesso!");
@@ -43,12 +42,12 @@ async function salvarCliente() {
 
     } catch (error) {
         console.error("Erro:", error);
-        alert("Erro ao conectar ao servidor");
+        alert("Erro: " + error.message);
     }
 }
 
 // =======================================
-// 📋 LISTAR CLIENTES (apenas do usuário logado)
+// 📋 LISTAR CLIENTES
 // =======================================
 async function listarClientes() {
 
@@ -63,12 +62,9 @@ async function listarClientes() {
             headers: { "Authorization": "Bearer " + getToken() }
         });
 
-        const clientes = await response.json();
+        if (!response.ok) throw new Error("Erro ao buscar clientes");
 
-        if (clientes.length === 0) {
-            tabela.innerHTML = `<tr><td colspan="5" style="text-align:center;">Nenhum cliente cadastrado.</td></tr>`;
-            return;
-        }
+        const clientes = await response.json();
 
         clientes.forEach((cliente) => {
 
@@ -111,6 +107,7 @@ async function listarClientes() {
 // ✏️ ABRIR MODAL EDIÇÃO
 // =======================================
 function abrirModalEdicao(id, nome, documento, email, telefone, regime) {
+
     document.getElementById("editId").value = id;
     document.getElementById("editNome").value = nome;
     document.getElementById("editDocumento").value = documento;
@@ -138,7 +135,7 @@ async function salvarEdicao() {
 
     try {
 
-        await fetch(`/api/clientes/${id}`, {
+        const response = await fetch(`/api/clientes/${id}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
@@ -147,13 +144,15 @@ async function salvarEdicao() {
             body: JSON.stringify(dadosAtualizados)
         });
 
+        if (!response.ok) throw new Error("Erro ao atualizar cliente");
+
         alert("Cliente atualizado!");
         fecharModal();
         listarClientes();
 
     } catch (error) {
         console.error("Erro ao atualizar:", error);
-        alert("Não foi possível atualizar o cliente");
+        alert("Erro ao atualizar cliente");
     }
 }
 
@@ -162,38 +161,31 @@ async function salvarEdicao() {
 // =======================================
 async function alterarStatusCliente(id, novoStatus) {
 
-    try {
-        await fetch(`/api/clientes/${id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + getToken()
-            },
-            body: JSON.stringify({ status: novoStatus })
-        });
+    await fetch(`/api/clientes/${id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + getToken()
+        },
+        body: JSON.stringify({ status: novoStatus })
+    });
 
-        listarClientes();
-    } catch (error) {
-        console.error("Erro ao atualizar status:", error);
-    }
+    listarClientes();
 }
 
 // =======================================
-// 🗑 EXCLUIR CLIENTE
+// 🗑 EXCLUIR
 // =======================================
 async function excluirCliente(id) {
 
     if (!confirm("Deseja excluir este cliente?")) return;
 
-    try {
-        await fetch(`/api/clientes/${id}`, {
-            method: "DELETE",
-            headers: { "Authorization": "Bearer " + getToken() }
-        });
+    await fetch(`/api/clientes/${id}`, {
+        method: "DELETE",
+        headers: {
+            "Authorization": "Bearer " + getToken()
+        }
+    });
 
-        listarClientes();
-    } catch (error) {
-        console.error("Erro ao excluir cliente:", error);
-        alert("Não foi possível excluir o cliente");
-    }
+    listarClientes();
 }

@@ -1,15 +1,27 @@
 // =======================================
+// 🔐 PEGAR TOKEN
+// =======================================
+function getToken() {
+    return localStorage.getItem("token");
+}
+
+// =======================================
 // 🔐 LOGIN USANDO API
 // =======================================
 async function login() {
+
     const usuarioInput = document.getElementById("usuario").value;
     const senhaInput = document.getElementById("senha").value;
 
     try {
+
         const response = await fetch("/api/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ usuario: usuarioInput, senha: senhaInput })
+            body: JSON.stringify({
+                usuario: usuarioInput,
+                senha: senhaInput
+            })
         });
 
         const data = await response.json();
@@ -23,7 +35,6 @@ async function login() {
         localStorage.setItem("token", data.token);
         localStorage.setItem("usuario", JSON.stringify(data.usuario));
 
-        // Redireciona para dashboard
         window.location.href = "dashboard.html";
 
     } catch (error) {
@@ -36,7 +47,8 @@ async function login() {
 // 🔎 VERIFICAR SE ESTÁ LOGADO
 // =======================================
 function verificarLogin() {
-    const token = localStorage.getItem("token");
+
+    const token = getToken();
     const usuario = JSON.parse(localStorage.getItem("usuario"));
 
     if (!token || !usuario) {
@@ -44,11 +56,9 @@ function verificarLogin() {
         return;
     }
 
-    // Exibe ou oculta menu de usuários dependendo do perfil
+    // Esconde menu de usuários se não for admin
     const menuAdmin = document.getElementById("menuUsuarios");
-    if (menuAdmin) {
-        menuAdmin.style.display = (usuario.perfil === "admin") ? "block" : "none";
-    }
+    if (menuAdmin) menuAdmin.style.display = (usuario.perfil === "admin") ? "block" : "none";
 }
 
 // =======================================
