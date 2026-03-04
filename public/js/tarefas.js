@@ -1,8 +1,8 @@
 document.addEventListener("DOMContentLoaded", function () {
-
-    document.getElementById("mesSelecionado")
-        .addEventListener("change", renderSped);
-
+    const select = document.getElementById("mesSelecionado");
+    if (select) {
+        select.addEventListener("change", renderSped);
+    }
 });
 
 function getToken() {
@@ -21,14 +21,12 @@ async function renderSped() {
 
     try {
 
-        // Buscar clientes
         const clientesResp = await fetch("/api/clientes", {
             headers: { "Authorization": "Bearer " + getToken() }
         });
 
         const clientes = await clientesResp.json();
 
-        // Buscar status SPED do mês
         const spedResp = await fetch(`/api/sped/${mes}`, {
             headers: { "Authorization": "Bearer " + getToken() }
         });

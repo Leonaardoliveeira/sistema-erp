@@ -1,5 +1,5 @@
 // =======================================
-// 🔐 FUNÇÃO PARA PEGAR TOKEN
+// 🔐 PEGAR TOKEN
 // =======================================
 function getToken() {
     return localStorage.getItem("token");
@@ -11,15 +11,9 @@ function getToken() {
 async function buscarClientes() {
     try {
         const response = await fetch("/api/clientes", {
-            headers: {
-                "Authorization": "Bearer " + getToken()
-            }
+            headers: { "Authorization": "Bearer " + getToken() }
         });
-
-        if (!response.ok) {
-            throw new Error("Erro ao buscar clientes");
-        }
-
+        if (!response.ok) throw new Error("Erro ao buscar clientes");
         return await response.json();
     } catch (error) {
         console.error("Erro:", error);
@@ -31,11 +25,6 @@ async function buscarClientes() {
 // 📊 CARREGAR DASHBOARD
 // =======================================
 async function carregarDashboard() {
-
-    if (typeof verificarViradaDeMes === "function") {
-        verificarViradaDeMes();
-    }
-
     const clientes = await buscarClientes();
 
     document.getElementById("totalClientes").innerText = clientes.length;
@@ -58,7 +47,6 @@ async function listarClientesDashboard() {
 // 🔍 FILTRO DE PESQUISA
 // =======================================
 async function filtrarClientes() {
-
     const termo = document.getElementById("campoPesquisa").value.toLowerCase();
     const clientes = await buscarClientes();
 
@@ -74,7 +62,6 @@ async function filtrarClientes() {
 // 🧱 RENDERIZAR TABELA
 // =======================================
 function renderizarTabelaDashboard(lista) {
-
     const tabela = document.getElementById("tabelaDashboard");
     if (!tabela) return;
 
@@ -86,9 +73,7 @@ function renderizarTabelaDashboard(lista) {
     }
 
     lista.forEach(cliente => {
-
         const stClasse = cliente.status ? cliente.status.toLowerCase() : "pendente";
-
         tabela.innerHTML += `
             <tr>
                 <td>${cliente.nome}</td>
