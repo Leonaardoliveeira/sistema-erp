@@ -5,6 +5,18 @@ function getToken() {
     return localStorage.getItem("token");
 }
 
+async function filtrarClientes() {
+    const termo = document.getElementById("campoPesquisa").value.toLowerCase();
+    const clientes = await buscarClientes();
+
+    const filtrados = clientes.filter(c =>
+        (c.nome && c.nome.toLowerCase().includes(termo)) ||
+        (c.documento && c.documento.toLowerCase().includes(termo))
+    );
+
+    renderizarTabelaDashboard(filtrados);
+}
+
 // =======================================
 // 📡 SALVAR NOVO CLIENTE
 // =======================================
