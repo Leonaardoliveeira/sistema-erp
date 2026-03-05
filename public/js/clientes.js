@@ -5,16 +5,22 @@ function getToken() {
     return localStorage.getItem("token");
 }
 
-async function filtrarClientes() {
+// =======================================
+//    FILTRAR CLIENTES
+//
+function filtrarClientes() {
     const termo = document.getElementById("campoPesquisa").value.toLowerCase();
-    const clientes = await buscarClientes();
+    const linhas = document.querySelectorAll("#tabelaClientes tr");
 
-    const filtrados = clientes.filter(c =>
-        (c.nome && c.nome.toLowerCase().includes(termo)) ||
-        (c.documento && c.documento.toLowerCase().includes(termo))
-    );
+    linhas.forEach(linha => {
+        const textoLinha = linha.innerText.toLowerCase();
 
-    renderizarTabelaDashboard(filtrados);
+        if (textoLinha.includes(termo)) {
+            linha.style.display = "";
+        } else {
+            linha.style.display = "none";
+        }
+    });
 }
 
 // =======================================
