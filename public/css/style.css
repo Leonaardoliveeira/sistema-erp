@@ -293,3 +293,93 @@ table {
   from { opacity: 0; transform: translateY(-20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ===== ERP V2 PROFISSIONAL ===== */
+
+body{
+font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+background:#f4f6f9;
+}
+
+.container{
+max-width:1200px;
+margin:auto;
+padding:15px;
+}
+
+.card{
+background:white;
+border-radius:10px;
+padding:15px;
+box-shadow:0 2px 8px rgba(0,0,0,0.08);
+margin-bottom:15px;
+}
+
+button{
+background:#2563eb;
+border:none;
+color:white;
+padding:8px 12px;
+border-radius:6px;
+cursor:pointer;
+}
+
+button:hover{
+background:#1d4ed8;
+}
+
+/* tabela profissional */
+
+.table-container{
+overflow-x:auto;
+width:100%;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+}
+
+th{
+background:#111827;
+color:white;
+padding:10px;
+}
+
+td{
+padding:10px;
+border-bottom:1px solid #eee;
+}
+
+/* status */
+
+.status-nao{
+color:#ef4444;
+font-weight:bold;
+}
+
+.status-gerado{
+color:#f59e0b;
+font-weight:bold;
+}
+
+.status-ok{
+color:#22c55e;
+font-weight:bold;
+}
+
+/* mobile */
+
+@media(max-width:768px){
+
+table{
+font-size:13px;
+}
+
+button{
+width:100%;
+margin-top:5px;
+}
+
+}
