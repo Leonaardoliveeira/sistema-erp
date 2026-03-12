@@ -7,71 +7,54 @@ font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
 }
 
 body{
-background-color:#f3f4f6;
+background:#f3f4f6;
 color:#1f2937;
 overflow-x:hidden;
 }
 
 /* ================= BOTÃO HAMBÚRGUER ================= */
+
 .menu-toggle{
 display:none;
 position:fixed;
 top:15px;
 left:15px;
 z-index:1100;
+
+width:42px;
+height:42px;
+
+align-items:center;
+justify-content:center;
+
 background:linear-gradient(135deg,#4f46e5,#6366f1);
 color:white;
 border:none;
-padding:10px 15px;
-border-radius:8px;
-font-size:20px;
+border-radius:10px;
+font-size:18px;
 cursor:pointer;
-box-shadow:0 6px 15px rgba(0,0,0,0.15);
+
+box-shadow:0 8px 20px rgba(0,0,0,0.15);
 transition:all .25s ease;
 }
 
 .menu-toggle:hover{
 transform:scale(1.05);
-box-shadow:0 8px 20px rgba(0,0,0,0.2);
-}
-
-/* ================= LOGIN ================= */
-.login-page{
-display:flex;
-justify-content:center;
-align-items:center;
-min-height:100vh;
-background:linear-gradient(135deg,#0f172a,#4f46e5);
-padding:20px;
-}
-
-.login-container{
-background:#ffffff;
-padding:40px;
-border-radius:16px;
-width:100%;
-max-width:360px;
-text-align:center;
-box-shadow:0 20px 40px rgba(0,0,0,0.25);
-animation:fadeIn .5s ease;
-}
-
-.login-container h2{
-margin-bottom:25px;
-color:#111827;
 }
 
 /* ================= SIDEBAR ================= */
+
 .sidebar{
 width:250px;
 height:100vh;
 background:linear-gradient(180deg,#0f172a,#1e293b);
 color:white;
 position:fixed;
+left:0;
+top:0;
 padding:25px 20px;
 z-index:1000;
 transition:transform .3s ease;
-box-shadow:5px 0 20px rgba(0,0,0,0.2);
 }
 
 .sidebar h2{
@@ -88,7 +71,6 @@ text-decoration:none;
 color:#9ca3af;
 border-radius:8px;
 transition:all .25s ease;
-font-size:14px;
 }
 
 .sidebar a:hover{
@@ -102,7 +84,8 @@ background:#4f46e5;
 color:white;
 }
 
-/* ================= MAIN CONTENT ================= */
+/* ================= MAIN ================= */
+
 .main{
 margin-left:250px;
 padding:30px;
@@ -111,6 +94,8 @@ min-height:100vh;
 transition:all .3s ease;
 }
 
+/* ================= TOPBAR ================= */
+
 .topbar{
 background:#ffffff;
 padding:20px 25px;
@@ -118,11 +103,12 @@ border-radius:12px;
 margin-bottom:25px;
 box-shadow:0 4px 10px rgba(0,0,0,0.08);
 display:flex;
-justify-content:space-between;
+justify-content:center;
 align-items:center;
 }
 
 /* ================= DASHBOARD CARDS ================= */
+
 .cards{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
@@ -136,7 +122,7 @@ padding:25px;
 border-radius:14px;
 box-shadow:0 5px 15px rgba(0,0,0,0.06);
 border-bottom:4px solid #e5e7eb;
-transition:transform .2s ease, box-shadow .2s ease;
+transition:all .2s ease;
 }
 
 .card:hover{
@@ -163,6 +149,7 @@ color:#111827;
 .card:nth-child(4){border-color:#ef4444;}
 
 /* ================= TABELAS ================= */
+
 .table-container{
 width:100%;
 overflow-x:auto;
@@ -198,6 +185,7 @@ background:#f9fafb;
 }
 
 /* ================= STATUS ================= */
+
 .status{
 padding:5px 12px;
 border-radius:6px;
@@ -222,32 +210,8 @@ background:#fee2e2;
 color:#b91c1c;
 }
 
-.status-botoes{
-display:flex;
-gap:5px;
-}
+/* ================= FORM ================= */
 
-.btn-status{
-padding:6px 10px;
-border:1px solid transparent;
-border-radius:6px;
-color:#6b7280;
-background:#f3f4f6;
-cursor:pointer;
-font-size:11px;
-font-weight:600;
-transition:.2s;
-}
-
-.btn-status:hover{
-transform:scale(1.05);
-}
-
-.btn-status.pendente.ativo{background:#f59e0b;color:white;}
-.btn-status.gerado.ativo{background:#10b981;color:white;}
-.btn-status.erro.ativo{background:#ef4444;color:white;}
-
-/* ================= FORMULÁRIOS ================= */
 .form-box{
 background:#ffffff;
 padding:30px;
@@ -264,7 +228,6 @@ border-radius:8px;
 border:1px solid #d1d5db;
 background:#fff;
 font-size:15px;
-transition:border .2s, box-shadow .2s;
 }
 
 input:focus,select:focus{
@@ -274,6 +237,7 @@ box-shadow:0 0 0 3px rgba(79,70,229,0.15);
 }
 
 /* ================= BOTÕES ================= */
+
 button{
 padding:10px 18px;
 border-radius:8px;
@@ -283,51 +247,17 @@ cursor:pointer;
 transition:.2s;
 }
 
-button:hover{
-transform:translateY(-1px);
-}
-
 .btn-primary{background:#4f46e5;color:white;}
-.btn-primary:hover{background:#4338ca;}
-
 .btn-success{background:#10b981;color:white;}
-
 .btn-danger{background:#ef4444;color:white;}
-
 .btn-secondary{background:#6b7280;color:white;}
-
-/* ================= MODAL ================= */
-.modal{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.5);
-backdrop-filter:blur(4px);
-z-index:1000;
-justify-content:center;
-align-items:center;
-}
-
-.modal-content{
-background:white;
-padding:30px;
-border-radius:16px;
-width:90%;
-max-width:450px;
-box-shadow:0 20px 25px rgba(0,0,0,0.2);
-animation:fadeIn .3s ease;
-}
 
 /* ================= RESPONSIVIDADE ================= */
 
-/* TABLET */
 @media (max-width:992px){
 
 .menu-toggle{
-display:block;
+display:flex;
 }
 
 .sidebar{
@@ -338,35 +268,22 @@ transform:translateX(-100%);
 transform:translateX(0);
 }
 
-.sidebar h2{
-margin-top:40px;
-font-size:1.2rem;
-}
-
 .main{
 margin-left:0;
 width:100%;
-padding:15px;
 padding-top:80px;
 }
 
-.topbar{
-flex-direction:column;
-gap:15px;
-text-align:center;
 }
 
-}
-
-/* MOBILE */
 @media (max-width:768px){
 
 .menu-toggle{
 top:10px;
 left:10px;
-padding:7px 11px;
+width:38px;
+height:38px;
 font-size:16px;
-border-radius:6px;
 }
 
 table{
@@ -388,7 +305,6 @@ margin-top:5px;
 
 }
 
-/* MOBILE PEQUENO */
 @media (max-width:480px){
 
 .login-container{
@@ -399,27 +315,6 @@ margin:10px;
 
 .login-container h2{
 font-size:20px;
-}
-
-.login-container input{
-padding:12px;
-font-size:16px;
-}
-
-}
-
-/* ================= ANIMAÇÃO ================= */
-
-@keyframes fadeIn{
-
-from{
-opacity:0;
-transform:translateY(-20px);
-}
-
-to{
-opacity:1;
-transform:translateY(0);
 }
 
 }
