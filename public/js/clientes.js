@@ -9,10 +9,12 @@ function getToken() {
 // FILTRAR CLIENTES
 // =======================================
 function filtrarClientes() {
+
     const termo = document.getElementById("campoPesquisa").value.toLowerCase();
     const linhas = document.querySelectorAll("#tabelaClientes tr");
 
     linhas.forEach(linha => {
+
         const textoLinha = linha.innerText.toLowerCase();
 
         if (textoLinha.includes(termo)) {
@@ -20,13 +22,16 @@ function filtrarClientes() {
         } else {
             linha.style.display = "none";
         }
+
     });
+
 }
 
 // =======================================
 // 📡 SALVAR NOVO CLIENTE
 // =======================================
 async function salvarCliente() {
+
     const nome = document.getElementById("nome").value;
     const documento = document.getElementById("documento").value;
     const email = document.getElementById("email").value;
@@ -39,120 +44,154 @@ async function salvarCliente() {
     }
 
     try {
+
         const response = await fetch("/api/clientes", {
+
             method: "POST",
+
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + getToken()
             },
+
             body: JSON.stringify({ nome, documento, email, telefone, regime })
+
         });
 
         if (!response.ok) {
+
             const erro = await response.json();
             alert(erro.message || "Erro ao salvar cliente");
             return;
+
         }
 
         alert("Cliente cadastrado com sucesso!");
         window.location.href = "clientes.html";
 
     } catch (error) {
+
         console.error("Erro:", error);
         alert("Erro ao conectar ao servidor");
+
     }
+
 }
 
 // =======================================
 // 📋 LISTAR CLIENTES
 // =======================================
 async function listarClientes() {
+
     const tabela = document.getElementById("tabelaClientes");
     if (!tabela) return;
+
     tabela.innerHTML = "";
 
     try {
+
         const response = await fetch("/api/clientes", {
             headers: { "Authorization": "Bearer " + getToken() }
         });
 
         const clientes = await response.json();
 
-        clientes.forEach((cliente) => {
+        clientes.forEach(cliente => {
 
             const st = cliente.status?.toLowerCase() || "pendente";
 
             tabela.innerHTML += `
-                <tr>
-                    <td>${cliente.nome}</td>
-                    <td>${cliente.documento || "-"}</td>
-                    <td>${cliente.regime || "-"}</td>
+            <tr>
 
-                    <td>
-                        <div class="status-botoes">
+                <td>${cliente.nome}</td>
+                <td>${cliente.documento || "-"}</td>
+                <td>${cliente.regime || "-"}</td>
 
-                            <button class="btn-status pendente ${st === 'pendente' ? 'ativo' : ''}" 
-                                onclick="alterarStatusCliente('${cliente._id}', 'Pendente')">
-                                Pendente
-                            </button>
+                <td>
 
-                            <button class="btn-status enviado ${st === 'enviado' ? 'ativo' : ''}" 
-                                onclick="alterarStatusCliente('${cliente._id}', 'Enviado')">
-                                Enviado
-                            </button>
+                    <div class="status-botoes">
 
-                            <button class="btn-status gerado ${st === 'gerado' ? 'ativo' : ''}" 
-                                onclick="alterarStatusCliente('${cliente._id}', 'Gerado')">
-                                Gerado
-                            </button>
-
-                            <button class="btn-status erro ${st === 'erro' ? 'ativo' : ''}" 
-                                onclick="alterarStatusCliente('${cliente._id}', 'Erro')">
-                                Erro
-                            </button>
-
-                        </div>
-<select class="status-select" onchange="alterarStatusCliente('${cliente._id}', this.value)">
-
-<option value="Pendente" ${st === 'pendente' ? 'selected' : ''}>Pendente</option>
-
-<option value="Enviado" ${st === 'enviado' ? 'selected' : ''}>Enviado</option>
-
-<option value="Gerado" ${st === 'gerado' ? 'selected' : ''}>Gerado</option>
-
-<option value="Erro" ${st === 'erro' ? 'selected' : ''}>Erro</option>
-
-</select>
-                    </td>
-
-                    <td>
-
-                        <button class="btn-primary" 
-                        style="background-color: #f59e0b; margin-right:5px;"
-                        onclick="abrirModalEdicao(
-                            '${cliente._id}',
-                            '${cliente.nome}',
-                            '${cliente.documento || ""}',
-                            '${cliente.email || ""}',
-                            '${cliente.telefone || ""}',
-                            '${cliente.regime || ""}'
-                        )">
-                        Editar
+                        <button class="btn-status pendente ${st === 'pendente' ? 'ativo' : ''}"
+                        onclick="alterarStatusCliente('${cliente._id}','Pendente')">
+                        Pendente
                         </button>
 
-                        <button class="btn-danger" onclick="excluirCliente('${cliente._id}')">
-                        Excluir
+                        <button class="btn-status enviado ${st === 'enviado' ? 'ativo' : ''}"
+                        onclick="alterarStatusCliente('${cliente._id}','Enviado')">
+                        Enviado
                         </button>
 
-                    </td>
+                        <button class="btn-status gerado ${st === 'gerado' ? 'ativo' : ''}"
+                        onclick="alterarStatusCliente('${cliente._id}','Gerado')">
+                        Gerado
+                        </button>
 
-                </tr>
+                        <button class="btn-status erro ${st === 'erro' ? 'ativo' : ''}"
+                        onclick="alterarStatusCliente('${cliente._id}','Erro')">
+                        Erro
+                        </button>
+
+                    </div>
+
+                    <select 
+                    class="status-select ${st}" 
+                    onchange="alterarStatusCliente('${cliente._id}',this.value); atualizarCorSelect(this)">
+
+                        <option value="Pendente" ${st === 'pendente' ? 'selected' : ''}>Pendente</option>
+                        <option value="Enviado" ${st === 'enviado' ? 'selected' : ''}>Enviado</option>
+                        <option value="Gerado" ${st === 'gerado' ? 'selected' : ''}>Gerado</option>
+                        <option value="Erro" ${st === 'erro' ? 'selected' : ''}>Erro</option>
+
+                    </select>
+
+                </td>
+
+                <td>
+
+                    <button class="btn-primary"
+                    style="background-color:#f59e0b;margin-right:5px;"
+                    onclick="abrirModalEdicao(
+                        '${cliente._id}',
+                        '${cliente.nome}',
+                        '${cliente.documento || ""}',
+                        '${cliente.email || ""}',
+                        '${cliente.telefone || ""}',
+                        '${cliente.regime || ""}'
+                    )">
+                    Editar
+                    </button>
+
+                    <button class="btn-danger"
+                    onclick="excluirCliente('${cliente._id}')">
+                    Excluir
+                    </button>
+
+                </td>
+
+            </tr>
             `;
+
         });
 
     } catch (error) {
+
         console.error("Erro ao listar clientes:", error);
+
     }
+
+}
+
+// =======================================
+// 🎨 ATUALIZAR COR DO SELECT
+// =======================================
+function atualizarCorSelect(select){
+
+    const valor = select.value.toLowerCase()
+
+    select.classList.remove("pendente","enviado","gerado","erro")
+
+    select.classList.add(valor)
+
 }
 
 // =======================================
@@ -168,6 +207,7 @@ function abrirModalEdicao(id, nome, documento, email, telefone, regime) {
     document.getElementById("editRegime").value = regime;
 
     document.getElementById("modalEdicao").style.display = "flex";
+
 }
 
 // =======================================
@@ -205,7 +245,6 @@ async function salvarEdicao() {
         alert("Cliente atualizado!");
 
         fecharModal();
-
         listarClientes();
 
     } catch (error) {
@@ -213,6 +252,7 @@ async function salvarEdicao() {
         console.error("Erro ao atualizar:", error);
 
     }
+
 }
 
 // =======================================
@@ -234,6 +274,7 @@ async function alterarStatusCliente(id, novoStatus) {
     });
 
     listarClientes();
+
 }
 
 // =======================================
@@ -252,6 +293,7 @@ async function excluirCliente(id) {
     });
 
     listarClientes();
+
 }
 
 // =======================================
