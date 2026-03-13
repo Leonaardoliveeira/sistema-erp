@@ -147,9 +147,9 @@ body {
 .card h3 { font-size: 14px; color: #6b7280; text-transform: uppercase; }
 .card p { font-size: 32px; font-weight: bold; margin-top: 10px; color: #111827; }
 
-.card:nth-child(1) { border-color: #4f46e5; } /* Total */
-.card:nth-child(2) { border-color: #10b981; } /* Gerados */
-.card:nth-child(3) { border-color: #f59e0b; } /* Pendentes */
+.card:nth-child(1) { border-color: #f59e0b; } /* Pendentes */
+.card:nth-child(2) { border-color: #4f46e5; } /* Enviados */
+.card:nth-child(3) { border-color: #10b981; } /* Gerados */
 .card:nth-child(4) { border-color: #ef4444; } /* Erros */
 
 /* ================= TABELAS ================= */
