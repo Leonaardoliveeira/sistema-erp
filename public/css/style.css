@@ -177,7 +177,6 @@ tr:hover { background: #f9fafb; }
 }
 
 .status.pendente { background: #fef3c7; color: #b45309; }
-.status.enviado { background: #fef3c7; color: #4f46e5; }
 .status.gerado    { background: #dcfce7; color: #15803d; }
 .status.erro      { background: #fee2e2; color: #b91c1c; }
 
@@ -201,6 +200,8 @@ tr:hover { background: #f9fafb; }
 .btn-status.pendente.ativo { background: #f59e0b; color: white; }
 .btn-status.gerado.ativo   { background: #10b981; color: white; }
 .btn-status.erro.ativo     { background: #ef4444; color: white; }
+.btn-status.enviado        { background: #3b82f6; color: #fff;
+}
 
 /* ================= FORMULÁRIOS E BOTÕES (RESTAURADOS) ================= */
 .form-box {
@@ -398,6 +399,11 @@ font-weight:bold;
 .status-ok{
 color:#22c55e;
 font-weight:bold;
+}
+
+.status.enviado {
+    background: #3b82f6;
+    color: #fff;
 }
 
 /* mobile */
