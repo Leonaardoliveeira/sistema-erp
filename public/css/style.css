@@ -177,6 +177,7 @@ tr:hover { background: #f9fafb; }
 }
 
 .status.pendente { background: #fef3c7; color: #b45309; }
+.status.enviado { background: #fef3c7; color: #4f46e5; }
 .status.gerado    { background: #dcfce7; color: #15803d; }
 .status.erro      { background: #fee2e2; color: #b91c1c; }
 
