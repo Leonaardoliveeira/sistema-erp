@@ -580,12 +580,15 @@ td {
 /* ===== STATUS RESPONSIVO ===== */
 
 .status-select{
-  display:none;
+  width:110px;
+  min-width:110px;
   padding:6px;
   border-radius:6px;
   border:1px solid #d1d5db;
-  font-size:12px;
+  font-size:13px;
+  background:#fff;
 }
+
 
 /* celular */
 @media (max-width:768px){
