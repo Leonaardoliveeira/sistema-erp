@@ -6,8 +6,8 @@ function getToken() {
 }
 
 // =======================================
-//    FILTRAR CLIENTES
-//
+// FILTRAR CLIENTES
+// =======================================
 function filtrarClientes() {
     const termo = document.getElementById("campoPesquisa").value.toLowerCase();
     const linhas = document.querySelectorAll("#tabelaClientes tr");
@@ -75,30 +75,66 @@ async function listarClientes() {
         const response = await fetch("/api/clientes", {
             headers: { "Authorization": "Bearer " + getToken() }
         });
+
         const clientes = await response.json();
 
         clientes.forEach((cliente) => {
+
             const st = cliente.status?.toLowerCase() || "pendente";
+
             tabela.innerHTML += `
                 <tr>
                     <td>${cliente.nome}</td>
                     <td>${cliente.documento || "-"}</td>
                     <td>${cliente.regime || "-"}</td>
+
                     <td>
                         <div class="status-botoes">
+
                             <button class="btn-status pendente ${st === 'pendente' ? 'ativo' : ''}" 
-                                onclick="alterarStatusCliente('${cliente._id}', 'Pendente')">Pendente</button>
+                                onclick="alterarStatusCliente('${cliente._id}', 'Pendente')">
+                                Pendente
+                            </button>
+
+                            <button class="btn-status enviado ${st === 'enviado' ? 'ativo' : ''}" 
+                                onclick="alterarStatusCliente('${cliente._id}', 'Enviado')">
+                                Enviado
+                            </button>
+
                             <button class="btn-status gerado ${st === 'gerado' ? 'ativo' : ''}" 
-                                onclick="alterarStatusCliente('${cliente._id}', 'Gerado')">Gerado</button>
+                                onclick="alterarStatusCliente('${cliente._id}', 'Gerado')">
+                                Gerado
+                            </button>
+
                             <button class="btn-status erro ${st === 'erro' ? 'ativo' : ''}" 
-                                onclick="alterarStatusCliente('${cliente._id}', 'Erro')">Erro</button>
+                                onclick="alterarStatusCliente('${cliente._id}', 'Erro')">
+                                Erro
+                            </button>
+
                         </div>
                     </td>
+
                     <td>
-                        <button class="btn-primary" style="background-color: #f59e0b; margin-right: 5px;" 
-                            onclick="abrirModalEdicao('${cliente._id}', '${cliente.nome}', '${cliente.documento || ""}', '${cliente.email || ""}', '${cliente.telefone || ""}', '${cliente.regime || ""}')">Editar</button>
-                        <button class="btn-danger" onclick="excluirCliente('${cliente._id}')">Excluir</button>
+
+                        <button class="btn-primary" 
+                        style="background-color: #f59e0b; margin-right:5px;"
+                        onclick="abrirModalEdicao(
+                            '${cliente._id}',
+                            '${cliente.nome}',
+                            '${cliente.documento || ""}',
+                            '${cliente.email || ""}',
+                            '${cliente.telefone || ""}',
+                            '${cliente.regime || ""}'
+                        )">
+                        Editar
+                        </button>
+
+                        <button class="btn-danger" onclick="excluirCliente('${cliente._id}')">
+                        Excluir
+                        </button>
+
                     </td>
+
                 </tr>
             `;
         });
@@ -112,12 +148,14 @@ async function listarClientes() {
 // ✏️ ABRIR MODAL EDIÇÃO
 // =======================================
 function abrirModalEdicao(id, nome, documento, email, telefone, regime) {
+
     document.getElementById("editId").value = id;
     document.getElementById("editNome").value = nome;
     document.getElementById("editDocumento").value = documento;
     document.getElementById("editEmail").value = email;
     document.getElementById("editTelefone").value = telefone;
     document.getElementById("editRegime").value = regime;
+
     document.getElementById("modalEdicao").style.display = "flex";
 }
 
@@ -125,28 +163,44 @@ function abrirModalEdicao(id, nome, documento, email, telefone, regime) {
 // 💾 SALVAR EDIÇÃO
 // =======================================
 async function salvarEdicao() {
+
     const id = document.getElementById("editId").value;
+
     const dadosAtualizados = {
+
         nome: document.getElementById("editNome").value,
         documento: document.getElementById("editDocumento").value,
         email: document.getElementById("editEmail").value,
         telefone: document.getElementById("editTelefone").value,
         regime: document.getElementById("editRegime").value
+
     };
 
     try {
+
         await fetch(`/api/clientes/${id}`, {
+
             method: "PUT",
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + getToken() },
+
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + getToken()
+            },
+
             body: JSON.stringify(dadosAtualizados)
+
         });
 
         alert("Cliente atualizado!");
+
         fecharModal();
+
         listarClientes();
 
     } catch (error) {
+
         console.error("Erro ao atualizar:", error);
+
     }
 }
 
@@ -154,26 +208,46 @@ async function salvarEdicao() {
 // 🔄 ALTERAR STATUS
 // =======================================
 async function alterarStatusCliente(id, novoStatus) {
+
     await fetch(`/api/clientes/${id}`, {
+
         method: "PUT",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + getToken() },
+
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + getToken()
+        },
+
         body: JSON.stringify({ status: novoStatus })
+
     });
+
     listarClientes();
 }
 
 // =======================================
-// 🗑 EXCLUIR
+// 🗑 EXCLUIR CLIENTE
 // =======================================
 async function excluirCliente(id) {
+
     if (!confirm("Deseja excluir este cliente?")) return;
-    await fetch(`/api/clientes/${id}`, { method: "DELETE", headers: { "Authorization": "Bearer " + getToken() } });
+
+    await fetch(`/api/clientes/${id}`, {
+
+        method: "DELETE",
+
+        headers: { "Authorization": "Bearer " + getToken() }
+
+    });
+
     listarClientes();
 }
 
 // =======================================
-// FECHAR MODAL
+// ❌ FECHAR MODAL
 // =======================================
 function fecharModal() {
+
     document.getElementById("modalEdicao").style.display = "none";
+
 }

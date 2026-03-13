@@ -25,9 +25,9 @@
     </div>
 
     <div class="cards">
-      <div class="card"><h3>Total Clientes</h3><p id="totalClientes">0</p></div>
-      <div class="card"><h3>Gerados</h3><p id="gerados">0</p></div>
       <div class="card"><h3>Pendentes</h3><p id="pendentes">0</p></div>
+      <div class="card"><h3>Enviados</h3><p id="enviados">0</p></div>
+      <div class="card"><h3>Gerados</h3><p id="gerados">0</p></div>
       <div class="card"><h3>Erros</h3><p id="erros">0</p></div>
     </div>
 
@@ -58,7 +58,6 @@
       sidebar.classList.toggle('active');
     }
 
-    // Fecha o menu ao clicar em um link
     document.querySelectorAll('.sidebar a').forEach(link => {
       link.addEventListener('click', () => {
         document.getElementById('sidebar').classList.remove('active');
