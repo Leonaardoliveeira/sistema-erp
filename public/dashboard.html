@@ -25,10 +25,25 @@
     </div>
 
     <div class="cards">
-      <div class="card"><h3>Pendentes</h3><p id="pendentes">0</p></div>
-      <div class="card"><h3>Enviados</h3><p id="enviados">0</p></div>
-      <div class="card"><h3>Gerados</h3><p id="gerados">0</p></div>
-      <div class="card"><h3>Erros</h3><p id="erros">0</p></div>
+      <div class="card" onclick="filtrarPorStatus('Pendente')">
+        <h3>Pendentes</h3>
+        <p id="pendentes">0</p>
+      </div>
+
+      <div class="card" onclick="filtrarPorStatus('Enviado')">
+        <h3>Enviados</h3>
+        <p id="enviados">0</p>
+      </div>
+
+      <div class="card" onclick="filtrarPorStatus('Gerado')">
+        <h3>Gerados</h3>
+        <p id="gerados">0</p>
+      </div>
+
+      <div class="card" onclick="filtrarPorStatus('Erro')">
+        <h3>Erros</h3>
+        <p id="erros">0</p>
+      </div>
     </div>
 
     <div class="form-box" style="margin-top:30px;">

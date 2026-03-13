@@ -6,6 +6,11 @@ function getToken() {
 }
 
 // =======================================
+// 🎯 CONTROLE DE FILTRO DO DASHBOARD
+// =======================================
+let filtroAtivo = null;
+
+// =======================================
 // 📡 BUSCAR CLIENTES DO BACKEND
 // =======================================
 async function buscarClientes() {
@@ -39,8 +44,30 @@ async function carregarDashboard() {
 // 📋 LISTAGEM PADRÃO
 // =======================================
 async function listarClientesDashboard() {
+    filtroAtivo = null;
     const clientes = await buscarClientes();
     renderizarTabelaDashboard(clientes);
+}
+
+// =======================================
+// 🎯 FILTRO AO CLICAR NOS CARDS
+// =======================================
+async function filtrarPorStatus(status) {
+
+    const clientes = await buscarClientes();
+
+    // se clicar no mesmo card remove filtro
+    if (filtroAtivo === status) {
+        filtroAtivo = null;
+        renderizarTabelaDashboard(clientes);
+        return;
+    }
+
+    filtroAtivo = status;
+
+    const filtrados = clientes.filter(c => c.status === status);
+
+    renderizarTabelaDashboard(filtrados);
 }
 
 // =======================================
@@ -50,7 +77,14 @@ async function filtrarClientes() {
     const termo = document.getElementById("campoPesquisa").value.toLowerCase();
     const clientes = await buscarClientes();
 
-    const filtrados = clientes.filter(c =>
+    let lista = clientes;
+
+    // aplica filtro de status se existir
+    if (filtroAtivo) {
+        lista = lista.filter(c => c.status === filtroAtivo);
+    }
+
+    const filtrados = lista.filter(c =>
         (c.nome && c.nome.toLowerCase().includes(termo)) ||
         (c.documento && c.documento.toLowerCase().includes(termo))
     );
@@ -73,7 +107,9 @@ function renderizarTabelaDashboard(lista) {
     }
 
     lista.forEach(cliente => {
+
         const stClasse = cliente.status ? cliente.status.toLowerCase() : "pendente";
+
         tabela.innerHTML += `
             <tr>
                 <td>${cliente.nome}</td>
