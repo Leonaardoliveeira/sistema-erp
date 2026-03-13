@@ -156,10 +156,10 @@ body {
   cursor: pointer;
 }
 
-.card:hover {
+/*.card:hover {
   transform: translateY(-3px);
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
-}
+}*/
 
 .card h3 {
   font-size: 14px;
@@ -204,6 +204,27 @@ body {
 /* Gerados */
 .card:nth-child(4) {
   border-color: #ef4444;
+}
+
+.card.active {
+  transform: translateY(-3px);
+}
+
+/* Cores da sombra quando ativo */
+.card:nth-child(1).active {
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.7);
+}
+
+.card:nth-child(2).active {
+  box-shadow: 0 0 15px rgba(79, 70, 229, 0.7);
+}
+
+.card:nth-child(3).active {
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.7);
+}
+
+.card:nth-child(4).active {
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.7);
 }
 
 /* Erros */
