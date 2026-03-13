@@ -112,6 +112,13 @@ async function listarClientes() {
                             </button>
 
                         </div>
+
+                        <select class="status-select" onchange="alterarStatus(${cliente.id}, this.value)">
+<option value="pendente">Pendente</option>
+<option value="enviado">Enviado</option>
+<option value="gerado">Gerado</option>
+<option value="erro">Erro</option>
+</select>
                     </td>
 
                     <td>

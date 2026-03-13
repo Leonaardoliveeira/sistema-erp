@@ -576,3 +576,27 @@ td {
   }
 
 }
+
+/* ===== STATUS RESPONSIVO ===== */
+
+.status-select{
+  display:none;
+  padding:6px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
+  font-size:12px;
+}
+
+/* celular */
+@media (max-width:768px){
+
+  .status-botoes{
+    display:none;
+  }
+
+  .status-select{
+    display:block;
+    width:100%;
+  }
+
+}
