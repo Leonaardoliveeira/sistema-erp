@@ -396,7 +396,7 @@ button {
 }
 
 table {
-  min-width: 600px;
+  /*min-width: 600px;*/
   /* Obriga a tabela a manter um tamanho mínimo para não esmagar o texto */
   width: 100%;
 }
@@ -577,28 +577,28 @@ td {
 
 }
 
-/*Tabelas responsivas */
-/* ===== AJUSTE FINAL PARA TABELA MOBILE ===== */
-
 @media (max-width:768px){
 
   .table-container{
     width:100%;
     overflow-x:auto;
-    -webkit-overflow-scrolling:touch;
+    -webkit-overflow-scrolling: touch;
   }
 
   table{
-    min-width:500px; /* mantém organização sem quebrar layout */
+    width:100%;
+    min-width:unset !important;
+    table-layout: auto;
   }
 
   th, td{
-    padding:10px;
-    font-size:13px;
-    white-space:nowrap;
+    padding:8px;
+    font-size:12px;
+    white-space:normal;
+    word-break:break-word;
   }
 
-  /* coluna ações não quebrar botões */
+  /* botões não quebram */
   td:last-child{
     white-space:nowrap;
   }
