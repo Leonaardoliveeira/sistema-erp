@@ -429,3 +429,64 @@ margin-top:5px;
 }
 
 }
+
+/* ================= TABELA MOBILE PROFISSIONAL ================= */
+
+@media (max-width:768px){
+
+  .table-container{
+    overflow:visible;
+    box-shadow:none;
+    background:transparent;
+  }
+
+  table{
+    min-width:100%;
+    border-collapse:separate;
+    border-spacing:0 12px;
+    background:transparent;
+  }
+
+  thead{
+    display:none;
+  }
+
+  tbody tr{
+    display:block;
+    background:white;
+    border-radius:12px;
+    padding:15px;
+    box-shadow:0 6px 16px rgba(0,0,0,0.08);
+    animation:fadePage .3s ease;
+  }
+
+  tbody td{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:8px 0;
+    border:none;
+    font-size:14px;
+  }
+
+  tbody td::before{
+    content:attr(data-label);
+    font-weight:600;
+    color:#6b7280;
+    font-size:12px;
+    text-transform:uppercase;
+  }
+
+  tbody td:last-child{
+    margin-top:10px;
+  }
+
+  .status-botoes{
+    justify-content:flex-end;
+  }
+
+  button{
+    width:auto;
+  }
+
+}
