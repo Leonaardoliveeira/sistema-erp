@@ -307,6 +307,27 @@ tr:hover {
   color: #fff;
 }
 
+/*Cores Select*/
+.status-select.pendente.ativo {
+  background: #f59e0b;
+  color: white;
+}
+
+.status-select.gerado.ativo {
+  background: #10b981;
+  color: white;
+}
+
+.status-select.erro.ativo {
+  background: #ef4444;
+  color: white;
+}
+
+.status-select.enviado.ativo {
+  background: #3b82f6;
+  color: #fff;
+}
+
 /* ================= FORMULÁRIOS E BOTÕES (RESTAURADOS) ================= */
 .form-box {
   background: #ffffff;
