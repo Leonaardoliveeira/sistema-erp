@@ -158,7 +158,6 @@ body {
 
 .card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
 }
 
 .card h3 {
@@ -174,58 +173,42 @@ body {
   color: #111827;
 }
 
-.card h3 {
-  font-size: 14px;
-  color: #6b7280;
-  text-transform: uppercase;
-}
-
-.card p {
-  font-size: 32px;
-  font-weight: bold;
-  margin-top: 10px;
-  color: #111827;
-}
-
+/* Card 1 */
 .card:nth-child(1) {
   border-color: #f59e0b;
 }
 
-/* Pendentes */
+.card:nth-child(1):hover {
+  box-shadow: 0 14px 28px rgba(245, 158, 11, 0.35);
+}
+
+/* Card 2 - Pendentes */
 .card:nth-child(2) {
   border-color: #4f46e5;
 }
 
-/* Enviados */
+.card:nth-child(2):hover {
+  box-shadow: 0 14px 28px rgba(79, 70, 229, 0.35);
+}
+
+/* Card 3 - Enviados */
 .card:nth-child(3) {
   border-color: #10b981;
 }
 
-/* Gerados */
+.card:nth-child(3):hover {
+  box-shadow: 0 14px 28px rgba(16, 185, 129, 0.35);
+}
+
+/* Card 4 - Gerados */
 .card:nth-child(4) {
   border-color: #ef4444;
 }
 
-.card.active {
-  transform: translateY(-3px);
+.card:nth-child(4):hover {
+  box-shadow: 0 14px 28px rgba(239, 68, 68, 0.35);
 }
 
-/* Cores da sombra quando ativo */
-.card:nth-child(1).active {
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.7);
-}
-
-.card:nth-child(2).active {
-  box-shadow: 0 0 15px rgba(79, 70, 229, 0.7);
-}
-
-.card:nth-child(3).active {
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.7);
-}
-
-.card:nth-child(4).active {
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.7);
-}
 
 /* Erros */
 /* ================= TABELAS ================= */
