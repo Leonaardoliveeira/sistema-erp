@@ -200,7 +200,7 @@ tr:hover { background: #f9fafb; }
 .btn-status.pendente.ativo { background: #f59e0b; color: white; }
 .btn-status.gerado.ativo   { background: #10b981; color: white; }
 .btn-status.erro.ativo     { background: #ef4444; color: white; }
-.btn-status.enviado        { background: #3b82f6; color: #fff;
+.btn-status.enviado.ativo  { background: #3b82f6; color: #fff;
 }
 
 /* ================= FORMULÁRIOS E BOTÕES (RESTAURADOS) ================= */
