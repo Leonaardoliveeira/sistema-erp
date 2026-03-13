@@ -576,31 +576,3 @@ td {
   }
 
 }
-
-@media (max-width:768px){
-
-  .table-container{
-    width:100%;
-    overflow-x:auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  table{
-    width:100%;
-    min-width:unset !important;
-    table-layout: auto;
-  }
-
-  th, td{
-    padding:8px;
-    font-size:12px;
-    white-space:normal;
-    word-break:break-word;
-  }
-
-  /* botões não quebram */
-  td:last-child{
-    white-space:nowrap;
-  }
-
-}
