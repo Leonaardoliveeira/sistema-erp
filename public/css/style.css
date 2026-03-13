@@ -563,3 +563,12 @@ td {
     margin-top: 5px;
   }
 }
+
+/*Card Mobile */
+@media (max-width: 768px) {
+
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+}
