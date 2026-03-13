@@ -156,10 +156,10 @@ body {
   cursor: pointer;
 }
 
-/*.card:hover {
+.card:hover {
   transform: translateY(-3px);
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
-}*/
+}
 
 .card h3 {
   font-size: 14px;
