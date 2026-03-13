@@ -112,12 +112,16 @@ async function listarClientes() {
                             </button>
 
                         </div>
+<select class="status-select" onchange="alterarStatusCliente('${cliente._id}', this.value)">
 
-                        <select class="status-select" onchange="alterarStatus(${cliente.id}, this.value)">
-<option value="pendente">Pendente</option>
-<option value="enviado">Enviado</option>
-<option value="gerado">Gerado</option>
-<option value="erro">Erro</option>
+<option value="Pendente" ${st === 'pendente' ? 'selected' : ''}>Pendente</option>
+
+<option value="Enviado" ${st === 'enviado' ? 'selected' : ''}>Enviado</option>
+
+<option value="Gerado" ${st === 'gerado' ? 'selected' : ''}>Gerado</option>
+
+<option value="Erro" ${st === 'erro' ? 'selected' : ''}>Erro</option>
+
 </select>
                     </td>
 
