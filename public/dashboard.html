@@ -88,15 +88,23 @@
 
     cards.forEach(function(card){
 
-      card.addEventListener("click", function(){
+      card.addEventListener("click", function(e){
 
-        // se já estiver ativo, desativa
+        // se já estiver ativo
         if(this.classList.contains("ativo")){
+
           this.classList.remove("ativo");
+
+          // limpa o filtro mostrando tudo novamente
+          if(typeof carregarDashboard === "function"){
+            carregarDashboard();
+          }
+
+          e.stopImmediatePropagation();
           return;
         }
 
-        // remove ativo de todos
+        // remove ativo dos outros
         cards.forEach(function(c){
           c.classList.remove("ativo");
         });
