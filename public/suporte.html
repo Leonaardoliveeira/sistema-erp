@@ -2,6 +2,7 @@
 <html lang="pt-br">
 
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -17,6 +18,7 @@
 <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
 
 <!-- SIDEBAR -->
+
 <div class="sidebar" id="sidebar">
 
 <h2>Franquia ERP</h2>
@@ -31,13 +33,15 @@
 </div>
 
 <!-- CONTEÚDO -->
+
 <div class="main">
 
 <div class="topbar">
-<h2>Suporte Remoto</h2>
+<h2>Suporte Remoto - AnyDesk</h2>
 </div>
 
 <!-- BUSCA -->
+
 <div class="suporte-search">
 
 <input
@@ -49,7 +53,8 @@ onkeyup="filtrarClientes()"
 
 </div>
 
-<!-- LISTA -->
+<!-- LISTA CLIENTES -->
+
 <div id="listaClientes" class="clientes-grid"></div>
 
 </div>
@@ -57,14 +62,20 @@ onkeyup="filtrarClientes()"
 <script>
 
 function toggleSidebar(){
-document.getElementById("sidebar").classList.toggle("active");
+
+document.getElementById("sidebar").classList.toggle("active")
+
 }
 
 document.querySelectorAll('.sidebar a').forEach(link=>{
+
 link.addEventListener('click',()=>{
-document.getElementById('sidebar').classList.remove('active');
-});
-});
+
+document.getElementById('sidebar').classList.remove('active')
+
+})
+
+})
 
 </script>
 
