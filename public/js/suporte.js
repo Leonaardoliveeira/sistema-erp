@@ -1,26 +1,39 @@
-const clientes = [
-
-{
-nome:"Empresa Alpha",
-cnpj:"12.345.678/0001-00",
-anydesk:"123456789"
-},
-
-{
-nome:"Empresa Beta",
-cnpj:"98.765.432/0001-10",
-anydesk:"987654321"
+// =======================================
+// 🔐 PEGAR TOKEN
+// =======================================
+function getToken() {
+    return localStorage.getItem("token");
 }
 
-]
 
-function carregarClientes(){
+// =======================================
+// 📡 CARREGAR CLIENTES DO SERVIDOR
+// =======================================
+async function carregarClientes(){
 
 const lista = document.getElementById("listaClientes")
 
 lista.innerHTML=""
 
+try{
+
+const response = await fetch("/api/clientes",{
+headers:{
+"Authorization":"Bearer "+getToken()
+}
+})
+
+const clientes = await response.json()
+
+
 clientes.forEach(cliente=>{
+
+// se não tiver acesso remoto cadastrado
+if(!cliente.acessosRemotos || cliente.acessosRemotos.length === 0){
+return
+}
+
+cliente.acessosRemotos.forEach(acesso=>{
 
 lista.innerHTML+=`
 
@@ -28,25 +41,25 @@ lista.innerHTML+=`
 
 <div class="cliente-nome">${cliente.nome}</div>
 
-<div class="cliente-cnpj">${cliente.cnpj}</div>
+<div class="cliente-cnpj">${cliente.documento || "-"}</div>
 
 <div class="anydesk-id">
 
-AnyDesk ID: ${cliente.anydesk}
+${acesso.nome} - AnyDesk ID: ${acesso.anydesk}
 
 </div>
 
 <div class="acoes">
 
 <button class="btn-anydesk"
-onclick="abrirAnyDesk('${cliente.anydesk}')">
+onclick="abrirAnyDesk('${acesso.anydesk}')">
 
 Abrir AnyDesk
 
 </button>
 
 <button class="btn-copiar"
-onclick="copiar('${cliente.anydesk}')">
+onclick="copiar('${acesso.anydesk}')">
 
 Copiar
 
@@ -60,14 +73,30 @@ Copiar
 
 })
 
+})
+
+}catch(error){
+
+console.error("Erro ao carregar clientes:",error)
+
 }
 
+}
+
+
+// =======================================
+// 🖥 ABRIR ANYDESK
+// =======================================
 function abrirAnyDesk(id){
 
 window.location.href = "anydesk:"+id
 
 }
 
+
+// =======================================
+// 📋 COPIAR ID
+// =======================================
 function copiar(texto){
 
 navigator.clipboard.writeText(texto)
@@ -76,6 +105,10 @@ alert("ID copiado!")
 
 }
 
+
+// =======================================
+// 🔎 FILTRAR CLIENTES
+// =======================================
 function filtrarClientes(){
 
 let busca = document.getElementById("buscar").value.toLowerCase()
@@ -91,3 +124,9 @@ card.style.display = nome.includes(busca) ? "flex" : "none"
 })
 
 }
+
+
+// =======================================
+// 🚀 CARREGAR AUTOMATICO
+// =======================================
+document.addEventListener("DOMContentLoaded",carregarClientes)
