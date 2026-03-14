@@ -1,10 +1,9 @@
 // =======================================
 // 🔐 PEGAR TOKEN
 // =======================================
-function getToken() {
-    return localStorage.getItem("token");
+function getToken(){
+    return localStorage.getItem("token")
 }
-
 
 // =======================================
 // 📡 CARREGAR CLIENTES
@@ -27,8 +26,6 @@ headers:{
 
 const clientes = await response.json()
 
-console.log("Clientes carregados:",clientes)
-
 clientes.forEach(cliente=>{
 
 if(!cliente.acessosRemotos) return
@@ -37,18 +34,20 @@ cliente.acessosRemotos.forEach(acesso=>{
 
 if(!acesso.anydesk) return
 
-lista.innerHTML+=`
+lista.innerHTML += `
 
 <div class="cliente-card">
 
-<div class="cliente-nome">${cliente.nome}</div>
+<div class="cliente-nome">
+${cliente.nome}
+</div>
 
-<div class="cliente-cnpj">${cliente.documento || "-"}</div>
+<div class="cliente-cnpj">
+${cliente.documento || "-"}
+</div>
 
 <div class="anydesk-id">
-
 ${acesso.nome} - AnyDesk ID: ${acesso.anydesk}
-
 </div>
 
 <div class="acoes">
@@ -81,16 +80,14 @@ console.error("Erro ao carregar clientes:",error)
 
 }
 
-
 // =======================================
 // 🖥 ABRIR ANYDESK
 // =======================================
 function abrirAnyDesk(id){
 
-window.location.href = "anydesk:"+id
+window.location.href="anydesk:"+id
 
 }
-
 
 // =======================================
 // 📋 COPIAR ID
@@ -98,14 +95,12 @@ window.location.href = "anydesk:"+id
 function copiar(texto){
 
 navigator.clipboard.writeText(texto)
-
 alert("ID copiado!")
 
 }
 
-
 // =======================================
-// 🔎 FILTRAR CLIENTES
+// 🔎 FILTRAR
 // =======================================
 function filtrarClientes(){
 
@@ -123,12 +118,7 @@ card.style.display = nome.includes(busca) ? "flex" : "none"
 
 }
 
-
 // =======================================
 // 🚀 INICIAR
 // =======================================
-document.addEventListener("DOMContentLoaded",function(){
-
-carregarClientes()
-
-})
+document.addEventListener("DOMContentLoaded",carregarClientes)
