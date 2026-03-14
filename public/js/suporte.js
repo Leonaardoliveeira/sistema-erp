@@ -2,12 +2,9 @@
 // 🔐 PEGAR TOKEN
 // =======================================
 function getToken(){
-    return localStorage.getItem("token")
+return localStorage.getItem("token")
 }
 
-// =======================================
-// 📡 CARREGAR CLIENTES
-// =======================================
 async function carregarClientes(){
 
 const lista = document.getElementById("listaClientes")
@@ -26,28 +23,46 @@ headers:{
 
 const clientes = await response.json()
 
+console.log("Clientes:",clientes)
+
 clientes.forEach(cliente=>{
 
-if(!cliente.acessosRemotos) return
-
-cliente.acessosRemotos.forEach(acesso=>{
-
-if(!acesso.anydesk) return
+// se não tiver acesso remoto
+if(!cliente.acessosRemotos || cliente.acessosRemotos.length === 0){
 
 lista.innerHTML += `
 
 <div class="cliente-card">
 
-<div class="cliente-nome">
-${cliente.nome}
-</div>
+<div class="cliente-nome">${cliente.nome}</div>
 
-<div class="cliente-cnpj">
-${cliente.documento || "-"}
-</div>
+<div class="cliente-cnpj">${cliente.documento || "-"}</div>
 
 <div class="anydesk-id">
+Nenhum acesso remoto cadastrado
+</div>
+
+</div>
+
+`
+
+return
+}
+
+cliente.acessosRemotos.forEach(acesso=>{
+
+lista.innerHTML += `
+
+<div class="cliente-card">
+
+<div class="cliente-nome">${cliente.nome}</div>
+
+<div class="cliente-cnpj">${cliente.documento || "-"}</div>
+
+<div class="anydesk-id">
+
 ${acesso.nome} - AnyDesk ID: ${acesso.anydesk}
+
 </div>
 
 <div class="acoes">
@@ -72,36 +87,23 @@ Copiar
 
 })
 
-}catch(error){
+}catch(e){
 
-console.error("Erro ao carregar clientes:",error)
-
-}
+console.error("Erro ao carregar clientes:",e)
 
 }
 
-// =======================================
-// 🖥 ABRIR ANYDESK
-// =======================================
+}
+
 function abrirAnyDesk(id){
-
 window.location.href="anydesk:"+id
-
 }
 
-// =======================================
-// 📋 COPIAR ID
-// =======================================
 function copiar(texto){
-
 navigator.clipboard.writeText(texto)
 alert("ID copiado!")
-
 }
 
-// =======================================
-// 🔎 FILTRAR
-// =======================================
 function filtrarClientes(){
 
 let busca = document.getElementById("buscar").value.toLowerCase()
@@ -117,8 +119,3 @@ card.style.display = nome.includes(busca) ? "flex" : "none"
 })
 
 }
-
-// =======================================
-// 🚀 INICIAR
-// =======================================
-document.addEventListener("DOMContentLoaded",carregarClientes)
