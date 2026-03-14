@@ -1,100 +1,50 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 
 <head>
-<meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Franquia ERP - Acesso Remoto</title>
-  <link rel="stylesheet" href="css/style.css">
-
-<style>
-
-body{
-font-family: Arial;
-background:#f4f6f9;
-padding:20px;
-}
-
-h1{
-margin-bottom:20px;
-}
-
-#buscar{
-width:300px;
-padding:10px;
-margin-bottom:20px;
-border-radius:5px;
-border:1px solid #ccc;
-}
-
-.cliente{
-background:white;
-padding:15px;
-border-radius:8px;
-margin-bottom:15px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-.cliente h3{
-margin:0 0 10px 0;
-}
-
-.acesso{
-display:flex;
-align-items:center;
-justify-content:space-between;
-padding:8px;
-border-bottom:1px solid #eee;
-}
-
-.acesso:last-child{
-border-bottom:none;
-}
-
-button{
-padding:6px 12px;
-border:none;
-border-radius:5px;
-cursor:pointer;
-}
-
-.btnConectar{
-background:#2ecc71;
-color:white;
-}
-
-.btnCopiar{
-background:#3498db;
-color:white;
-margin-left:5px;
-}
-
-</style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Franquia ERP - Acesso Remoto</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body onload="verificarLogin(); listarUsuarios();">
 
-  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
 
-  <div class="sidebar" id="sidebar">
-    <h2>Franquia ERP</h2>
-    <a href="dashboard.html"><i>📊 </i>Dashboard</a>
-    <a href="cadastro.html"><i>✍ </i>Cadastro de Clientes</a>
-    <a href="clientes.html"><i>🤝 </i>Lista de Clientes</a>
-    <a href="usuarios.html" id="menuUsuarios"><i>👨‍💼 </i>Cadastro de Usuários</a>
-    <a href="suporte.html"><i>🆘 </i>Suporte ao cliente</a>
-    <a href="#" onclick="logout()"><i>🔒 </i>Sair</a>
-  </div>
+    <div class="sidebar" id="sidebar">
+        <h2>Franquia ERP</h2>
+        <a href="dashboard.html"><i>📊 </i>Dashboard</a>
+        <a href="cadastro.html"><i>✍ </i>Cadastro de Clientes</a>
+        <a href="clientes.html"><i>🤝 </i>Lista de Clientes</a>
+        <a href="usuarios.html" id="menuUsuarios"><i>👨‍💼 </i>Cadastro de Usuários</a>
+        <a href="suporte.html"><i>🆘 </i>Suporte ao cliente</a>
+        <a href="#" onclick="logout()"><i>🔒 </i>Sair</a>
+    </div>
 
 
-<h1>Suporte Técnico</h1>
+    <h1>Suporte Técnico</h1>
 
-<input type="text" id="buscar" placeholder="Buscar cliente...">
+    <input type="text" id="buscar" placeholder="Buscar cliente...">
 
-<div id="listaClientes"></div>
+    <div id="listaClientes"></div>
+    <script>
+        // Função para abrir/fechar menu no mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
+        }
 
-<script src="js/auth.js"></script>
-<script src="js/suporte.js"></script>
+        // Fecha o menu automaticamente ao clicar em um link no mobile
+        document.querySelectorAll('.sidebar a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.getElementById('sidebar').classList.remove('active');
+            });
+        });
+    </script>
+
+    <script src="js/auth.js"></script>
+    <script src="js/suporte.js"></script>
 
 </body>
 
