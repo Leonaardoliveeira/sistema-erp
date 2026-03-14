@@ -90,10 +90,18 @@
 
       card.addEventListener("click", function(){
 
+        // se já estiver ativo, desativa
+        if(this.classList.contains("ativo")){
+          this.classList.remove("ativo");
+          return;
+        }
+
+        // remove ativo de todos
         cards.forEach(function(c){
           c.classList.remove("ativo");
         });
 
+        // ativa o clicado
         this.classList.add("ativo");
 
       });
