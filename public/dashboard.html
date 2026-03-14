@@ -11,7 +11,7 @@
   <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
 
   <div class="sidebar" id="sidebar">
-    <h2>Franquia ERP</h2>
+    <h2>Franquia Soluções</h2>
     <a href="dashboard.html"><i>📊 </i>Dashboard</a>
     <a href="cadastro.html"><i>✍ </i>Cadastro de Cliente</a>
     <a href="clientes.html"><i>🤝 </i>Lista de Clientes</a>  
@@ -68,17 +68,41 @@
   </div>
 
   <script>
-    function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      sidebar.classList.toggle('active');
-    }
 
-    document.querySelectorAll('.sidebar a').forEach(link => {
-      link.addEventListener('click', () => {
-        document.getElementById('sidebar').classList.remove('active');
-      });
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('active');
+  }
+
+  document.querySelectorAll('.sidebar a').forEach(link => {
+    link.addEventListener('click', () => {
+      document.getElementById('sidebar').classList.remove('active');
     });
-  </script>
+  });
+
+  /* ================= CARDS ATIVOS ================= */
+
+  document.addEventListener("DOMContentLoaded", function () {
+
+    const cards = document.querySelectorAll(".cards .card");
+
+    cards.forEach(function(card){
+
+      card.addEventListener("click", function(){
+
+        cards.forEach(function(c){
+          c.classList.remove("ativo");
+        });
+
+        this.classList.add("ativo");
+
+      });
+
+    });
+
+  });
+
+</script>
 
   <script src="js/auth.js"></script>
   <script src="js/clientes.js"></script>
