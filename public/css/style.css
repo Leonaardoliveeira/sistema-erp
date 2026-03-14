@@ -633,41 +633,43 @@ td {
 }
 
 /* caixa acesso remoto */
+.container-cadastro{
+display:flex;
+gap:30px;
+align-items:flex-start;
+}
+
+.form-box{
+flex:1;
+background:white;
+padding:25px;
+border-radius:12px;
+}
+
 .acesso-remoto{
-  flex:1;
-  min-width:350px;
-  background:white;
-  padding:30px;
-  border-radius:14px;
-  box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);
+flex:1;
+background:white;
+padding:25px;
+border-radius:12px;
 }
 
-.acesso-remoto h3{
-  margin-bottom:20px;
-  color:#111827;
-}
-
-/* linha acesso */
 .acesso{
-  display:flex;
-  gap:10px;
-  margin-bottom:10px;
+display:flex;
+gap:10px;
+margin-bottom:10px;
 }
 
 .acesso input{
-  flex:1;
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #d1d5db;
+flex:1;
+padding:10px;
+border-radius:6px;
+border:1px solid #ddd;
 }
-
 /* responsivo */
 @media(max-width:900px){
-
-  .container-cadastro{
-    flex-direction:column;
-  }
-
+.container-cadastro{
+flex-direction:column;
+}
 }
 
 /* mobile */

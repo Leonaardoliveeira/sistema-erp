@@ -38,6 +38,41 @@ async function salvarCliente() {
     const telefone = document.getElementById("telefone").value;
     const regime = document.getElementById("regime").value;
 
+
+    // =======================================
+    // 🖥 ACESSOS REMOTOS (NOVO)
+    // =======================================
+
+    const acessosRemotos = [
+
+        {
+            nome: document.getElementById("nome1")?.value || "",
+            anydesk: document.getElementById("anydesk1")?.value || ""
+        },
+
+        {
+            nome: document.getElementById("nome2")?.value || "",
+            anydesk: document.getElementById("anydesk2")?.value || ""
+        },
+
+        {
+            nome: document.getElementById("nome3")?.value || "",
+            anydesk: document.getElementById("anydesk3")?.value || ""
+        },
+
+        {
+            nome: document.getElementById("nome4")?.value || "",
+            anydesk: document.getElementById("anydesk4")?.value || ""
+        },
+
+        {
+            nome: document.getElementById("nome5")?.value || "",
+            anydesk: document.getElementById("anydesk5")?.value || ""
+        }
+
+    ].filter(a => a.anydesk !== "");
+
+
     if (!nome) {
         alert("O nome é obrigatório!");
         return;
@@ -54,7 +89,14 @@ async function salvarCliente() {
                 "Authorization": "Bearer " + getToken()
             },
 
-            body: JSON.stringify({ nome, documento, email, telefone, regime })
+            body: JSON.stringify({
+                nome,
+                documento,
+                email,
+                telefone,
+                regime,
+                acessosRemotos // 👈 NOVO CAMPO
+            })
 
         });
 
