@@ -19,7 +19,6 @@ body {
     opacity: 0;
     transform: translateY(8px)
   }
-
   to {
     opacity: 1;
     transform: translateY(0)
@@ -152,7 +151,7 @@ body {
   border-radius: 14px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   border-bottom: 4px solid #e5e7eb;
-  transition: transform .2s ease, box-shadow .2s ease;
+  transition: all .25s ease; /* alteração */
   cursor: pointer;
 }
 
@@ -182,7 +181,7 @@ body {
   box-shadow: 0 14px 28px rgba(245, 158, 11, 0.35);
 }
 
-/* Card 2 - Pendentes */
+/* Card 2 */
 .card:nth-child(2) {
   border-color: #4f46e5;
 }
@@ -191,7 +190,7 @@ body {
   box-shadow: 0 14px 28px rgba(79, 70, 229, 0.35);
 }
 
-/* Card 3 - Enviados */
+/* Card 3 */
 .card:nth-child(3) {
   border-color: #10b981;
 }
@@ -200,7 +199,7 @@ body {
   box-shadow: 0 14px 28px rgba(16, 185, 129, 0.35);
 }
 
-/* Card 4 - Gerados */
+/* Card 4 */
 .card:nth-child(4) {
   border-color: #ef4444;
 }
@@ -209,8 +208,30 @@ body {
   box-shadow: 0 14px 28px rgba(239, 68, 68, 0.35);
 }
 
+/* ================= CARD SELECIONADO ================= */
 
-/* Erros */
+.card.ativo {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 16px 32px rgba(0,0,0,0.18);
+  border-bottom-width:6px;
+}
+
+.card:nth-child(1).ativo{
+  box-shadow: 0 18px 35px rgba(245,158,11,0.45);
+}
+
+.card:nth-child(2).ativo{
+  box-shadow: 0 18px 35px rgba(79,70,229,0.45);
+}
+
+.card:nth-child(3).ativo{
+  box-shadow: 0 18px 35px rgba(16,185,129,0.45);
+}
+
+.card:nth-child(4).ativo{
+  box-shadow: 0 18px 35px rgba(239,68,68,0.45);
+}
+
 /* ================= TABELAS ================= */
 .table-container {
   width: 100%;
