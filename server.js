@@ -46,11 +46,22 @@ const SpedSchema = new mongoose.Schema({
   usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario" }
 });
 
-const AcessoRemotoSchema = new mongoose.Schema({
-  clienteId: { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
-  maquina: String,
-  anydesk: String,
-  observacao: String,
+const ClienteSchema = new mongoose.Schema({
+  nome: { type: String, required: true },
+  documento: String,
+  email: String,
+  telefone: String,
+  regime: String,
+  status: { type: String, default: "Pendente" },
+
+  acessosRemotos: [
+    {
+      nome: String,
+      anydesk: String
+    }
+  ],
+
+  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
   criadoEm: { type: Date, default: Date.now }
 });
 
