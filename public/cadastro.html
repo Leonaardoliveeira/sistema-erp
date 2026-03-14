@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Franquia ERP - Cadastro de Cliente</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body onload="verificarLogin();">
   <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
 
@@ -14,7 +16,7 @@
     <a href="dashboard.html"><i>📊 </i>Dashboard</a>
     <a href="cadastro.html"><i>✍ </i>Cadastro de Clientes</a>
     <a href="clientes.html"><i>🤝 </i>Lista de Clientes</a>
-    <a href="usuarios.html" id="menuUsuarios" style="display:none;"><i>👨‍💼 </i>Cadastro de Usuários</a> 
+    <a href="usuarios.html" id="menuUsuarios" style="display:none;"><i>👨‍💼 </i>Cadastro de Usuários</a>
     <a href="#" onclick="logout()"><i>🔒 </i>Sair</a>
   </div>
 
@@ -23,57 +25,62 @@
       <h2>Novo Cliente</h2>
     </div>
 
-    <div class="form-box" style="background:white; padding:25px; border-radius:12px; max-width:600px;">
-      <h3 style="text-align: center; margin-bottom: 20px;">Cadastro</h3>
-      <input type="text" id="nome" placeholder="Nome" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd;">
-      <input type="text" id="documento" placeholder="CPF/CNPJ" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd;">
-      <input type="email" id="email" placeholder="Email" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd;">
-      <input type="text" id="telefone" placeholder="Telefone" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd;">
+    <div class="container-cadastro">
 
-      <select id="regime" style="width:100%; padding:12px; margin-bottom:18px; border-radius:8px; border:1px solid #ddd;">
-        <option value="">Selecione o Regime</option>
-        <option value="Simples Nacional">Simples Nacional</option>
-        <option value="Lucro Presumido">Lucro Presumido</option>
-        <option value="Lucro Real">Lucro Real</option>
-        <option value="MEI">MEI</option>
-      </select>
+      <!-- CADASTRO DO CLIENTE -->
+      <div class="form-box">
+        <h3 style="text-align: center; margin-bottom: 20px;">Cadastro</h3>
 
-      <button class="btn-primary" style="width:100%; padding:15px; background:#4f46e5; color:white; border:none; border-radius:8px; cursor:pointer;" onclick="salvarCliente()">Salvar Cliente</button>
+        <input type="text" id="nome" placeholder="Nome">
+        <input type="text" id="documento" placeholder="CPF/CNPJ">
+        <input type="email" id="email" placeholder="Email">
+        <input type="text" id="telefone" placeholder="Telefone">
+
+        <select id="regime">
+          <option value="">Selecione o Regime</option>
+          <option value="Simples Nacional">Simples Nacional</option>
+          <option value="Lucro Presumido">Lucro Presumido</option>
+          <option value="Lucro Real">Lucro Real</option>
+          <option value="MEI">MEI</option>
+        </select>
+
+        <button class="btn-primary" onclick="salvarCliente()">Salvar Cliente</button>
+      </div>
+
+      <!-- ACESSO REMOTO -->
+      <div class="acesso-remoto">
+
+        <h3 style="text-align:center;margin-bottom:20px;">Acesso Remoto</h3>
+
+        <div class="acesso">
+          <input id="nome1" placeholder="Nome máquina">
+          <input id="anydesk1" placeholder="ID AnyDesk">
+        </div>
+
+        <div class="acesso">
+          <input id="nome2" placeholder="Nome máquina">
+          <input id="anydesk2" placeholder="ID AnyDesk">
+        </div>
+
+        <div class="acesso">
+          <input id="nome3" placeholder="Nome máquina">
+          <input id="anydesk3" placeholder="ID AnyDesk">
+        </div>
+
+        <div class="acesso">
+          <input id="nome4" placeholder="Nome máquina">
+          <input id="anydesk4" placeholder="ID AnyDesk">
+        </div>
+
+        <div class="acesso">
+          <input id="nome5" placeholder="Nome máquina">
+          <input id="anydesk5" placeholder="ID AnyDesk">
+        </div>
+
+      </div>
+
     </div>
   </div>
-  <div class="acesso-remoto">
-   <h3 style="text-align: center; margin-bottom: 20px;">Acesso Remoto</h3>
-
-<div class="acessos-remotos">
-
-<div class="acesso">
-<input id="nome1" placeholder="Nome máquina (Servidor, Caixa, etc)">
-<input id="anydesk1" placeholder="ID AnyDesk">
-</div>
-
-<div class="acesso">
-<input id="nome2" placeholder="Nome máquina">
-<input id="anydesk2" placeholder="ID AnyDesk">
-</div>
-
-<div class="acesso">
-<input id="nome3" placeholder="Nome máquina">
-<input id="anydesk3" placeholder="ID AnyDesk">
-</div>
-
-<div class="acesso">
-<input id="nome4" placeholder="Nome máquina">
-<input id="anydesk4" placeholder="ID AnyDesk">
-</div>
-
-<div class="acesso">
-<input id="nome5" placeholder="Nome máquina">
-<input id="anydesk5" placeholder="ID AnyDesk">
-</div>
-
-</div>
-  </div>
-
   <script>
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('active');
@@ -82,4 +89,5 @@
   <script src="js/auth.js"></script>
   <script src="js/clientes.js"></script>
 </body>
+
 </html>
