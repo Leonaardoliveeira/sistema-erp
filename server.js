@@ -34,9 +34,24 @@ const ClienteSchema = new mongoose.Schema({
   email: String,
   telefone: String,
   regime: String,
+
+  acessosRemotos: [
+    {
+      nome: String,
+      anydesk: String
+    }
+  ],
+
   status: { type: String, default: "Pendente" },
-  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
+
+  usuarioId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Usuario",
+    required: true
+  },
+
   criadoEm: { type: Date, default: Date.now }
+
 });
 
 const SpedSchema = new mongoose.Schema({
