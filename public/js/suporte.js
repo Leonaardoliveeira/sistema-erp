@@ -20,13 +20,21 @@ headers:{
 
 const clientes = await response.json()
 
+console.log("CLIENTES RECEBIDOS:", clientes)
+
 clientes.forEach(cliente=>{
 
-if(!cliente.acessosRemotos) return
+// verifica se tem acessos
+if(!cliente.acessosRemotos || cliente.acessosRemotos.length === 0){
+return
+}
 
 cliente.acessosRemotos.forEach(acesso=>{
 
-if(!acesso.anydesk) return
+// ignora acessos vazios
+if(!acesso.anydesk || acesso.anydesk.trim() === ""){
+return
+}
 
 lista.innerHTML += `
 
@@ -41,7 +49,7 @@ ${cliente.documento || "-"}
 </div>
 
 <div class="anydesk-id">
-${acesso.nome} - AnyDesk: ${acesso.anydesk}
+${acesso.nome || "Computador"} - AnyDesk: ${acesso.anydesk}
 </div>
 
 <div class="acoes">
