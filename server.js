@@ -46,9 +46,20 @@ const SpedSchema = new mongoose.Schema({
   usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario" }
 });
 
+const AcessoRemotoSchema = new mongoose.Schema({
+  clienteId: { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
+  maquina: String,
+  anydesk: String,
+  observacao: String,
+  criadoEm: { type: Date, default: Date.now }
+});
+
+
 const Usuario = mongoose.model("Usuario", UsuarioSchema);
 const Cliente = mongoose.model("Cliente", ClienteSchema);
 const Sped = mongoose.model("Sped", SpedSchema);
+const AcessoRemoto = mongoose.model("AcessoRemoto", AcessoRemotoSchema);
+
 
 // --------------------
 // MIDDLEWARES
@@ -133,7 +144,7 @@ app.delete("/api/clientes/:id", verificarToken, async (req, res) => {
 });
 
 // --------------------
-// SPED
+// ARQUIVOS SPED
 // --------------------
 app.get("/api/sped/:mes", verificarToken, async (req, res) => {
   try {
@@ -210,6 +221,32 @@ app.delete("/api/usuarios/:id", verificarToken, verificarAdmin, async (req, res)
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
+});
+
+
+// ACESSO REMOTO
+app.post("/api/acessos", verificarToken, async (req, res) => {
+  try {
+    const acesso = new AcessoRemoto(req.body);
+    await acesso.save();
+    res.json(acesso);
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
+app.get("/api/acessos", verificarToken, async (req, res) => {
+  try {
+    const acessos = await AcessoRemoto.find().populate("clienteId");
+    res.json(acessos);
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
+app.delete("/api/acessos/:id", verificarToken, async (req, res) => {
+  await AcessoRemoto.findByIdAndDelete(req.params.id);
+  res.json({ ok: true });
 });
 
 // --------------------
