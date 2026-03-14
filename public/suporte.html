@@ -3,7 +3,9 @@
 
 <head>
 <meta charset="UTF-8">
-<title>Suporte Técnico</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Franquia ERP - Acesso Remoto</title>
+  <link rel="stylesheet" href="css/style.css">
 
 <style>
 
@@ -70,8 +72,20 @@ margin-left:5px;
 </style>
 
 </head>
+<body onload="verificarLogin(); listarUsuarios();">
 
-<body>
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+  <div class="sidebar" id="sidebar">
+    <h2>Franquia ERP</h2>
+    <a href="dashboard.html"><i>📊 </i>Dashboard</a>
+    <a href="cadastro.html"><i>✍ </i>Cadastro de Clientes</a>
+    <a href="clientes.html"><i>🤝 </i>Lista de Clientes</a>
+    <a href="usuarios.html" id="menuUsuarios"><i>👨‍💼 </i>Cadastro de Usuários</a>
+    <a href="suporte.html"><i>🆘 </i>Suporte ao cliente</a>
+    <a href="#" onclick="logout()"><i>🔒 </i>Sair</a>
+  </div>
+
 
 <h1>Suporte Técnico</h1>
 
@@ -79,6 +93,7 @@ margin-left:5px;
 
 <div id="listaClientes"></div>
 
+<script src="js/auth.js"></script>
 <script src="js/suporte.js"></script>
 
 </body>
