@@ -661,88 +661,6 @@ td {
   border:1px solid #d1d5db;
 }
 
-
-/* =========================================
-   SUPORTE / ACESSO REMOTO
-========================================= */
-
-.suporte-container{
-  margin-top:20px;
-}
-
-.search-box{
-  background:#fff;
-  padding:20px;
-  border-radius:12px;
-  margin-bottom:20px;
-  box-shadow:0 4px 6px rgba(0,0,0,0.05);
-  max-width:500px;
-}
-
-.search-box label{
-  font-size:14px;
-  font-weight:600;
-  color:#374151;
-  display:block;
-  margin-bottom:6px;
-}
-
-.search-box input{
-  width:100%;
-  padding:12px;
-  border-radius:8px;
-  border:1px solid #d1d5db;
-}
-
-.clientes-container{
-  margin-top:20px;
-}
-
-/* lista de clientes */
-
-.cliente-card{
-  background:#fff;
-  padding:18px;
-  border-radius:12px;
-  margin-bottom:10px;
-
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-
-  box-shadow:0 3px 6px rgba(0,0,0,0.05);
-
-  transition:.2s;
-}
-
-.cliente-card:hover{
-  transform:translateY(-2px);
-  box-shadow:0 8px 18px rgba(0,0,0,0.08);
-}
-
-.cliente-info{
-  display:flex;
-  flex-direction:column;
-}
-
-.cliente-nome{
-  font-weight:600;
-  font-size:15px;
-  color:#111827;
-}
-
-.cliente-cnpj{
-  font-size:13px;
-  color:#6b7280;
-}
-
-.acoes-remoto{
-  display:flex;
-  gap:8px;
-}
-
-
-
 /* responsivo */
 @media(max-width:900px){
 
@@ -769,25 +687,6 @@ td {
 
   .cards {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-}
-
-/* ACESSO REMOTO*/
-@media(max-width:768px){
-
-  .cliente-card{
-    flex-direction:column;
-    align-items:flex-start;
-    gap:10px;
-  }
-
-  .acoes-remoto{
-    width:100%;
-  }
-
-  .acoes-remoto button{
-    flex:1;
   }
 
 }

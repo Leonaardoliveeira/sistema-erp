@@ -2,76 +2,74 @@
 <html lang="pt-br">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Franquia ERP - Acesso Remoto</title>
-    <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Franquia ERP - Suporte</title>
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/suporte.css">
+
 </head>
 
-<body onload="verificarLogin(); listarUsuarios();">
+<body onload="verificarLogin(); carregarClientes();">
 
-    <!-- BOTÃO MENU MOBILE -->
-    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+<button class="menu-toggle" onclick="toggleSidebar()">☰</button>
 
-    <!-- SIDEBAR -->
-    <div class="sidebar" id="sidebar">
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
 
-        <h2>Franquia ERP</h2>
+<h2>Franquia ERP</h2>
 
-        <a href="dashboard.html"><i>📊 </i>Dashboard</a>
-        <a href="cadastro.html"><i>✍ </i>Cadastro de Clientes</a>
-        <a href="clientes.html"><i>🤝 </i>Lista de Clientes</a>
-        <a href="usuarios.html" id="menuUsuarios"><i>👨‍💼 </i>Cadastro de Usuários</a>
-        <a href="suporte.html"><i>🆘 </i>Suporte ao Cliente</a>
-        <a href="#" onclick="logout()"><i>🔒 </i>Sair</a>
+<a href="dashboard.html">📊 Dashboard</a>
+<a href="cadastro.html">✍ Cadastro de Clientes</a>
+<a href="clientes.html">🤝 Lista de Clientes</a>
+<a href="usuarios.html" id="menuUsuarios">👨‍💼 Cadastro de Usuários</a>
+<a href="suporte.html">🆘 Suporte ao cliente</a>
+<a href="#" onclick="logout()">🔒 Sair</a>
 
-    </div>
+</div>
 
-    <!-- CONTEÚDO PRINCIPAL -->
-    <div class="main">
+<!-- CONTEÚDO -->
+<div class="main">
 
-        <!-- TOPBAR -->
-        <div class="topbar">
-            <h2>Acesso Remoto</h2>
-        </div>
+<div class="topbar">
+<h2>Suporte Remoto</h2>
+</div>
 
-        <!-- BUSCA -->
-        <div class="form-box">
+<!-- BUSCA -->
+<div class="suporte-search">
 
-            <h3>Acesso remoto</h3>
+<input
+type="text"
+id="buscar"
+placeholder="🔎 Buscar cliente..."
+onkeyup="filtrarClientes()"
+>
 
-            <input 
-                type="text" 
-                id="buscar" 
-                placeholder="Buscar cliente..."
-                autocomplete="off"
-            >
+</div>
 
-        </div>
+<!-- LISTA -->
+<div id="listaClientes" class="clientes-grid"></div>
 
-        <!-- LISTA DE CLIENTES -->
-        <div id="listaClientes"></div>
+</div>
 
-    </div>
+<script>
 
-    <!-- SCRIPT MENU MOBILE -->
-    <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('active');
-        }
+function toggleSidebar(){
+document.getElementById("sidebar").classList.toggle("active");
+}
 
-        document.querySelectorAll('.sidebar a').forEach(link => {
-            link.addEventListener('click', () => {
-                document.getElementById('sidebar').classList.remove('active');
-            });
-        });
-    </script>
+document.querySelectorAll('.sidebar a').forEach(link=>{
+link.addEventListener('click',()=>{
+document.getElementById('sidebar').classList.remove('active');
+});
+});
 
-    <!-- SCRIPTS DO SISTEMA -->
-    <script src="js/auth.js"></script>
-    <script src="js/suporte.js"></script>
+</script>
+
+<script src="js/auth.js"></script>
+<script src="js/suporte.js"></script>
 
 </body>
-
 </html>

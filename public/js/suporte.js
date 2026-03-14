@@ -1,66 +1,57 @@
-const token = localStorage.getItem("token")
+const clientes = [
 
-let clientes = []
+{
+nome:"Empresa Alpha",
+cnpj:"12.345.678/0001-00",
+anydesk:"123456789",
+team:"987654321"
+},
 
-async function carregarClientes(){
-
-const res = await fetch("/api/clientes",{
-headers:{ Authorization:"Bearer "+token }
-})
-
-clientes = await res.json()
-
-mostrar(clientes)
-
+{
+nome:"Empresa Beta",
+cnpj:"98.765.432/0001-10",
+anydesk:"456789123",
+team:"321654987"
 }
 
-function mostrar(lista){
+]
 
-const container = document.getElementById("listaClientes")
+function carregarClientes(){
 
-container.innerHTML=""
+const lista=document.getElementById("listaClientes")
 
-lista.forEach(cliente=>{
+lista.innerHTML=""
 
-let acessosHTML=""
+clientes.forEach(cliente=>{
 
-if(cliente.acessosRemotos){
+lista.innerHTML+=`
 
-cliente.acessosRemotos.forEach(a=>{
+<div class="cliente-card">
 
-acessosHTML += `
-<div class="acesso">
+<div class="cliente-nome">${cliente.nome}</div>
 
-<div>
-<strong>${a.nome}</strong> - ${a.anydesk}
+<div class="cliente-info">CNPJ: ${cliente.cnpj}</div>
+
+<div class="acesso-box">
+
+<div>ID AnyDesk: ${cliente.anydesk}</div>
+<div>ID TeamViewer: ${cliente.team}</div>
+
 </div>
 
-<div>
+<div class="acoes">
 
-<button class="btnConectar" onclick="conectar('${a.anydesk}')">
-Conectar
+<button class="btn-acesso btn-anydesk"
+onclick="copiar('${cliente.anydesk}')">
+Copiar AnyDesk
 </button>
 
-<button class="btnCopiar" onclick="copiar('${a.anydesk}')">
-Copiar
+<button class="btn-acesso btn-team"
+onclick="copiar('${cliente.team}')">
+Copiar TeamViewer
 </button>
 
 </div>
-
-</div>
-`
-
-})
-
-}
-
-container.innerHTML += `
-
-<div class="cliente">
-
-<h3>${cliente.nome}</h3>
-
-${acessosHTML}
 
 </div>
 
@@ -70,30 +61,26 @@ ${acessosHTML}
 
 }
 
-function conectar(id){
+function copiar(texto){
 
-window.location.href="anydesk:"+id
+navigator.clipboard.writeText(texto)
 
-}
-
-function copiar(id){
-
-navigator.clipboard.writeText(id)
-
-alert("ID copiado")
+alert("Copiado!")
 
 }
 
-document.getElementById("buscar").addEventListener("keyup",e=>{
+function filtrarClientes(){
 
-const termo = e.target.value.toLowerCase()
+let busca=document.getElementById("buscar").value.toLowerCase()
 
-const filtrados = clientes.filter(c =>
-c.nome.toLowerCase().includes(termo)
-)
+let cards=document.querySelectorAll(".cliente-card")
 
-mostrar(filtrados)
+cards.forEach(card=>{
+
+let nome=card.querySelector(".cliente-nome").innerText.toLowerCase()
+
+card.style.display=nome.includes(busca) ? "flex":"none"
 
 })
 
-carregarClientes()
+}
