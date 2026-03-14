@@ -7,11 +7,13 @@ function getToken() {
 
 
 // =======================================
-// 📡 CARREGAR CLIENTES DO SERVIDOR
+// 📡 CARREGAR CLIENTES
 // =======================================
 async function carregarClientes(){
 
 const lista = document.getElementById("listaClientes")
+
+if(!lista) return
 
 lista.innerHTML=""
 
@@ -25,15 +27,15 @@ headers:{
 
 const clientes = await response.json()
 
+console.log("Clientes carregados:",clientes)
 
 clientes.forEach(cliente=>{
 
-// se não tiver acesso remoto cadastrado
-if(!cliente.acessosRemotos || cliente.acessosRemotos.length === 0){
-return
-}
+if(!cliente.acessosRemotos) return
 
 cliente.acessosRemotos.forEach(acesso=>{
+
+if(!acesso.anydesk) return
 
 lista.innerHTML+=`
 
@@ -53,16 +55,12 @@ ${acesso.nome} - AnyDesk ID: ${acesso.anydesk}
 
 <button class="btn-anydesk"
 onclick="abrirAnyDesk('${acesso.anydesk}')">
-
 Abrir AnyDesk
-
 </button>
 
 <button class="btn-copiar"
 onclick="copiar('${acesso.anydesk}')">
-
 Copiar
-
 </button>
 
 </div>
@@ -127,6 +125,10 @@ card.style.display = nome.includes(busca) ? "flex" : "none"
 
 
 // =======================================
-// 🚀 CARREGAR AUTOMATICO
+// 🚀 INICIAR
 // =======================================
-document.addEventListener("DOMContentLoaded",carregarClientes)
+document.addEventListener("DOMContentLoaded",function(){
+
+carregarClientes()
+
+})
