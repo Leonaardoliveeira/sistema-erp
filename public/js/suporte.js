@@ -20,33 +20,19 @@ headers:{
 
 const clientes = await response.json()
 
-console.log("CLIENTES RECEBIDOS:", clientes)
-
 clientes.forEach(cliente=>{
 
-// verifica se tem acessos
-if(!cliente.acessosRemotos || cliente.acessosRemotos.length === 0){
-return
-}
+if(!cliente.acessosRemotos || cliente.acessosRemotos.length === 0) return
+
+let acessosHTML = ""
 
 cliente.acessosRemotos.forEach(acesso=>{
 
-// ignora acessos vazios
-if(!acesso.anydesk || acesso.anydesk.trim() === ""){
-return
-}
+if(!acesso.anydesk) return
 
-lista.innerHTML += `
+acessosHTML += `
 
-<div class="cliente-card">
-
-<div class="cliente-nome">
-${cliente.nome}
-</div>
-
-<div class="cliente-cnpj">
-${cliente.documento || "-"}
-</div>
+<div class="acesso-item">
 
 <div class="anydesk-id">
 ${acesso.nome || "Computador"} - AnyDesk: ${acesso.anydesk}
@@ -56,7 +42,7 @@ ${acesso.nome || "Computador"} - AnyDesk: ${acesso.anydesk}
 
 <button class="btn-anydesk"
 onclick="abrirAnyDesk('${acesso.anydesk}')">
-Abrir AnyDesk
+Abrir
 </button>
 
 <button class="btn-copiar"
@@ -72,6 +58,26 @@ Copiar
 
 })
 
+lista.innerHTML += `
+
+<div class="cliente-card">
+
+<div class="cliente-nome">
+${cliente.nome}
+</div>
+
+<div class="cliente-cnpj">
+${cliente.documento || "-"}
+</div>
+
+<div class="acessos-lista">
+${acessosHTML}
+</div>
+
+</div>
+
+`
+
 })
 
 }catch(e){
@@ -83,16 +89,12 @@ console.error("Erro ao carregar clientes:",e)
 }
 
 function abrirAnyDesk(id){
-
 window.location.href="anydesk:"+id
-
 }
 
 function copiar(texto){
-
 navigator.clipboard.writeText(texto)
 alert("ID copiado")
-
 }
 
 function filtrarClientes(){
