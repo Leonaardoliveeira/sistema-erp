@@ -20,15 +20,18 @@ headers:{
 
 const clientes = await response.json()
 
+console.log("CLIENTES:",clientes)
+
 clientes.forEach(cliente=>{
 
-// se não tiver acessos remotos, ignora cliente
-if(!cliente.acessosRemotos || cliente.acessosRemotos.length === 0) return
+// pega acessos
+let acessos = cliente.acessosRemotos
 
-cliente.acessosRemotos.forEach(acesso=>{
+if(!acessos) return
 
-// se não tiver anydesk, ignora
-if(!acesso.anydesk) return
+acessos.forEach(acesso=>{
+
+if(!acesso.anydesk || acesso.anydesk.trim() === "") return
 
 lista.innerHTML += `
 
@@ -77,16 +80,12 @@ console.error("Erro ao carregar clientes:",e)
 }
 
 function abrirAnyDesk(id){
-
 window.location.href="anydesk:"+id
-
 }
 
 function copiar(texto){
-
 navigator.clipboard.writeText(texto)
 alert("ID copiado!")
-
 }
 
 function filtrarClientes(){
