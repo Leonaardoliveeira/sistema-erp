@@ -1,35 +1,76 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cadastro de Cliente</title>
+  <title>Franquia ERP - Clientes</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body onload="verificarLogin()">
+
+<body onload="verificarLogin(); listarClientesCadastro(); mostrarUsuarioLogado();">
+
   <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
 
   <div class="sidebar" id="sidebar">
-    <h2>Franquia - ERP</h2>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="cadastro.html">Cadastro de Clientes</a>
-    <a href="clientes.html">Lista de Clientes</a>
-    <a href="usuarios.html" id="menuUsuarios" style="display:none;">Cadastro de Usuários</a> 
-    <a href="#" onclick="logout()">Sair</a>
+    <h2> Franquia ERP <button onclick="toggleDark()">🌙</button>
+      <div id="usuarioLogado" style="margin-top:10px; font-size:14px;"></div>
+    </h2>
+    <a href="dashboard.html">📊 Dashboard</a>
+    <a href="cadastro.html">✍ Cadastro de Clientes</a>
+    <a href="clientes.html">📝 Gerenciamento Sped</a>
+    <a href="usuarios.html" id="menuUsuarios" style="display:none;">👨‍💼 Cadastro de Usuários</a>
+    <a href="suporte.html">🆘 Suporte ao Cliente</a>
+    <a href="#" onclick="logout()">🔒 Sair</a>
   </div>
 
   <div class="main">
     <div class="topbar">
-      <h2>Novo Cliente</h2>
+      <h2>
+        <button class="btn-primary" onclick="abrirModal()"> ➕ Incluir </button>
+        Gerenciamento de Clientes
+      </h2>
     </div>
 
-    <div class="form-box" style="background:white; padding:25px; border-radius:12px; max-width:600px;">
-      <input type="text" id="nome" placeholder="Nome" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd;">
-      <input type="text" id="documento" placeholder="CPF/CNPJ" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd;">
-      <input type="email" id="email" placeholder="Email" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd;">
-      <input type="text" id="telefone" placeholder="Telefone" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd;">
+    <div class="form-box" style="margin-top:30px;">
+      <h3>Pesquisar Clientes</h3>
+      <input type="text" id="campoPesquisa" placeholder="🔎 Nome, Documento ou Telefone..." onkeyup="filtrarClientes()">
+    </div>
 
-      <select id="regime" style="width:100%; padding:12px; margin-bottom:18px; border-radius:8px; border:1px solid #ddd;">
+    <div class="container-cadastro">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Documento</th>
+              <th>Regime</th>
+              <th>Telefone</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaClientes"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div id="modalEdicao" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close" onclick="fecharModal()">&times;</span>
+
+      <h3 id="tituloModal">Cadastro de Cliente</h3>
+
+      <!-- ID para edição -->
+      <input type="hidden" id="editId">
+
+      <input type="text" id="editNome" placeholder="Nome">
+      <input type="text" id="editDocumento" placeholder="CPF/CNPJ">
+      <input type="email" id="editEmail" placeholder="Email">
+      <input type="text" id="editTelefone" placeholder="Telefone">
+
+      <select id="editRegime">
         <option value="">Selecione o Regime</option>
         <option value="Simples Nacional">Simples Nacional</option>
         <option value="Lucro Presumido">Lucro Presumido</option>
@@ -37,7 +78,41 @@
         <option value="MEI">MEI</option>
       </select>
 
-      <button class="btn-primary" style="width:100%; padding:15px; background:#4f46e5; color:white; border:none; border-radius:8px; cursor:pointer;" onclick="salvarCliente()">Salvar Cliente</button>
+      <div class="acesso-remoto">
+        <h3>Acessos Remotos</h3>
+
+        <div class="acesso">
+          <input id="nome1" placeholder="Servidor / Caixa">
+          <input id="anydesk1" placeholder="ID AnyDesk">
+        </div>
+
+        <div class="acesso">
+          <input id="nome2" placeholder="Servidor / Caixa">
+          <input id="anydesk2" placeholder="ID AnyDesk">
+        </div>
+
+        <div class="acesso">
+          <input id="nome3" placeholder="Servidor / Caixa">
+          <input id="anydesk3" placeholder="ID AnyDesk">
+        </div>
+
+        <div class="acesso">
+          <input id="nome4" placeholder="Servidor / Caixa">
+          <input id="anydesk4" placeholder="ID AnyDesk">
+        </div>
+
+        <div class="acesso">
+          <input id="nome5" placeholder="Servidor / Caixa">
+          <input id="anydesk5" placeholder="ID AnyDesk">
+        </div>
+      </div>
+
+      <!-- BOTÃO INTELIGENTE -->
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button class="btn-success" onclick="salvarClienteOuEditar()">Salvar</button>
+        <button class="btn-secondary" onclick="fecharModal()">Cancelar</button>
+      </div>
+
     </div>
   </div>
 
@@ -45,8 +120,46 @@
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('active');
     }
+
+    // 🔥 NOVO CLIENTE
+    function abrirModal() {
+      document.getElementById("modalEdicao").style.display = "flex";
+      document.getElementById("tituloModal").innerText = "Novo Cliente";
+
+      // limpar ID
+      document.getElementById("editId").value = "";
+
+      // limpar campos
+      document.getElementById("editNome").value = "";
+      document.getElementById("editDocumento").value = "";
+      document.getElementById("editEmail").value = "";
+      document.getElementById("editTelefone").value = "";
+      document.getElementById("editRegime").value = "";
+
+      for (let i = 1; i <= 5; i++) {
+        document.getElementById(`nome${i}`).value = "";
+        document.getElementById(`anydesk${i}`).value = "";
+      }
+    }
+
+    function fecharModal() {
+      document.getElementById("modalEdicao").style.display = "none";
+    }
+
+    // 🔥 FUNÇÃO QUE RESOLVE TUDO
+    async function salvarClienteOuEditar() {
+      const id = document.getElementById("editId").value;
+
+      if (id) {
+        await salvarEdicao();   // editar
+      } else {
+        await salvarCliente();  // novo
+      }
+    }
   </script>
+
   <script src="js/auth.js"></script>
   <script src="js/clientes.js"></script>
 </body>
+
 </html>

@@ -1,26 +1,36 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Clientes</title>
+  <title>Franquia ERP - Clientes</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body onload="verificarLogin(); listarClientes();">
+
+<body onload="verificarLogin(); listarClientes(); mostrarUsuarioLogado();">
   <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
 
   <div class="sidebar" id="sidebar">
-    <h2>Franquia - ERP</h2>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="cadastro.html">Cadastro de Clientes</a>
-    <a href="clientes.html">Lista de Clientes</a>
-    <a href="usuarios.html" id="menuUsuarios" style="display:none;">Cadastro de Usuários</a> 
-    <a href="#" onclick="logout()">Sair</a>
+    <h2>Franquia ERP <button onclick="toggleDark()">🌙</button>
+      <div id="usuarioLogado" style="margin-top:10px; font-size:14px;"></div>
+    </h2>
+    <a href="dashboard.html">📊 Dashboard</a>
+    <a href="cadastro.html">✍ Cadastro de Clientes</a>
+    <a href="clientes.html">📝 Gerenciamento Sped</a>
+    <a href="usuarios.html" id="menuUsuarios" style="display:none;">👨‍💼 Cadastro de Usuários</a>
+    <a href="suporte.html">🆘 Suporte ao cliente</a>
+    <a href="#" onclick="logout()">🔒 Sair</a>
   </div>
 
   <div class="main">
     <div class="topbar">
-      <h2>Lista de Clientes</h2>
+      <h2>Genrenciamento de Sped</h2>
+    </div>
+
+    <div class="form-box" style="margin-top:30px;">
+      <h3>Pesquisar Clientes</h3>
+      <input type="text" id="campoPesquisa" placeholder="🔎 Nome, Documento ou Telefone..." onkeyup="filtrarClientes()">
     </div>
 
     <div class="table-container">
@@ -39,12 +49,70 @@
     </div>
   </div>
 
+  <div id="modalEdicao" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3>Editar Cliente</h3>
+      <input type="hidden" id="editId">
+      <input type="text" id="editNome" placeholder="Nome">
+      <input type="text" id="editDocumento" placeholder="Documento">
+      <input type="text" id="editEmail" placeholder="Email">
+      <input type="text" id="editTelefone" placeholder="Telefone">
+      <select id="editRegime">
+        <option value="">Selecione o Regime</option>
+        <option value="Simples Nacional">Simples Nacional</option>
+        <option value="Lucro Presumido">Lucro Presumido</option>
+        <option value="Lucro Real">Lucro Real</option>
+        <option value="MEI">MEI</option>
+      </select>
+
+      <div class="acesso-remoto">
+        <h3>Acessos Remotos</h3>
+
+        <div class="acesso">
+          <input id="nome1" placeholder="Servidor / Caixa">
+          <input id="anydesk1" placeholder="ID AnyDesk">
+        </div>
+
+        <div class="acesso">
+          <input id="nome2" placeholder="Servidor / Caixa">
+          <input id="anydesk2" placeholder="ID AnyDesk">
+        </div>
+
+        <div class="acesso">
+          <input id="nome3" placeholder="Servidor / Caixa">
+          <input id="anydesk3" placeholder="ID AnyDesk">
+        </div>
+
+        <div class="acesso">
+          <input id="nome4" placeholder="Servidor / Caixa">
+          <input id="anydesk4" placeholder="ID AnyDesk">
+        </div>
+
+        <div class="acesso">
+          <input id="nome5" placeholder="Servidor / Caixa">
+          <input id="anydesk5" placeholder="ID AnyDesk">
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button class="btn-success" onclick="salvarEdicao()">Salvar Alterações</button>
+        <button class="btn-secondary" onclick="fecharModal()">Cancelar</button>
+      </div>
+    </div>
+
+  </div>
+
   <script>
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('active');
+    }
+
+    function fecharModal() {
+      document.getElementById('modalEdicao').style.display = 'none';
     }
   </script>
   <script src="js/auth.js"></script>
   <script src="js/clientes.js"></script>
 </body>
+
 </html>

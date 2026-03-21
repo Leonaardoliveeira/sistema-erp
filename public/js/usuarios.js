@@ -1,50 +1,94 @@
-// Carrega a tabela ao abrir a página
-function listarUsuarios() {
+// =======================================
+// 🔐 PEGAR TOKEN
+// =======================================
+function getToken() {
+    return localStorage.getItem("token");
+}
+
+// =======================================
+// 📋 LISTAR USUÁRIOS (ADMIN)
+// =======================================
+async function listarUsuarios() {
+
     const tabela = document.getElementById("tabelaUsuarios");
     if (!tabela) return;
 
-    const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
     tabela.innerHTML = "";
 
-    usuarios.forEach((user, index) => {
-        tabela.innerHTML += `
-            <tr>
-                <td>${user.nome}</td>
-                <td>${user.usuario}</td>
-                <td><span class="status ${user.perfil}">${user.perfil.toUpperCase()}</span></td>
-                <td>
-                    ${user.usuario !== 'admin' 
-                        ? `<button class="btn-primary" style="background-color: #f59e0b; margin-right: 5px;" onclick="prepararEdicao(${index})">Editar</button>
-                           <button class="btn-danger" onclick="excluirUsuario(${index})">Excluir</button>` 
-                        : '<small>Sistema (Mestre)</small>'}
-                </td>
-            </tr>`;
-    });
+    try {
+
+        const response = await fetch("/api/usuarios", {
+            headers: { "Authorization": "Bearer " + getToken() }
+        });
+
+        if (!response.ok) {
+            tabela.innerHTML = "<tr><td colspan='4'>Acesso negado</td></tr>";
+            return;
+        }
+
+        const usuarios = await response.json();
+
+        if (usuarios.length === 0) {
+            tabela.innerHTML = "<tr><td colspan='4'>Nenhum usuário cadastrado</td></tr>";
+            return;
+        }
+
+        usuarios.forEach((user) => {
+            tabela.innerHTML += `
+                <tr>
+                    <td>${user.nome}</td>
+                    <td>${user.usuario}</td>
+                    <td><span class="status ${user.perfil}">${user.perfil.toUpperCase()}</span></td>
+                    <td>
+                        ${user.usuario !== "admin"
+                            ? `
+                            <button class="btn-primary" style="background:#f59e0b;margin-right:5px;"
+                                onclick="prepararEdicao('${user._id}','${user.nome}','${user.usuario}','${user.perfil}')">
+                                Editar
+                            </button>
+                            <button class="btn-danger"
+                                onclick="excluirUsuario('${user._id}')">
+                                Excluir
+                            </button>
+                            `
+                            : "<small>Sistema (Mestre)</small>"
+                        }
+                    </td>
+                </tr>
+            `;
+        });
+
+    } catch (error) {
+        console.error("Erro:", error);
+        tabela.innerHTML = "<tr><td colspan='4'>Erro ao carregar usuários</td></tr>";
+    }
 }
 
-// Prepara o modal para um NOVO usuário
+// =======================================
+// ABRIR MODAL NOVO
+// =======================================
 function abrirModal() {
+
     document.getElementById("modalUsuario").style.display = "flex";
-    document.getElementById("uTitulo").innerText = "Novo Acesso";
-    document.getElementById("editIndex").value = ""; // Limpa o index para o modo "Criação"
-    
-    // Limpa os campos
+    document.getElementById("uTitulo").innerText = "Novo Usuário";
+
+    document.getElementById("editId").value = "";
     document.getElementById("uNome").value = "";
     document.getElementById("uLogin").value = "";
     document.getElementById("uSenha").value = "";
-    document.getElementById("uPerfil").value = "usuario";
+    document.getElementById("uPerfil").value = "user";
 }
 
-// Carrega os dados do usuário no modal para EDITAR
-function prepararEdicao(index) {
-    const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-    const user = usuarios[index];
+// =======================================
+// PREPARAR EDIÇÃO
+// =======================================
+function prepararEdicao(id, nome, login, perfil) {
 
-    document.getElementById("uNome").value = user.nome;
-    document.getElementById("uLogin").value = user.usuario;
-    document.getElementById("uSenha").value = user.senha;
-    document.getElementById("uPerfil").value = user.perfil;
-    document.getElementById("editIndex").value = index; // Define o index para o modo "Edição"
+    document.getElementById("editId").value = id;
+    document.getElementById("uNome").value = nome;
+    document.getElementById("uLogin").value = login;
+    document.getElementById("uSenha").value = "";
+    document.getElementById("uPerfil").value = perfil;
 
     document.getElementById("uTitulo").innerText = "Editar Usuário";
     document.getElementById("modalUsuario").style.display = "flex";
@@ -54,43 +98,99 @@ function fecharModal() {
     document.getElementById("modalUsuario").style.display = "none";
 }
 
-// Função Única para Salvar (Cria ou Atualiza)
-function salvarUsuario() {
+// =======================================
+// SALVAR USUÁRIO
+// =======================================
+async function salvarUsuario() {
+
+    const id = document.getElementById("editId").value;
     const nome = document.getElementById("uNome").value;
     const login = document.getElementById("uLogin").value;
     const senha = document.getElementById("uSenha").value;
     const perfil = document.getElementById("uPerfil").value;
-    const editIndex = document.getElementById("editIndex").value;
 
-    if (!nome || !login || !senha) {
-        alert("Por favor, preencha todos os campos.");
+    if (!nome || !login) {
+        alert("Preencha os campos obrigatórios");
         return;
     }
 
-    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+    const dados = { nome, usuario: login, perfil };
+    if (senha) dados.senha = senha;
 
-    if (editIndex === "") {
-        // MODO NOVO: Verifica se login já existe
-        if (usuarios.some(u => u.usuario === login)) {
-            alert("Este nome de usuário já está em uso!");
+    try {
+
+        let response;
+
+        if (id === "") {
+            response = await fetch("/api/usuarios", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + getToken()
+                },
+                body: JSON.stringify(dados)
+            });
+        } else {
+            response = await fetch(`/api/usuarios/${id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + getToken()
+                },
+                body: JSON.stringify(dados)
+            });
+        }
+
+        const resultado = await response.json();
+
+        if (!response.ok) {
+            alert(resultado.message || "Erro ao salvar");
             return;
         }
-        usuarios.push({ nome, usuario: login, senha, perfil });
-    } else {
-        // MODO EDIÇÃO: Atualiza a posição existente
-        usuarios[editIndex] = { nome, usuario: login, senha, perfil };
-    }
 
-    localStorage.setItem("usuarios", JSON.stringify(usuarios));
-    fecharModal();
+        fecharModal();
+        listarUsuarios();
+
+    } catch (error) {
+        console.error("Erro:", error);
+        alert("Erro ao salvar usuário");
+    }
+}
+
+// =======================================
+// EXCLUIR
+// =======================================
+async function excluirUsuario(id) {
+
+    if (!confirm("Deseja excluir este usuário?")) return;
+
+    await fetch(`/api/usuarios/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": "Bearer " + getToken() }
+    });
+
     listarUsuarios();
 }
 
-function excluirUsuario(index) {
-    if (confirm("Tem certeza que deseja remover o acesso deste usuário?")) {
-        let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-        usuarios.splice(index, 1);
-        localStorage.setItem("usuarios", JSON.stringify(usuarios));
-        listarUsuarios();
+// =======================================
+// 🌙 DARK MODE
+// =======================================
+function toggleDark() {
+    document.body.classList.toggle("dark");
+
+    // salva preferência
+    if (document.body.classList.contains("dark")) {
+        localStorage.setItem("tema", "dark");
+    } else {
+        localStorage.setItem("tema", "light");
     }
 }
+
+// aplicar tema salvo ao carregar
+window.addEventListener("load", () => {
+    const tema = localStorage.getItem("tema");
+
+    if (tema === "dark") {
+        document.body.classList.add("dark");
+    }
+});

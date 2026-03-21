@@ -1,4 +1,6 @@
-/* ================= GERAL ================= */
+/* ==========================================================================
+   1. CONFIGURAÇÕES GERAIS E ANIMAÇÕES
+   ========================================================================== */
 * {
   margin: 0;
   padding: 0;
@@ -10,26 +12,102 @@ body {
   background-color: #f3f4f6;
   color: #1f2937;
   overflow-x: hidden;
+  animation: fadePage .4s ease;
 }
 
-/* ================= BOTÃO HAMBÚRGUER ================= */
-.menu-toggle {
-  display: none; 
+@keyframes fadePage {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   2. ESTRUTURA DE LAYOUT (SIDEBAR, MAIN, TOPBAR)
+   ========================================================================== */
+.sidebar {
+  width: 250px;
+  height: 100vh;
+  background: linear-gradient(180deg, #0f172a, #1e293b);
+  color: white;
   position: fixed;
-  top: 15px;
-  left: 15px;
-  z-index: 1100;
+  padding: 25px 20px;
+  z-index: 1000;
+  transition: transform 0.3s ease;
+}
+
+.sidebar h2 {
+  margin-bottom: 30px;
+  font-size: 1.5rem;
+  letter-spacing: 1px;
+}
+
+.sidebar a {
+  display: block;
+  padding: 12px 15px;
+  margin-bottom: 8px;
+  text-decoration: none;
+  color: #9ca3af;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.sidebar a:hover {
+  background: rgba(79, 70, 229, 0.2);
+  color: #818cf8;
+}
+
+.sidebar a:active,
+.sidebar a:focus {
   background: #4f46e5;
   color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 8px;
-  font-size: 20px;
-  cursor: pointer;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-/* ================= LOGIN ================= */
+.main {
+  margin-left: 250px;
+  padding: 30px;
+  width: calc(100% - 250px);
+  min-height: 100vh;
+  transition: all 0.3s ease;
+}
+
+.topbar {
+  background: #ffffff;
+  padding: 20px 25px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 15px;
+}
+
+/* ==========================================================================
+   3. LOGIN E TELAS DE ACESSO
+   ========================================================================== */
 .login-page {
   display: flex;
   justify-content: center;
@@ -46,59 +124,18 @@ body {
   width: 100%;
   max-width: 360px;
   text-align: center;
-  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  animation: fadePage .5s ease;
 }
 
-.login-container h2 { margin-bottom: 25px; color: #111827; }
-
-/* ================= SIDEBAR ================= */
-.sidebar {
-  width: 250px;
-  height: 100vh;
-  background: linear-gradient(180deg, #0f172a, #1e293b);
-  color: white;
-  position: fixed;
-  padding: 25px 20px;
-  z-index: 1000;
-  transition: transform 0.3s ease;
-}
-
-.sidebar h2 { margin-bottom: 30px; font-size: 1.5rem; letter-spacing: 1px; }
-
-.sidebar a {
-  display: block;
-  padding: 12px 15px;
-  margin-bottom: 8px;
-  text-decoration: none;
-  color: #9ca3af;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-}
-
-.sidebar a:hover { background: rgba(79, 70, 229, 0.2); color: #818cf8; }
-.sidebar a:active, .sidebar a:focus { background: #4f46e5; color: white; }
-
-/* ================= MAIN CONTENT ================= */
-.main {
-  margin-left: 250px;
-  padding: 30px;
-  width: calc(100% - 250px);
-  min-height: 100vh;
-  transition: all 0.3s ease;
-}
-
-.topbar {
-  background: #ffffff;
-  padding: 20px 25px;
-  border-radius: 12px;
+.login-container h2 {
   margin-bottom: 25px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  color: #111827;
 }
 
-/* ================= DASHBOARD CARDS ================= */
+/* ==========================================================================
+   4. COMPONENTES: DASHBOARD CARDS
+   ========================================================================== */
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -110,33 +147,290 @@ body {
   background: #ffffff;
   padding: 25px;
   border-radius: 14px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   border-bottom: 4px solid #e5e7eb;
+  transition: all .25s ease;
+  cursor: pointer;
 }
 
-.card h3 { font-size: 14px; color: #6b7280; text-transform: uppercase; }
-.card p { font-size: 32px; font-weight: bold; margin-top: 10px; color: #111827; }
+.card:hover {
+  transform: translateY(-3px);
+}
 
-.card:nth-child(1) { border-color: #4f46e5; } /* Total */
-.card:nth-child(2) { border-color: #10b981; } /* Gerados */
-.card:nth-child(3) { border-color: #f59e0b; } /* Pendentes */
-.card:nth-child(4) { border-color: #ef4444; } /* Erros */
+.card h3 {
+  font-size: 14px;
+  color: #6b7280;
+  text-transform: uppercase;
+}
 
-/* ================= TABELAS ================= */
+.card p {
+  font-size: 32px;
+  font-weight: bold;
+  margin-top: 10px;
+  color: #111827;
+}
+
+/* Cores e Estados dos Cards */
+.card:nth-child(1) {
+  border-color: #f59e0b;
+}
+
+.card:nth-child(1):hover {
+  box-shadow: 0 14px 28px rgba(245, 158, 11, 0.35);
+}
+
+.card:nth-child(2) {
+  border-color: #4f46e5;
+}
+
+.card:nth-child(2):hover {
+  box-shadow: 0 14px 28px rgba(79, 70, 229, 0.35);
+}
+
+.card:nth-child(3) {
+  border-color: #10b981;
+}
+
+.card:nth-child(3):hover {
+  box-shadow: 0 14px 28px rgba(16, 185, 129, 0.35);
+}
+
+.card:nth-child(4) {
+  border-color: #ef4444;
+}
+
+.card:nth-child(4):hover {
+  box-shadow: 0 14px 28px rgba(239, 68, 68, 0.35);
+}
+
+.card.ativo {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18);
+  border-bottom-width: 6px;
+}
+
+.card:nth-child(1).ativo {
+  box-shadow: 0 18px 35px rgba(245, 158, 11, 0.45);
+}
+
+.card:nth-child(2).ativo {
+  box-shadow: 0 18px 35px rgba(79, 70, 229, 0.45);
+}
+
+.card:nth-child(3).ativo {
+  box-shadow: 0 18px 35px rgba(16, 185, 129, 0.45);
+}
+
+.card:nth-child(4).ativo {
+  box-shadow: 0 18px 35px rgba(239, 68, 68, 0.45);
+}
+
+/* ==========================================================================
+   5. COMPONENTES: TABELAS
+   ========================================================================== */
 .table-container {
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   background: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  margin-top: 20px;
 }
 
-table { width: 100%; border-collapse: collapse; }
-th { background: #f9fafb; padding: 16px; text-align: left; font-size: 13px; color: #4b5563; text-transform: uppercase; border-bottom: 2px solid #f3f4f6; }
-td { padding: 16px; border-top: 1px solid #f3f4f6; font-size: 14px; }
-tr:hover { background: #f9fafb; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
 
-/* ================= STATUS E BADGES (RESTAURADOS) ================= */
+th {
+  background: #f9fafb;
+  padding: 16px;
+  text-align: left;
+  font-size: 13px;
+  color: #4b5563;
+  text-transform: uppercase;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+/* Estilo alternativo th profissional */
+.table-container th {
+  background: #111827;
+  color: white;
+  padding: 10px;
+}
+
+td {
+  padding: 16px;
+  border-top: 1px solid #f3f4f6;
+  font-size: 14px;
+}
+
+tr:hover {
+  background: #f9fafb;
+}
+
+/* ==========================================================================
+   6. FORMULÁRIOS, BOTÕES E MODAL
+   ========================================================================== */
+.form-box {
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 14px;
+  max-width: 600px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  min-width: 350px;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 18px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  font-size: 16px;
+}
+
+button {
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s;
+  background: #2563eb;
+  color: white;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+.btn-primary {
+  background: #4f46e5;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #4338ca;
+}
+
+.btn-success {
+  background: #10b981;
+  color: white;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-secondary {
+  background: #6b7280;
+  color: white;
+}
+
+.menu-toggle {
+  display: none;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 1100;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.25s ease;
+}
+
+.menu-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.modal.ativo {
+  display: flex;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================================================
+    BOTÃO CLOSE MODAL
+   ========================================================================== */
+
+.close {
+  font-size: 26px;
+  font-weight: bold;
+  color: #6b7280;
+
+  cursor: pointer;
+
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 8px;
+
+  transition: all 0.2s ease;
+}
+
+/* Hover */
+.close:hover {
+  background: #f3f4f6;
+  color: #111827;
+  transform: scale(1.1);
+}
+
+/* Clique */
+.close:active {
+  transform: scale(0.95);
+}
+
+
+/* ==========================================================================
+   7. STATUS E BADGES
+   ========================================================================== */
 .status {
   padding: 5px 12px;
   border-radius: 6px;
@@ -146,9 +440,40 @@ tr:hover { background: #f9fafb; }
   display: inline-block;
 }
 
-.status.pendente { background: #fef3c7; color: #b45309; }
-.status.gerado    { background: #dcfce7; color: #15803d; }
-.status.erro      { background: #fee2e2; color: #b91c1c; }
+.status.pendente {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.status.gerado {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.status.erro {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.status.enviado {
+  background: #b2cbf1;
+  color: #0f66f1;
+}
+
+.status-nao {
+  color: #ef4444;
+  font-weight: bold;
+}
+
+.status-gerado {
+  color: #f59e0b;
+  font-weight: bold;
+}
+
+.status-ok {
+  color: #22c55e;
+  font-weight: bold;
+}
 
 .status-botoes {
   display: flex;
@@ -167,99 +492,360 @@ tr:hover { background: #f9fafb; }
   transition: all 0.2s;
 }
 
-.btn-status.pendente.ativo { background: #f59e0b; color: white; }
-.btn-status.gerado.ativo   { background: #10b981; color: white; }
-.btn-status.erro.ativo     { background: #ef4444; color: white; }
-
-/* ================= FORMULÁRIOS E BOTÕES (RESTAURADOS) ================= */
-.form-box {
-  background: #ffffff;
-  padding: 30px;
-  border-radius: 14px;
-  max-width: 600px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+.btn-status.pendente.ativo {
+  background: #f59e0b;
+  color: white;
 }
 
-input, select {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 18px;
-  border-radius: 8px;
+.btn-status.gerado.ativo {
+  background: #10b981;
+  color: white;
+}
+
+.btn-status.erro.ativo {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-status.enviado.ativo {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.status-select {
+  display: none;
+  width: 110px;
+  min-width: 110px;
+  padding: 6px 10px;
+  border-radius: 6px;
   border: 1px solid #d1d5db;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
   background: #fff;
-  font-size: 16px;
 }
 
-button {
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
+.status-select.pendente {
+  background: #f59e0b;
+  color: white;
+}
+
+.status-select.enviado {
+  background: #3b82f6;
+  color: white;
+}
+
+.status-select.gerado {
+  background: #10b981;
+  color: white;
+}
+
+.status-select.erro {
+  background: #ef4444;
+  color: white;
+}
+
+/* ==========================================================================
+   8. TELA SUPORTE E ACESSO REMOTO
+   ========================================================================== */
+.suporte-search {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  max-width: 500px;
+}
+
+.clientes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.cliente-card {
+  background: white;
+  padding: 18px;
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   transition: 0.2s;
 }
 
-.btn-primary { background: #4f46e5; color: white; }
-.btn-primary:hover { background: #4338ca; }
-.btn-success { background: #10b981; color: white; }
-.btn-danger { background: #ef4444; color: white; }
-.btn-secondary { background: #6b7280; color: white; }
-
-/* ================= MODAL ================= */
-.modal {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  z-index: 1000;
-  justify-content: center;
-  align-items: center;
+.cliente-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.1);
 }
 
-.modal-content {
+.cliente-nome {
+  font-weight: 600;
+  font-size: 16px;
+  color: #111827;
+}
+
+.cliente-cnpj {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.anydesk-id {
+  background: #f3f4f6;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.acoes {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-anydesk {
+  flex: 1;
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-copiar {
+  background: #6b7280;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.container-cadastro {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.acesso-remoto {
+  flex: 1;
   background: white;
-  padding: 30px;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 450px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-}
-
-.table-container {
-  width: 100%;
-  overflow-x: auto; /* Cria o scroll horizontal */
-  -webkit-overflow-scrolling: touch; /* Suaviza o scroll no iPhone */
-  background: #ffffff;
+  padding: 25px;
   border-radius: 12px;
-  margin-top: 20px;
 }
 
-table {
-  min-width: 600px; /* Obriga a tabela a manter um tamanho mínimo para não esmagar o texto */
-  width: 100%;
+.acesso {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
-/* ================= RESPONSIVIDADE ================= */
+/* ==========================================================================
+   9. DARK MODE 🌙
+   ========================================================================== */
+body.dark {
+  background: #0b0f19;
+  color: #e5e7eb;
+}
+
+body.dark .topbar,
+body.dark .card,
+body.dark table,
+body.dark tr,
+body.dark .form-box,
+body.dark .acesso-remoto,
+body.dark .suporte-search,
+body.dark .modal-content,
+body.dark .cliente-card {
+  background: #111827;
+}
+
+body.dark tr:nth-child(even) {
+  background: #0f172a;
+}
+
+body.dark tr:hover {
+  background: #1f2937;
+}
+
+body.dark td,
+body.dark .cliente-nome,
+body.dark .cliente-cnpj,
+body.dark .acessos-lista {
+  color: #e5e7eb;
+}
+
+body.dark input,
+body.dark select,
+body.dark .anydesk-id {
+  background: #020617;
+  border: 1px solid #1f2937;
+  color: #e5e7eb;
+}
+
+body.dark button {
+  background: #020617;
+}
+
+body.dark button:hover {
+  background: #4338ca;
+}
+
+body.dark .btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+body.dark #pendentes,
+body.dark #enviados,
+body.dark #gerados,
+body.dark #erros {
+  color: #ffffff !important;
+  font-size: 32px !important;
+  font-weight: bold !important;
+  display: block !important;
+  opacity: 1 !important;
+}
+
+/* ==========================================================================
+   10. RESPONSIVIDADE (MEDIA QUERIES)
+   ========================================================================== */
 @media (max-width: 992px) {
-  .menu-toggle { display: block; }
-  .sidebar { transform: translateX(-100%); }
-  .sidebar.active { transform: translateX(0); }
-  .sidebar h2 { margin-top: 40px; font-size: 1.2rem; }
-  
+  .menu-toggle {
+    display: flex;
+  }
+
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.active {
+    transform: translateX(0);
+  }
+
+  .sidebar h2 {
+    margin-top: 40px;
+    font-size: 1.2rem;
+  }
+
   .main {
     margin-left: 0;
     width: 100%;
     padding: 15px;
     padding-top: 80px;
   }
-  .topbar { flex-direction: column; gap: 15px; text-align: center; }
+
+  .topbar {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
 }
+
+@media (max-width: 900px) {
+  .container-cadastro {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 768px) {
+  .clientes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .table-container {
+    overflow-x: hidden;
+  }
+
+  table {
+    table-layout: fixed;
+    width: 100%;
+    font-size: 12px;
+  }
+
+  td,
+  th {
+    padding: 6px;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  button {
+    width: 100%;
+    margin-top: 5px;
+  }
+
+  /* Esconder colunas na tabela mobile */
+  table th:nth-child(2),
+  table td:nth-child(2),
+  table th:nth-child(3),
+  table td:nth-child(3) {
+    display: none;
+  }
+
+  .status-botoes {
+    display: none;
+  }
+
+  .status-select {
+    display: block;
+    width: 100%;
+  }
+
+  /* 1. Remove o efeito de hover que "gruda" no mobile */
+  .card:hover {
+    transform: none !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  /* 2. Força o estilo visual quando a classe .ativo estiver presente */
+  .card.ativo {
+    transform: translateY(-5px) scale(1.03) !important;
+    border-bottom-width: 6px !important;
+    z-index: 10;
+    /* Garante que ele fique sobreposto aos outros */
+  }
+
+  /* 3. Garante que as sombras coloridas apareçam no clique (mobile) */
+  .card:nth-child(1).ativo {
+    box-shadow: 0 15px 30px rgba(245, 158, 11, 0.4) !important;
+  }
+
+  .card:nth-child(2).ativo {
+    box-shadow: 0 15px 30px rgba(79, 70, 229, 0.4) !important;
+  }
+
+  .card:nth-child(3).ativo {
+    box-shadow: 0 15px 30px rgba(16, 185, 129, 0.4) !important;
+  }
+
+  .card:nth-child(4).ativo {
+    box-shadow: 0 15px 30px rgba(239, 68, 68, 0.4) !important;
+  }
+
+  .modal-content {
+    max-height: 95vh;
+    padding: 20px;
+  }
+
+  .modal-body-container {
+    flex-direction: column;
+  }
+
+
+}
+
 @media (max-width: 480px) {
   .login-container {
     padding: 30px 20px;
-    max-width: 100%; /* Ocupa a largura disponível */
+    max-width: 100%;
     margin: 10px;
   }
 
@@ -269,11 +855,6 @@ table {
 
   .login-container input {
     padding: 12px;
-    font-size: 16px; /* Importante para acessibilidade */
+    font-size: 16px;
   }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
 }
