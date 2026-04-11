@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Franquia ERP - Clientes</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body onload="verificarLogin(); listarClientes(); mostrarUsuarioLogado();">
+
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-content">
+      <div class="sidebar-header">
+        <div class="logo">
+          <i data-lucide="layers" class="logo-icon"></i>
+          <span>Franquia ERP</span>
+        </div>
+        <button class="theme-switch" onclick="toggleDark()">
+          <i data-lucide="moon"></i>
+        </button>
+      </div>
+
+      <div class="user-profile">
+        <div class="avatar">
+          <img src="https://ui-avatars.com/api/?name=Leonardo&background=0D8ABC&color=fff" alt="Avatar" id="userAvatar">
+        </div>
+        <div class="user-info">
+          <span class="user-name" id="usuarioLogado">Leonardo Silva</span>
+          <span class="user-role">Administrador</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-group">
+          <span class="nav-title">Gestão</span>
+          <a href="dashboard.html" class="nav-item">
+            <i data-lucide="layout-dashboard"></i> Dashboard
+          </a>
+          <a href="cadastro.html" class="nav-item">
+            <i data-lucide="user-plus"></i> Cadastro de Cliente
+          </a>
+        </div>
+
+        <div class="nav-group">
+          <span class="nav-title">Operacional</span>
+          <a href="clientes.html" class="nav-item active">
+            <i data-lucide="file-text"></i> Gerenciamento Sped
+          </a>
+          <a href="usuarios.html" id="menuUsuarios" class="nav-item">
+            <i data-lucide="users"></i> Usuários
+          </a>
+        </div>
+
+        <div class="nav-group">
+          <span class="nav-title">Ajuda</span>
+          <a href="suporte.html" class="nav-item">
+            <i data-lucide="help-circle"></i> Suporte
+          </a>
+        </div>
+
+        <div class="nav-footer">
+          <a href="#" onclick="logout()" class="nav-item logout">
+            <i data-lucide="log-out"></i> Sair
+          </a>
+        </div>
+      </nav>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <h2>Gerenciamento de Sped</h2>
+    </div>
+
+    <div class="form-box" style="margin-top:30px;">
+      <h3>Pesquisar Clientes</h3>
+      <input type="text" id="campoPesquisa" placeholder="🔎 Nome, Documento ou Telefone..." onkeyup="filtrarClientes()">
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Documento</th>
+            <th>Regime</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaClientes"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 🔥 MODAL EDIÇÃO DINÂMICO -->
+  <div id="modalEdicao" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close" onclick="fecharModal()">&times;</span>
+      <h3 id="tituloModal">Editar Cliente</h3>
+      <input type="hidden" id="editId">
+      <input type="text" id="editNome" placeholder="Nome">
+      <input type="text" id="editDocumento" placeholder="Documento">
+      <input type="text" id="editEmail" placeholder="Email">
+      <input type="text" id="editTelefone" placeholder="Telefone">
+
+      <select id="editRegime">
+        <option value="">Selecione o Regime</option>
+        <option value="Simples Nacional">Simples Nacional</option>
+        <option value="Lucro Presumido">Lucro Presumido</option>
+        <option value="Lucro Real">Lucro Real</option>
+        <option value="MEI">MEI</option>
+      </select>
+
+      <select id="editSped">
+        <option value="Sim" selected>Gera SPED</option>
+        <option value="Nao">Não Gera SPED</option>
+      </select>
+
+      <!-- 🔥 ACESSOS DINÂMICOS -->
+      <div class="acesso-remoto">
+        <h3>Acessos Remotos</h3>
+
+        <!-- LISTA GERADA PELO JS -->
+        <div id="listaAcessos"></div>
+
+        <!-- BOTÃO ADICIONAR -->
+        <button class="btn-add-acesso" type="button" class="btn-primary" onclick="adicionarAcesso()">
+          ➕ Adicionar Acesso
+        </button>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-success" onclick="salvarEdicao()">Salvar</button>
+        <button class="btn-secondary" onclick="fecharModal()">Cancelar</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Inicializa os ícones Lucide
+    lucide.createIcons();
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('active');
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('active');
+    }
+
+    function fecharModal() {
+      document.getElementById('modalEdicao').style.display = 'none';
+    }
+
+
+    //CADASTRO DE MASCARAS
+    window.addEventListener("DOMContentLoaded", () => {
+      const inputTelefone = document.getElementById("editTelefone");
+      const inputDocumento = document.getElementById("editDocumento");
+
+      if (inputTelefone) {
+        inputTelefone.addEventListener("input", (e) => {
+          e.target.value = mascaraTelefone(e.target.value);
+        });
+      }
+
+      if (inputDocumento) {
+        inputDocumento.addEventListener("input", (e) => {
+          e.target.value = mascaraDocumento(e.target.value);
+        });
+      }
+    });
+  </script>
+
+  <script src="js/toast.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/clientes.js"></script>
+
+  <!-- 🔥 LOADING -->
+  <div id="loading">
+    <div class="spinner"></div>
+  </div>
+  <style>
+    /* Estilos rápidos para o Loading que você já tinha */
+    #loading {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #fff;
+      border-top: 5px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</body>
+
+</html>
