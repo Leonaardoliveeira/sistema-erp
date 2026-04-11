@@ -19,7 +19,7 @@ function esconderLoading() {
 }
 
 // =======================================
-// FILTRAR CLIENTES
+// FILTRAR CLIENTES.
 // =======================================
 function filtrarClientes() {
     const termo = document.getElementById("campoPesquisa").value.toLowerCase();
@@ -166,15 +166,17 @@ async function listarClientes() {
                         </select>
                     </td>
                     <td>
-                        <button class="btn-primary"
-                            style="background-color:#f59e0b;margin-right:5px;"
-                            onclick="abrirModalEdicao('${cliente._id}')">
+                        <div class="td-acoes">
+                            <button class="btn-primary"
+                                style="background-color:#f59e0b;"
+                                onclick="abrirModalEdicao('${cliente._id}')">
                             Editar
                         </button>
                         <button class="btn-danger"
                             onclick="excluirCliente('${cliente._id}')">
                             Excluir
                         </button>
+                        </div>
                     </td>
                 </tr>`;
         });
@@ -218,15 +220,17 @@ async function listarClientesCadastro() {
                     : '<span class="icon-sped nao" title="Não gera SPED">●</span>'}
                     </td>
                     <td>
-                        <button class="btn-primary"
-                            style="background-color:#f59e0b;margin-right:5px;"
-                            onclick="abrirModalEdicao('${cliente._id}')">
+                        <div class="td-acoes">
+                            <button class="btn-primary"
+                                style="background-color:#f59e0b;"
+                                onclick="abrirModalEdicao('${cliente._id}')">
                             Editar
                         </button>
                         <button class="btn-danger"
                             onclick="excluirCliente('${cliente._id}')">
                             Excluir
                         </button>
+                        </div>
                     </td>
                 </tr>`;
         });

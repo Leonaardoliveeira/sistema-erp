@@ -58,14 +58,16 @@ async function listarUsuarios() {
                     <td>
                         ${user.usuario !== "admin"
                     ? `
-                            <button class="btn-primary" style="background:#f59e0b;margin-right:5px;"
-                                onclick="prepararEdicao('${user._id}','${user.nome}','${user.usuario}','${user.perfil}')">
-                                Editar
-                            </button>
-                            <button class="btn-danger"
-                                onclick="excluirUsuario('${user._id}')">
-                                Excluir
-                            </button>
+                            <div class="td-acoes">
+                                <button class="btn-primary" style="background:#f59e0b;"
+                                    onclick="prepararEdicao('${user._id}','${user.nome}','${user.usuario}','${user.perfil}')">
+                                    Editar
+                                </button>
+                                <button class="btn-danger"
+                                    onclick="excluirUsuario('${user._id}')">
+                                    Excluir
+                                </button>
+                            </div>
                             `
                     : "<small>Sistema (Mestre)</small>"
                 }
@@ -209,7 +211,7 @@ function toggleDark() {
     }
 }
 
-// aplicar tema salvo ao carregar
+// aplicar tema salvo ao carregar.
 window.addEventListener("load", () => {
     const tema = localStorage.getItem("tema");
 
