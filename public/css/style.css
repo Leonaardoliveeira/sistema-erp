@@ -583,179 +583,47 @@ body.dark .modal-actions { border-color: #1f2937; }
    11. MEDIA QUERIES
    ========================================================================== */
 @media (max-width: 992px) {
-  .menu-toggle {
-    display: flex;
-  }
+  .menu-toggle { display: flex; }
 
-  .sidebar {
-    transform: translateX(-100%);
-  }
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.active { transform: translateX(0); box-shadow: 4px 0 30px rgba(0,0,0,.3); }
 
-  .sidebar.active {
-    transform: translateX(0);
-  }
+  .main { margin-left: 0; padding: 20px 16px; padding-top: 72px; }
 
-  .sidebar h2 {
-    margin-top: 40px;
-    font-size: 1.2rem;
-  }
+  .topbar { flex-direction: column; align-items: flex-start; gap: 10px; }
 
-  .main {
-    margin-left: 0;
-    width: 100%;
-    padding: 15px;
-    padding-top: 80px;
-  }
-
-  .topbar {
-    flex-direction: column;
-    gap: 15px;
-    text-align: center;
-  }
+  .cards { grid-template-columns: repeat(2, 1fr); gap: 12px; }
 }
 
-@media (max-width: 900px) {
-  .container-cadastro {
-    flex-direction: column;
-  }
+@media (max-width: 640px) {
+  .main { padding: 16px 12px; padding-top: 68px; }
 
-  .sidebar-header {
-    flex-direction: row;
-    justify-content: space-between;
-    padding-right: 10px;
-    margin-top: 10px;
-    /* Espaço para não bater no topo do celular */
-    width: 100%
-  }
+  .cards { gap: 10px; }
+  .card  { padding: 16px 14px; }
+  .card p { font-size: 1.7rem; }
 
-  .logo {
-    font-size: 1.1rem;
-    /* Diminui um pouco para caber melhor */
-  }
+  table { min-width: 520px; }
+  tbody td, thead th { padding: 10px 12px; font-size: 13px; }
 
-  /* Se o botão de fechar o menu estiver atrapalhando a visão do logo */
-  .sidebar.active .sidebar-header {
-    padding-left: 50px;
-    /* Dá espaço para o botão hambúrguer se ele ficar sobreposto */
-  }
+  .td-acoes { flex-direction: column; gap: 4px; }
+  .td-acoes button { width: 100%; }
 
+  .status-botoes { display: none; }
+  .status-select { display: block; width: 100%; }
+
+  .modal-content  { max-height: 98vh; padding: 20px 16px; border-radius: var(--radius); }
+  .modal-actions  { flex-direction: column-reverse; }
+  .modal-actions button { width: 100%; min-width: unset; }
+
+  .container-cadastro { flex-direction: column; }
+  .form-box { min-width: unset; width: 100%; }
+
+  .clientes-grid { grid-template-columns: 1fr; }
+  .login-container { padding: 28px 20px; }
 }
 
-@media (max-width: 768px) {
-
-  body {
-    font-size: 15px;
-  }
-
-  .clientes-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .table-container {
-    overflow-x: hidden;
-  }
-
-  table {
-    table-layout: fixed;
-    width: 100%;
-    font-size: 12px;
-  }
-
-  td,
-  th {
-    padding: 6px;
-    word-break: break-word;
-    overflow-wrap: break-word;
-  }
-
-  button {
-    width: 100%;
-    margin-top: 5px;
-  }
-
-  td:last-child {
-    flex-direction: column;
-  }
-
-  /* Esconder colunas na tabela mobile */
-  table th:nth-child(2),
-  table td:nth-child(2),
-  table th:nth-child(3),
-  table td:nth-child(3) {
-    display: none;
-  }
-
-  .status-botoes {
-    display: none;
-  }
-
-  .status-select {
-    display: block;
-    width: 100%;
-  }
-
-  /* 1. Remove o efeito de hover que "gruda" no mobile */
-  .card:hover {
-    transform: none !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
-  }
-
-  /* 2. Força o estilo visual quando a classe .ativo estiver presente */
-  .card.ativo {
-    transform: translateY(-5px) scale(1.03) !important;
-    border-bottom-width: 6px !important;
-    z-index: 10;
-    /* Garante que ele fique sobreposto aos outros */
-  }
-
-  /* 3. Garante que as sombras coloridas apareçam no clique (mobile) */
-  .card:nth-child(1).ativo {
-    box-shadow: 0 15px 30px rgba(245, 158, 11, 0.4) !important;
-  }
-
-  .card:nth-child(2).ativo {
-    box-shadow: 0 15px 30px rgba(79, 70, 229, 0.4) !important;
-  }
-
-  .card:nth-child(3).ativo {
-    box-shadow: 0 15px 30px rgba(16, 185, 129, 0.4) !important;
-  }
-
-  .card:nth-child(4).ativo {
-    box-shadow: 0 15px 30px rgba(239, 68, 68, 0.4) !important;
-  }
-
-  .modal-content {
-    max-height: 95vh;
-    padding: 20px;
-  }
-
-  .modal-body-container {
-    flex-direction: column;
-  }
-
-
-}
-
-@media (max-width: 480px) {
-  .login-container {
-    padding: 30px 20px;
-    max-width: 100%;
-    margin: 10px;
-  }
-
-  .login-container h2 {
-    font-size: 20px;
-  }
-
-  .login-container input {
-    padding: 12px;
-    font-size: 16px;
-  }
+@media (max-width: 380px) {
+  .card p { font-size: 1.5rem; }
 }
 
 
