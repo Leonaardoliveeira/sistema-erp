@@ -595,6 +595,55 @@ body.dark .modal-actions { border-color: #1f2937; }
   .cards { grid-template-columns: repeat(2, 1fr); gap: 12px; }
 }
 
+@media (max-width: 768px) {
+
+  body {
+    font-size: 15px;
+  }
+
+  .clientes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .table-container {
+    overflow-x: hidden;
+  }
+
+  table {
+    table-layout: fixed;
+    width: 100%;
+    font-size: 12px;
+  }
+
+  td,
+  th {
+    padding: 6px;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  button {
+    width: 100%;
+    margin-top: 5px;
+  }
+
+  td:last-child {
+    flex-direction: column;
+  }
+
+  /* Esconder colunas na tabela mobile */
+  table th:nth-child(2),
+  table td:nth-child(2),
+  table th:nth-child(3),
+  table td:nth-child(3) {
+    display: none;
+  }
+}
+
 @media (max-width: 640px) {
   .main { padding: 16px 12px; padding-top: 68px; }
 
