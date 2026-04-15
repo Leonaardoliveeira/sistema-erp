@@ -86,7 +86,9 @@ async function verificarResetMensal() {
 // master e admin veem tudo; user vê só os próprios
 // --------------------
 function filtroPerfil(req) {
-  if (req.usuario.perfil === "master" || req.usuario.perfil === "admin") return {};
+  // Apenas master vê todos os clientes
+  if (req.usuario.perfil === "master") return {};
+  // admin e user veem apenas os próprios
   return { usuarioId: req.usuario.id };
 }
 
@@ -105,8 +107,9 @@ function verificarToken(req, res, next) {
 }
 
 function verificarMaster(req, res, next) {
-  if (req.usuario.perfil !== "master")
-    return res.status(403).json({ message: "Acesso negado: apenas o mestre gerencia usuários" });
+  // master e admin gerenciam usuários; user não pode
+  if (req.usuario.perfil === "user")
+    return res.status(403).json({ message: "Acesso negado: sem permissão para gerenciar usuários" });
   next();
 }
 

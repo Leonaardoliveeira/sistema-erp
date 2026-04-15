@@ -44,7 +44,7 @@ function verificarLogin() {
     // Menu "Usuários" — somente master
     const menuUsuarios = document.getElementById("menuUsuarios");
     if (menuUsuarios) {
-        menuUsuarios.style.display = usuario.perfil === "master" ? "" : "none";
+        menuUsuarios.style.display = (usuario.perfil === "master" || usuario.perfil === "admin") ? "" : "none";
     }
 
     // Agenda alerta de SPED pendentes uma vez por dia
