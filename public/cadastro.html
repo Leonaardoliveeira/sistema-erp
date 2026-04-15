@@ -79,11 +79,10 @@
     <div class="form-box" style="margin-top:30px;">
       <h3>Pesquisar Clientes</h3>
       <input type="text" id="campoPesquisa" placeholder="🔎 Nome, Documento ou Telefone..." onkeyup="filtrarClientes()">
-      <button class="btn-primary" onclick="abrirModal()"> ➕ Incluir </button>
+      <button class="btn-primary" onclick="abrirNovoCliente()"> ➕ Incluir </button>
     </div>
 
-    <div class="container-cadastro">
-      <div class="table-container">
+    <div class="table-container">
         <table>
           <thead>
             <tr>
@@ -97,7 +96,6 @@
           </thead>
           <tbody id="tabelaClientes"></tbody>
         </table>
-      </div>
     </div>
   </div>
 
@@ -160,36 +158,19 @@
       document.getElementById('sidebar').classList.toggle('active');
     }
 
-    function abrirModal() {
-      document.getElementById("modalEdicao").style.display = "flex";
-      document.getElementById("tituloModal").innerText = "Novo Cliente";
-
-      document.getElementById("editId").value = "";
-      document.getElementById("editNome").value = "";
+    function abrirNovoCliente() {
+      document.getElementById("editId").value        = "";
+      document.getElementById("editNome").value      = "";
       document.getElementById("editDocumento").value = "";
-      document.getElementById("editEmail").value = "";
-      document.getElementById("editTelefone").value = "";
-      document.getElementById("editRegime").value = "";
-
-      // 🔥 LIMPA LISTA DINÂMICA
+      document.getElementById("editEmail").value     = "";
+      document.getElementById("editTelefone").value  = "";
+      document.getElementById("editRegime").value    = "";
+      document.getElementById("editSped").value      = "Sim";
       document.getElementById("listaAcessos").innerHTML = "";
-
-      // 🔥 CRIA UM CAMPO INICIAL
+      const titulo = document.getElementById("tituloModal");
+      if (titulo) titulo.innerText = "Novo Cliente";
       adicionarAcesso();
-    }
-
-    function fecharModal() {
-      document.getElementById("modalEdicao").style.display = "none";
-    }
-
-    async function salvarClienteOuEditar() {
-      const id = document.getElementById("editId").value;
-
-      if (id) {
-        await salvarEdicao();
-      } else {
-        await salvarCliente();
-      }
+      document.getElementById("modalEdicao").style.display = "flex";
     }
 
 

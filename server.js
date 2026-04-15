@@ -11,136 +11,84 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// --------------------
-// Conexão MongoDB
-// --------------------
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ Conectado ao MongoDB"))
   .catch(err => console.error("❌ Erro ao conectar:", err));
-
 
 // --------------------
 // SCHEMAS
 // --------------------
 const UsuarioSchema = new mongoose.Schema({
-  nome: { type: String, required: true },
+  nome:    { type: String, required: true },
   usuario: { type: String, required: true, unique: true },
-  senha: { type: String, required: true },
-  perfil: { type: String, enum: ["admin", "user"], default: "user" }
+  senha:   { type: String, required: true },
+  // master: vê tudo + gerencia usuários + cadastra clientes
+  // admin:  vê tudo + cadastra clientes (sem gerenciar usuários)
+  // user:   vê/edita apenas os próprios clientes + cadastra clientes
+  perfil:  { type: String, enum: ["master", "admin", "user"], default: "user" }
 });
 
 const ClienteSchema = new mongoose.Schema({
-  nome: { type: String, required: true },
+  nome:      { type: String, required: true },
   documento: String,
-  email: String,
-  telefone: String,
-  regime: String,
-
-  sped: {
-    type: String,
-    enum: ["Sim", "Nao"],
-    default: "Nao"
-  },
-
-
-  acessosRemotos: [
-    {
-      nome: String,
-      anydesk: String
-    }
-  ],
-
-  status: { type: String, default: "Pendente" },
-
-  usuarioId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Usuario",
-    required: true
-  },
-
-  criadoEm: { type: Date, default: Date.now }
-
+  email:     String,
+  telefone:  String,
+  regime:    String,
+  sped:      { type: String, enum: ["Sim", "Nao"], default: "Nao" },
+  acessosRemotos: [{ nome: String, anydesk: String }],
+  status:    { type: String, default: "Pendente" },
+  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
+  criadoEm:  { type: Date, default: Date.now }
 });
 
 const SpedSchema = new mongoose.Schema({
   clienteId: { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
-  mes: { type: String, required: true },
-  status: { type: String, enum: ["nao", "gerado", "ok"], default: "nao" },
+  mes:       { type: String, required: true },
+  status:    { type: String, enum: ["nao", "gerado", "ok"], default: "nao" },
   usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario" }
+});
+
+const ConfigSchema = new mongoose.Schema({
+  chave: { type: String, unique: true },
+  mes:   Number,
+  ano:   Number
 });
 
 const Usuario = mongoose.model("Usuario", UsuarioSchema);
 const Cliente = mongoose.model("Cliente", ClienteSchema);
-const Sped = mongoose.model("Sped", SpedSchema);
+const Sped    = mongoose.model("Sped", SpedSchema);
+const Config  = mongoose.model("Config", ConfigSchema);
 
 // --------------------
 // RESET MENSAL
 // --------------------
-
-const ConfigSchema = new mongoose.Schema({
-  chave: { type: String, unique: true },
-  mes: Number,
-  ano: Number
-});
-
-const Config = mongoose.model("Config", ConfigSchema);
-
-
-// --------------------
-// FUNÇÃO RESET MENSAL (CORRIGIDA)
-// --------------------
 async function verificarResetMensal() {
   try {
-    // 🔥 Força timezone do Brasil
-    const agoraBrasil = new Date(
-      new Date().toLocaleString("en-US", {
-        timeZone: "America/Sao_Paulo"
-      })
-    );
-
+    const agoraBrasil = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
     const mesAtual = agoraBrasil.getMonth();
     const anoAtual = agoraBrasil.getFullYear();
-
-    console.log("🕒 Data servidor UTC:", new Date());
-    console.log("🇧🇷 Data Brasil:", agoraBrasil);
-
     const config = await Config.findOne({ chave: "resetMensalClientes" });
-
-    console.log("📦 Config atual:", config);
-
-    // 🛑 Se já rodou esse mês, não faz nada
-    if (config && config.mes === mesAtual && config.ano === anoAtual) {
-      console.log("✅ Reset já executado este mês");
-      return;
-    }
-
-    console.log("🔄 Executando reset mensal automático...");
-
-    const result = await Cliente.updateMany(
-      { sped: "Sim" },
-      { $set: { status: "Pendente" } }
-    );
-
-    console.log(`✅ ${result.modifiedCount} clientes resetados`);
-
-    // 🔥 Atualiza ou cria config
+    if (config && config.mes === mesAtual && config.ano === anoAtual) return;
+    const result = await Cliente.updateMany({ sped: "Sim" }, { $set: { status: "Pendente" } });
+    console.log("Reset mensal: " + result.modifiedCount + " clientes resetados");
     await Config.findOneAndUpdate(
       { chave: "resetMensalClientes" },
-      {
-        chave: "resetMensalClientes",
-        mes: mesAtual,
-        ano: anoAtual
-      },
+      { chave: "resetMensalClientes", mes: mesAtual, ano: anoAtual },
       { upsert: true, new: true }
     );
-
-    console.log("💾 Config atualizada com sucesso");
-
   } catch (err) {
-    console.error("❌ Erro no reset automático:", err);
+    console.error("Erro no reset:", err);
   }
 }
 
+// --------------------
+// HELPER: filtro por perfil
+// master e admin veem tudo; user vê só os próprios
+// --------------------
+function filtroPerfil(req) {
+  if (req.usuario.perfil === "master" || req.usuario.perfil === "admin") return {};
+  return { usuarioId: req.usuario.id };
+}
 
 // --------------------
 // MIDDLEWARES
@@ -151,13 +99,14 @@ function verificarToken(req, res, next) {
   const token = authHeader.split(" ")[1];
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) return res.status(401).json({ message: "Token inválido" });
-    req.usuario = decoded; // { id, perfil }
+    req.usuario = decoded;
     next();
   });
 }
 
-function verificarAdmin(req, res, next) {
-  if (req.usuario.perfil !== "admin") return res.status(403).json({ message: "Acesso negado" });
+function verificarMaster(req, res, next) {
+  if (req.usuario.perfil !== "master")
+    return res.status(403).json({ message: "Acesso negado: apenas o mestre gerencia usuários" });
   next();
 }
 
@@ -171,7 +120,6 @@ app.post("/api/login", async (req, res) => {
     if (!user) return res.status(401).json({ message: "Credenciais inválidas" });
     const match = await bcrypt.compare(senha, user.senha);
     if (!match) return res.status(401).json({ message: "Credenciais inválidas" });
-
     const token = jwt.sign({ id: user._id, perfil: user.perfil }, process.env.JWT_SECRET, { expiresIn: "8h" });
     res.json({ token, usuario: { nome: user.nome, usuario: user.usuario, perfil: user.perfil } });
   } catch (err) {
@@ -184,44 +132,32 @@ app.post("/api/login", async (req, res) => {
 // --------------------
 app.get("/api/clientes", verificarToken, async (req, res) => {
   try {
-    // 🔥 chama o reset automático
     await verificarResetMensal();
-
-    const filtro = req.usuario.perfil === "admin"
-      ? {}
-      : { usuarioId: req.usuario.id };
-
-    const clientes = await Cliente.find(filtro).sort({ nome: 1 });
-
+    const clientes = await Cliente.find(filtroPerfil(req)).sort({ nome: 1 });
     res.json(clientes);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
-// 🔍 BUSCAR CLIENTE POR ID
+
 app.get("/api/clientes/:id", verificarToken, async (req, res) => {
   try {
-    const filtro = req.usuario.perfil === "admin"
-      ? { _id: req.params.id }
-      : { _id: req.params.id, usuarioId: req.usuario.id };
-
-    const cliente = await Cliente.findOne(filtro);
-
-    if (!cliente) {
-      return res.status(404).json({ message: "Cliente não encontrado" });
-    }
-
+    const cliente = await Cliente.findOne({ _id: req.params.id, ...filtroPerfil(req) });
+    if (!cliente) return res.status(404).json({ message: "Cliente não encontrado" });
     res.json(cliente);
-
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
+// Todos os 3 níveis podem cadastrar clientes
 app.post("/api/clientes", verificarToken, async (req, res) => {
   try {
-    const dadosCliente = { ...req.body, usuarioId: req.usuario.id };
-    const novoCliente = await Cliente.create(dadosCliente);
+    const { nome, documento, email, telefone, regime, sped, acessosRemotos } = req.body;
+    const novoCliente = await Cliente.create({
+      nome, documento, email, telefone, regime, sped, acessosRemotos,
+      usuarioId: req.usuario.id
+    });
     res.status(201).json(novoCliente);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -230,10 +166,20 @@ app.post("/api/clientes", verificarToken, async (req, res) => {
 
 app.put("/api/clientes/:id", verificarToken, async (req, res) => {
   try {
-    const filtro = req.usuario.perfil === "admin" ? { _id: req.params.id } : { _id: req.params.id, usuarioId: req.usuario.id };
-    const clienteAtualizado = await Cliente.findOneAndUpdate(filtro, req.body, { new: true });
-    if (!clienteAtualizado) return res.status(404).json({ message: "Cliente não encontrado" });
-    res.json(clienteAtualizado);
+    const filtro = { _id: req.params.id, ...filtroPerfil(req) };
+    const { nome, documento, email, telefone, regime, sped, acessosRemotos, status } = req.body;
+    const dados = {};
+    if (nome !== undefined) dados.nome = nome;
+    if (documento !== undefined) dados.documento = documento;
+    if (email !== undefined) dados.email = email;
+    if (telefone !== undefined) dados.telefone = telefone;
+    if (regime !== undefined) dados.regime = regime;
+    if (sped !== undefined) dados.sped = sped;
+    if (acessosRemotos !== undefined) dados.acessosRemotos = acessosRemotos;
+    if (status !== undefined) dados.status = status;
+    const atualizado = await Cliente.findOneAndUpdate(filtro, dados, { new: true });
+    if (!atualizado) return res.status(404).json({ message: "Cliente não encontrado" });
+    res.json(atualizado);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -241,8 +187,7 @@ app.put("/api/clientes/:id", verificarToken, async (req, res) => {
 
 app.delete("/api/clientes/:id", verificarToken, async (req, res) => {
   try {
-    const filtro = req.usuario.perfil === "admin" ? { _id: req.params.id } : { _id: req.params.id, usuarioId: req.usuario.id };
-    const removido = await Cliente.findOneAndDelete(filtro);
+    const removido = await Cliente.findOneAndDelete({ _id: req.params.id, ...filtroPerfil(req) });
     if (!removido) return res.status(404).json({ message: "Não autorizado" });
     res.json({ message: "Cliente removido" });
   } catch (err) {
@@ -251,11 +196,24 @@ app.delete("/api/clientes/:id", verificarToken, async (req, res) => {
 });
 
 // --------------------
+// ALERTA: SPED PENDENTES (usado pelo frontend ao entrar)
+// --------------------
+app.get("/api/alertas/sped-pendentes", verificarToken, async (req, res) => {
+  try {
+    const filtro = { ...filtroPerfil(req), sped: "Sim", status: "Pendente" };
+    const total = await Cliente.countDocuments(filtro);
+    res.json({ total });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --------------------
 // SPED
 // --------------------
 app.get("/api/sped/:mes", verificarToken, async (req, res) => {
   try {
-    const clientesMeus = await Cliente.find(req.usuario.perfil === "admin" ? {} : { usuarioId: req.usuario.id });
+    const clientesMeus = await Cliente.find(filtroPerfil(req));
     const idsMeus = clientesMeus.map(c => c._id);
     const speds = await Sped.find({ mes: req.params.mes, clienteId: { $in: idsMeus } }).populate("clienteId");
     res.json(speds);
@@ -267,9 +225,8 @@ app.get("/api/sped/:mes", verificarToken, async (req, res) => {
 app.post("/api/sped", verificarToken, async (req, res) => {
   try {
     const { clienteId, mes, status } = req.body;
-    const cliente = await Cliente.findOne({ _id: clienteId, usuarioId: req.usuario.id });
-    if (!cliente && req.usuario.perfil !== "admin") return res.status(403).json({ message: "Não autorizado" });
-
+    const cliente = await Cliente.findOne({ _id: clienteId, ...filtroPerfil(req) });
+    if (!cliente) return res.status(403).json({ message: "Não autorizado" });
     let registro = await Sped.findOne({ clienteId, mes });
     if (registro) {
       registro.status = status;
@@ -284,9 +241,9 @@ app.post("/api/sped", verificarToken, async (req, res) => {
 });
 
 // --------------------
-// USUÁRIOS (ADMIN)
+// USUÁRIOS — somente master
 // --------------------
-app.get("/api/usuarios", verificarToken, verificarAdmin, async (req, res) => {
+app.get("/api/usuarios", verificarToken, verificarMaster, async (req, res) => {
   try {
     const usuarios = await Usuario.find().select("-senha");
     res.json(usuarios);
@@ -295,7 +252,7 @@ app.get("/api/usuarios", verificarToken, verificarAdmin, async (req, res) => {
   }
 });
 
-app.post("/api/usuarios", verificarToken, verificarAdmin, async (req, res) => {
+app.post("/api/usuarios", verificarToken, verificarMaster, async (req, res) => {
   try {
     const { nome, usuario, senha, perfil } = req.body;
     if (!nome || !usuario || !senha) return res.status(400).json({ message: "Campos obrigatórios" });
@@ -307,7 +264,7 @@ app.post("/api/usuarios", verificarToken, verificarAdmin, async (req, res) => {
   }
 });
 
-app.put("/api/usuarios/:id", verificarToken, verificarAdmin, async (req, res) => {
+app.put("/api/usuarios/:id", verificarToken, verificarMaster, async (req, res) => {
   try {
     const { nome, usuario, senha, perfil } = req.body;
     const dados = { nome, usuario, perfil };
@@ -320,7 +277,7 @@ app.put("/api/usuarios/:id", verificarToken, verificarAdmin, async (req, res) =>
   }
 });
 
-app.delete("/api/usuarios/:id", verificarToken, verificarAdmin, async (req, res) => {
+app.delete("/api/usuarios/:id", verificarToken, verificarMaster, async (req, res) => {
   try {
     const removido = await Usuario.findByIdAndDelete(req.params.id);
     if (!removido) return res.status(404).json({ message: "Usuário não encontrado" });
@@ -334,4 +291,4 @@ app.delete("/api/usuarios/:id", verificarToken, verificarAdmin, async (req, res)
 // INICIAR SERVIDOR
 // --------------------
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Servidor em http://localhost:${PORT}`));
+app.listen(PORT, () => console.log("Servidor em http://localhost:" + PORT));
