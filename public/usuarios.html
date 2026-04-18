@@ -95,7 +95,7 @@
 
 
   <!-- ====== CONFIG ALERTAS SPED ====== -->
-  <div class="main-section" style="margin-top:28px;">
+  <div class="main" style="margin-top:28px;">
     <div class="section-header">
       <h3 class="section-title">
         <i data-lucide="bell" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i>
@@ -107,7 +107,8 @@
 
       <div class="alerta-toggle-wrap">
         <label class="toggle-label">
-          <span>Alertas ativos</span>
+          <span>Alertas ativos</span>         
+          <input type="checkbox" id="alertaAtivo" hidden>         
           <button type="button" class="toggle-btn" id="toggleAlerta" onclick="toggleAtivoAlerta()">
             <span class="toggle-thumb"></span>
           </button>
@@ -128,7 +129,7 @@
     </div>
 
     <div class="alerta-actions">
-      <button class="btn-success" type="button" onclick="salvarConfigAlerta()">
+      <button class="btn-success" type="button" onclick="salvarConfigAlertas()">
         Salvar configuração
       </button>
     </div>
