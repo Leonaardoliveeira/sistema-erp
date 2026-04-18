@@ -38,7 +38,7 @@
       <nav class="sidebar-nav">
         <div class="nav-group">
           <span class="nav-title">Gestão</span>
-          <a href="dashboard.html" class="nav-item">
+          <a href="dashboard.html" class="nav-item active">
             <i data-lucide="layout-dashboard"></i> Dashboard
           </a>
           <a href="cadastro.html" class="nav-item">
@@ -92,47 +92,66 @@
       </table>
     </div>
   </div>
+
+
   <!-- ====== CONFIG ALERTAS SPED ====== -->
-  <div class="main" style="margin-top:4px;">
+  <div class="alerta-config-section">
+    <div class="alerta-config-card">
+      <div class="alerta-config-header">
+        <div class="alerta-config-title">
+          <i data-lucide="bell" style="width:18px;height:18px;color:var(--amber);"></i>
+          <span>Alertas de SPED Pendentes</span>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="alertaAtivo" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <p class="alerta-config-desc">Configure os horários em que o sistema irá notificar sobre SPEDs pendentes neste mês.</p>
+      <div id="listaHorarios" class="horarios-lista"></div>
+      <div class="alerta-config-actions">
+        <button class="btn-secondary" type="button" onclick="adicionarHorario()">
+          <i data-lucide="plus" style="width:14px;height:14px;"></i> Adicionar horário
+        </button>
+        <button class="btn-success" type="button" onclick="salvarConfigAlertas()">
+          <i data-lucide="save" style="width:14px;height:14px;"></i> Salvar configuração
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- CONFIGURAÇÃO DE ALERTAS SPED -->
+  <div class="main-section" style="margin-top:28px;">
     <div class="section-header">
       <h3 class="section-title">
         <i data-lucide="bell" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i>
-        Alertas de SPED Pendentes
+        Configuração de Alertas SPED
       </h3>
     </div>
-
     <div class="alerta-config-box">
-
-      <div class="alerta-toggle-wrap">
-        <label class="toggle-label">
-          <span>Alertas ativos</span>         
-          <input type="checkbox" id="alertaAtivo" hidden>         
-          <button type="button" class="toggle-btn" id="toggleAlerta" onclick="toggleAtivoAlerta()">
-            <span class="toggle-thumb"></span>
-          </button>
-        </label>
-        <p class="alerta-desc">Quando ativo, você recebe notificações nos horários configurados sempre que houver SPEDs
-          pendentes.</p>
+      <div class="alerta-config-row">
+        <div class="alerta-toggle-wrap">
+          <label class="toggle-label">
+            <span>Alertas ativos</span>
+            <button type="button" class="toggle-btn" id="toggleAlerta" onclick="toggleAtivoAlerta()">
+              <span class="toggle-thumb"></span>
+            </button>
+          </label>
+          <p class="alerta-desc">Quando ativo, você recebe notificações nos horários configurados sempre que houver SPEDs pendentes.</p>
+        </div>
+      </div>
+      <div class="alerta-horarios-wrap" id="alertaHorariosWrap">
+        <label class="alerta-label-horario">Horários de notificação</label>
+        <div id="listaHorarios" class="horarios-lista"></div>
+        <button type="button" class="btn-add-horario" onclick="adicionarHorario()">
+          <i data-lucide="plus" style="width:14px;height:14px;"></i> Adicionar horário
+        </button>
+      </div>
+      <div class="alerta-actions">
+        <button class="btn-success" onclick="salvarConfigAlerta()">Salvar configuração</button>
       </div>
     </div>
-
-    <div class="alerta-horarios-wrap" id="alertaHorariosWrap">
-      <label class="alerta-label-horario">Horários de notificação</label>
-
-      <div id="listaHorarios" class="horarios-lista"></div>
-
-      <button type="button" class="btn-add-horario" onclick="adicionarHorario()">
-        <i data-lucide="plus" style="width:14px;height:14px;"></i> Adicionar horário
-      </button>
-    </div>
-
-    <div class="alerta-actions">
-      <button class="btn-success" type="button" onclick="salvarConfigAlertas()">
-        Salvar configuração
-      </button>
-    </div>
-
-  </div>
   </div>
 
   <div id="modalUsuario" class="modal" style="display:none;">
@@ -196,7 +215,7 @@
   <div id="loading">
     <div class="spinner"></div>
   </div>
-
+  
 </body>
 
 </html>
