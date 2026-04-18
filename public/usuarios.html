@@ -38,7 +38,7 @@
       <nav class="sidebar-nav">
         <div class="nav-group">
           <span class="nav-title">Gestão</span>
-          <a href="dashboard.html" class="nav-item active">
+          <a href="dashboard.html" class="nav-item">
             <i data-lucide="layout-dashboard"></i> Dashboard
           </a>
           <a href="cadastro.html" class="nav-item">
@@ -95,31 +95,7 @@
 
 
   <!-- ====== CONFIG ALERTAS SPED ====== -->
-  <div class="alerta-config-section">
-    <div class="alerta-config-card">
-      <div class="alerta-config-header">
-        <div class="alerta-config-title">
-          <i data-lucide="bell" style="width:18px;height:18px;color:var(--amber);"></i>
-          <span>Alertas de SPED Pendentes</span>
-        </div>
-        <label class="toggle-switch">
-          <input type="checkbox" id="alertaAtivo" checked>
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <p class="alerta-config-desc">Configure os horários em que o sistema irá notificar sobre SPEDs pendentes neste mês.</p>
-      <div id="listaHorarios" class="horarios-lista"></div>
-      <div class="alerta-config-actions">
-        <button class="btn-secondary" type="button" onclick="adicionarHorario()">
-          <i data-lucide="plus" style="width:14px;height:14px;"></i> Adicionar horário
-        </button>
-        <button class="btn-success" type="button" onclick="salvarConfigAlertas()">
-          <i data-lucide="save" style="width:14px;height:14px;"></i> Salvar configuração
-        </button>
-      </div>
-    </div>
-  </div>
-
+ 
 
   <!-- CONFIGURAÇÃO DE ALERTAS SPED -->
   <div class="main-section" style="margin-top:28px;">
