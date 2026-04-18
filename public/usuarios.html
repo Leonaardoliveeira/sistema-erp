@@ -105,37 +105,35 @@
 
     <div class="alerta-config-box">
 
-      <div class="alerta-config-row">
-        <div class="alerta-toggle-wrap">
-          <label class="toggle-label">
-            <span>Alertas ativos</span>
-            <button type="button" class="toggle-btn" id="alertaAtivo" onclick="toggleAtivoAlerta()">
-              <span class="toggle-thumb"></span>
-            </button>
-          </label>
-          <p class="alerta-desc">
-            Configure os horários em que o sistema irá notificar sobre SPEDs pendentes neste mês.
-          </p>
-        </div>
+      <div class="alerta-toggle-wrap">
+        <label class="toggle-label">
+          <span>Alertas ativos</span>
+          <button type="button" class="toggle-btn" id="toggleAlerta" onclick="toggleAtivoAlerta()">
+            <span class="toggle-thumb"></span>
+          </button>
+        </label>
+        <p class="alerta-desc">Quando ativo, você recebe notificações nos horários configurados sempre que houver SPEDs
+          pendentes.</p>
       </div>
-
-      <div class="alerta-horarios-wrap" id="alertaHorariosWrap">
-        <label class="alerta-label-horario">Horários de notificação</label>
-
-        <div id="listaHorarios" class="horarios-lista"></div>
-
-        <button type="button" class="btn-add-horario" onclick="adicionarHorario()">
-          <i data-lucide="plus" style="width:14px;height:14px;"></i> Adicionar horário
-        </button>
-      </div>
-
-      <div class="alerta-actions">
-        <button class="btn-success" type="button" onclick="salvarConfigAlerta()">
-          Salvar configuração
-        </button>
-      </div>
-
     </div>
+
+    <div class="alerta-horarios-wrap" id="alertaHorariosWrap">
+      <label class="alerta-label-horario">Horários de notificação</label>
+
+      <div id="listaHorarios" class="horarios-lista"></div>
+
+      <button type="button" class="btn-add-horario" onclick="adicionarHorario()">
+        <i data-lucide="plus" style="width:14px;height:14px;"></i> Adicionar horário
+      </button>
+    </div>
+
+    <div class="alerta-actions">
+      <button class="btn-success" type="button" onclick="salvarConfigAlerta()">
+        Salvar configuração
+      </button>
+    </div>
+
+  </div>
   </div>
 
   <div id="modalUsuario" class="modal" style="display:none;">
