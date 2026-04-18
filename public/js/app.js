@@ -87,6 +87,8 @@ function filtrarPorStatus(status, elemento) {
 
         // mostra todos novamente
         renderizarTabelaDashboard(clientesCache);
+        const el = document.getElementById("tituloFiltroAtivo");
+        if (el) el.textContent = "";
         return;
     }
 
@@ -102,6 +104,8 @@ function filtrarPorStatus(status, elemento) {
     const filtrados = clientesCache.filter(c => c.status === status);
 
     renderizarTabelaDashboard(filtrados);
+    const el = document.getElementById("tituloFiltroAtivo");
+    if (el) el.textContent = "— " + status;
 }
 // =======================================
 // 🔍 FILTRO DE PESQUISA (SEM API)
@@ -155,11 +159,11 @@ function renderizarTabelaDashboard(lista) {
 
         html += `
             <tr>
-                <td>${cliente.nome}</td>
-                <td>${cliente.documento || "-"}</td>
-                <td>${cliente.regime || "-"}</td>
-                <td>${cliente.telefone || "-"}</td>
-                <td>
+                <td data-label="Nome">${cliente.nome}</td>
+                <td data-label="Documento">${cliente.documento || "-"}</td>
+                <td data-label="Regime">${cliente.regime || "-"}</td>
+                <td data-label="Telefone">${cliente.telefone || "-"}</td>
+                <td data-label="Status">
                     <span class="status ${stClasse}">
                         ${cliente.status || "Pendente"}
                     </span>

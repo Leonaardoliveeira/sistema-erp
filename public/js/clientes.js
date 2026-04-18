@@ -102,18 +102,12 @@ async function listarClientes() {
                     <td data-label="Documento">${cliente.documento || "-"}</td>
                     <td data-label="Regime">${cliente.regime || "-"}</td>
                     <td data-label="Status">
-                        <div class="status-botoes">
-                            <button class="btn-status pendente ${st === 'pendente' ? 'ativo' : ''}" onclick="alterarStatusCliente('${cliente._id}','Pendente')">Pendente</button>
-                            <button class="btn-status enviado ${st === 'enviado' ? 'ativo' : ''}" onclick="alterarStatusCliente('${cliente._id}','Enviado')">Enviado</button>
-                            <button class="btn-status gerado ${st === 'gerado' ? 'ativo' : ''}" onclick="alterarStatusCliente('${cliente._id}','Gerado')">Gerado</button>
-                            <button class="btn-status erro ${st === 'erro' ? 'ativo' : ''}" onclick="alterarStatusCliente('${cliente._id}','Erro')">Erro</button>
+                        <div class="status-pills">
+                            <button class="pill pendente ${st === 'pendente' ? 'ativo' : ''}" onclick="alterarStatusCliente('${cliente._id}','Pendente')">Pendente</button>
+                            <button class="pill enviado ${st === 'enviado' ? 'ativo' : ''}" onclick="alterarStatusCliente('${cliente._id}','Enviado')">Enviado</button>
+                            <button class="pill gerado ${st === 'gerado' ? 'ativo' : ''}" onclick="alterarStatusCliente('${cliente._id}','Gerado')">Gerado</button>
+                            <button class="pill erro ${st === 'erro' ? 'ativo' : ''}" onclick="alterarStatusCliente('${cliente._id}','Erro')">Erro</button>
                         </div>
-                        <select class="status-select ${st}" onchange="alterarStatusCliente('${cliente._id}',this.value); atualizarCorSelect(this)">
-                            <option value="Pendente" ${st === 'pendente' ? 'selected' : ''}>Pendente</option>
-                            <option value="Enviado"  ${st === 'enviado'  ? 'selected' : ''}>Enviado</option>
-                            <option value="Gerado"   ${st === 'gerado'   ? 'selected' : ''}>Gerado</option>
-                            <option value="Erro"     ${st === 'erro'     ? 'selected' : ''}>Erro</option>
-                        </select>
                     </td>
                     <td class="td-acoes-cell">
                         <div class="td-acoes">
