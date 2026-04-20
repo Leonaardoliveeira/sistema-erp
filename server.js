@@ -1,16 +1,19 @@
 require("dotenv").config();
-const express = require("express");
-const path = require("path");
-const cors = require("cors");
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+const express   = require("express");
+const path      = require("path");
+const cors      = require("cors");
+const mongoose  = require("mongoose");
+const bcrypt    = require("bcryptjs");
+const jwt       = require("jsonwebtoken");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+// --------------------
+// CONEXÃO MONGODB
+// --------------------
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ Conectado ao MongoDB"))
   .catch(err => console.error("❌ Erro ao conectar:", err));
@@ -22,23 +25,23 @@ const UsuarioSchema = new mongoose.Schema({
   nome:    { type: String, required: true },
   usuario: { type: String, required: true, unique: true },
   senha:   { type: String, required: true },
-  // master: vê tudo + gerencia usuários + cadastra clientes
-  // admin:  vê tudo + cadastra clientes (sem gerenciar usuários)
-  // user:   vê/edita apenas os próprios clientes + cadastra clientes
+  // master: vê todos os clientes + gerencia usuários
+  // admin:  vê apenas os próprios + gerencia usuários
+  // user:   vê apenas os próprios, não gerencia usuários
   perfil:  { type: String, enum: ["master", "admin", "user"], default: "user" }
 });
 
 const ClienteSchema = new mongoose.Schema({
-  nome:      { type: String, required: true },
-  documento: String,
-  email:     String,
-  telefone:  String,
-  regime:    String,
-  sped:      { type: String, enum: ["Sim", "Nao"], default: "Nao" },
+  nome:           { type: String, required: true },
+  documento:      String,
+  email:          String,
+  telefone:       String,
+  regime:         String,
+  sped:           { type: String, enum: ["Sim", "Nao"], default: "Nao" },
   acessosRemotos: [{ nome: String, anydesk: String }],
-  status:    { type: String, default: "Pendente" },
-  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
-  criadoEm:  { type: Date, default: Date.now }
+  status:         { type: String, default: "Pendente" },
+  usuarioId:      { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
+  criadoEm:       { type: Date, default: Date.now }
 });
 
 const SpedSchema = new mongoose.Schema({
@@ -54,10 +57,30 @@ const ConfigSchema = new mongoose.Schema({
   ano:   Number
 });
 
-const Usuario = mongoose.model("Usuario", UsuarioSchema);
-const Cliente = mongoose.model("Cliente", ClienteSchema);
-const Sped    = mongoose.model("Sped", SpedSchema);
-const Config  = mongoose.model("Config", ConfigSchema);
+const AlertaConfigSchema = new mongoose.Schema({
+  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true, unique: true },
+  ativo:     { type: Boolean, default: true },
+  horarios:  { type: [String], default: ["08:00"] }
+});
+
+const BackupSchema = new mongoose.Schema({
+  clienteId:  { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
+  usuarioId:  { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
+  status:     { type: String, enum: ["ok", "falha", "pendente"], default: "pendente" },
+  tamanho:    { type: String },
+  destino:    { type: String },
+  observacao: { type: String },
+  dataBackup: { type: Date, required: true },
+  criadoEm:  { type: Date, default: Date.now }
+});
+
+// Registra models apenas uma vez (evita erro no Vercel com hot-reload)
+const Usuario      = mongoose.models.Usuario      || mongoose.model("Usuario",      UsuarioSchema);
+const Cliente      = mongoose.models.Cliente      || mongoose.model("Cliente",      ClienteSchema);
+const Sped         = mongoose.models.Sped         || mongoose.model("Sped",         SpedSchema);
+const Config       = mongoose.models.Config       || mongoose.model("Config",       ConfigSchema);
+const AlertaConfig = mongoose.models.AlertaConfig || mongoose.model("AlertaConfig", AlertaConfigSchema);
+const Backup       = mongoose.models.Backup       || mongoose.model("Backup",       BackupSchema);
 
 // --------------------
 // RESET MENSAL
@@ -82,13 +105,11 @@ async function verificarResetMensal() {
 }
 
 // --------------------
-// HELPER: filtro por perfil
-// master e admin veem tudo; user vê só os próprios
+// HELPERS
 // --------------------
+// master vê todos; admin e user veem só os próprios
 function filtroPerfil(req) {
-  // Apenas master vê todos os clientes
   if (req.usuario.perfil === "master") return {};
-  // admin e user veem apenas os próprios
   return { usuarioId: req.usuario.id };
 }
 
@@ -106,10 +127,10 @@ function verificarToken(req, res, next) {
   });
 }
 
-function verificarMaster(req, res, next) {
-  // master e admin gerenciam usuários; user não pode
+// Apenas user não pode gerenciar usuários
+function verificarAdmin(req, res, next) {
   if (req.usuario.perfil === "user")
-    return res.status(403).json({ message: "Acesso negado: sem permissão para gerenciar usuários" });
+    return res.status(403).json({ message: "Acesso negado" });
   next();
 }
 
@@ -153,7 +174,6 @@ app.get("/api/clientes/:id", verificarToken, async (req, res) => {
   }
 });
 
-// Todos os 3 níveis podem cadastrar clientes
 app.post("/api/clientes", verificarToken, async (req, res) => {
   try {
     const { nome, documento, email, telefone, regime, sped, acessosRemotos } = req.body;
@@ -172,14 +192,14 @@ app.put("/api/clientes/:id", verificarToken, async (req, res) => {
     const filtro = { _id: req.params.id, ...filtroPerfil(req) };
     const { nome, documento, email, telefone, regime, sped, acessosRemotos, status } = req.body;
     const dados = {};
-    if (nome !== undefined) dados.nome = nome;
-    if (documento !== undefined) dados.documento = documento;
-    if (email !== undefined) dados.email = email;
-    if (telefone !== undefined) dados.telefone = telefone;
-    if (regime !== undefined) dados.regime = regime;
-    if (sped !== undefined) dados.sped = sped;
-    if (acessosRemotos !== undefined) dados.acessosRemotos = acessosRemotos;
-    if (status !== undefined) dados.status = status;
+    if (nome          !== undefined) dados.nome          = nome;
+    if (documento     !== undefined) dados.documento     = documento;
+    if (email         !== undefined) dados.email         = email;
+    if (telefone      !== undefined) dados.telefone      = telefone;
+    if (regime        !== undefined) dados.regime        = regime;
+    if (sped          !== undefined) dados.sped          = sped;
+    if (acessosRemotos!== undefined) dados.acessosRemotos= acessosRemotos;
+    if (status        !== undefined) dados.status        = status;
     const atualizado = await Cliente.findOneAndUpdate(filtro, dados, { new: true });
     if (!atualizado) return res.status(404).json({ message: "Cliente não encontrado" });
     res.json(atualizado);
@@ -199,7 +219,7 @@ app.delete("/api/clientes/:id", verificarToken, async (req, res) => {
 });
 
 // --------------------
-// ALERTA: SPED PENDENTES (usado pelo frontend ao entrar)
+// ALERTAS — SPED PENDENTES
 // --------------------
 app.get("/api/alertas/sped-pendentes", verificarToken, async (req, res) => {
   try {
@@ -208,6 +228,30 @@ app.get("/api/alertas/sped-pendentes", verificarToken, async (req, res) => {
     res.json({ total });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+app.get("/api/alertas/config", verificarToken, async (req, res) => {
+  try {
+    let config = await AlertaConfig.findOne({ usuarioId: req.usuario.id });
+    if (!config) config = { ativo: true, horarios: ["08:00"] };
+    res.json(config);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post("/api/alertas/config", verificarToken, async (req, res) => {
+  try {
+    const { ativo, horarios } = req.body;
+    const config = await AlertaConfig.findOneAndUpdate(
+      { usuarioId: req.usuario.id },
+      { usuarioId: req.usuario.id, ativo, horarios },
+      { upsert: true, new: true }
+    );
+    res.json(config);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 });
 
@@ -244,9 +288,9 @@ app.post("/api/sped", verificarToken, async (req, res) => {
 });
 
 // --------------------
-// USUÁRIOS — somente master
+// USUÁRIOS
 // --------------------
-app.get("/api/usuarios", verificarToken, verificarMaster, async (req, res) => {
+app.get("/api/usuarios", verificarToken, verificarAdmin, async (req, res) => {
   try {
     const usuarios = await Usuario.find().select("-senha");
     res.json(usuarios);
@@ -255,7 +299,7 @@ app.get("/api/usuarios", verificarToken, verificarMaster, async (req, res) => {
   }
 });
 
-app.post("/api/usuarios", verificarToken, verificarMaster, async (req, res) => {
+app.post("/api/usuarios", verificarToken, verificarAdmin, async (req, res) => {
   try {
     const { nome, usuario, senha, perfil } = req.body;
     if (!nome || !usuario || !senha) return res.status(400).json({ message: "Campos obrigatórios" });
@@ -267,7 +311,7 @@ app.post("/api/usuarios", verificarToken, verificarMaster, async (req, res) => {
   }
 });
 
-app.put("/api/usuarios/:id", verificarToken, verificarMaster, async (req, res) => {
+app.put("/api/usuarios/:id", verificarToken, verificarAdmin, async (req, res) => {
   try {
     const { nome, usuario, senha, perfil } = req.body;
     const dados = { nome, usuario, perfil };
@@ -280,7 +324,7 @@ app.put("/api/usuarios/:id", verificarToken, verificarMaster, async (req, res) =
   }
 });
 
-app.delete("/api/usuarios/:id", verificarToken, verificarMaster, async (req, res) => {
+app.delete("/api/usuarios/:id", verificarToken, verificarAdmin, async (req, res) => {
   try {
     const removido = await Usuario.findByIdAndDelete(req.params.id);
     if (!removido) return res.status(404).json({ message: "Usuário não encontrado" });
@@ -291,37 +335,18 @@ app.delete("/api/usuarios/:id", verificarToken, verificarMaster, async (req, res
 });
 
 // --------------------
-// BACKUP — MONITORAMENTO
+// BACKUP
 // --------------------
-const BackupSchema = new mongoose.Schema({
-  clienteId:   { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
-  usuarioId:   { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
-  status:      { type: String, enum: ["ok", "falha", "pendente"], default: "pendente" },
-  tamanho:     { type: String },          // ex: "2.3 GB"
-  destino:     { type: String },          // ex: "S3", "Google Drive"
-  observacao:  { type: String },
-  dataBackup:  { type: Date, required: true },
-  criadoEm:    { type: Date, default: Date.now }
-});
-const Backup = mongoose.model("Backup", BackupSchema);
-
-// Registrar backup via script externo (API KEY via header)
-// O script chama: POST /api/backup com Authorization: Bearer <token>
 app.post("/api/backup", verificarToken, async (req, res) => {
   try {
     const { clienteId, status, tamanho, destino, observacao, dataBackup } = req.body;
     if (!clienteId || !status) return res.status(400).json({ message: "clienteId e status são obrigatórios" });
-
-    // Verifica se cliente existe e pertence ao usuário (ou master vê tudo)
     const cliente = await Cliente.findOne({ _id: clienteId, ...filtroPerfil(req) });
     if (!cliente) return res.status(404).json({ message: "Cliente não encontrado" });
-
     const backup = await Backup.create({
-      clienteId,
-      usuarioId: req.usuario.id,
-      status,
-      tamanho:    tamanho || null,
-      destino:    destino || null,
+      clienteId, usuarioId: req.usuario.id, status,
+      tamanho:    tamanho    || null,
+      destino:    destino    || null,
       observacao: observacao || null,
       dataBackup: dataBackup ? new Date(dataBackup) : new Date()
     });
@@ -331,12 +356,41 @@ app.post("/api/backup", verificarToken, async (req, res) => {
   }
 });
 
-// Listar backups com filtros opcionais: ?clienteId=&status=&dias=30
+app.get("/api/backup/resumo", verificarToken, async (req, res) => {
+  try {
+    const clientesVisiveis = await Cliente.find(filtroPerfil(req)).select("_id nome");
+    const idsVisiveis = clientesVisiveis.map(c => c._id);
+
+    const hoje = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    hoje.setHours(0, 0, 0, 0);
+
+    const backupsHoje = await Backup.find({
+      clienteId: { $in: idsVisiveis },
+      status: "ok",
+      dataBackup: { $gte: hoje }
+    }).select("clienteId");
+
+    const idsComBackup   = new Set(backupsHoje.map(b => b.clienteId.toString()));
+    const totalClientes  = clientesVisiveis.length;
+    const comBackup      = idsComBackup.size;
+    const semBackup      = totalClientes - comBackup;
+    const semBackupLista = clientesVisiveis.filter(c => !idsComBackup.has(c._id.toString()));
+
+    const ultimosBackups = await Backup.aggregate([
+      { $match: { clienteId: { $in: idsVisiveis } } },
+      { $sort:  { dataBackup: -1 } },
+      { $group: { _id: "$clienteId", ultimo: { $first: "$$ROOT" } } }
+    ]);
+
+    res.json({ totalClientes, comBackup, semBackup, semBackupLista, ultimosBackups });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 app.get("/api/backup", verificarToken, async (req, res) => {
   try {
     const { clienteId, status, dias } = req.query;
-
-    // Só traz clientes visíveis para o perfil do usuário
     const clientesVisiveis = await Cliente.find(filtroPerfil(req)).select("_id");
     const idsVisiveis = clientesVisiveis.map(c => c._id);
 
@@ -361,51 +415,13 @@ app.get("/api/backup", verificarToken, async (req, res) => {
   }
 });
 
-// Resumo: quantos clientes sem backup hoje
-app.get("/api/backup/resumo", verificarToken, async (req, res) => {
-  try {
-    const clientesVisiveis = await Cliente.find(filtroPerfil(req)).select("_id nome");
-    const idsVisiveis = clientesVisiveis.map(c => c._id);
-
-    // Início do dia de hoje (Brasil)
-    const hoje = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-    hoje.setHours(0, 0, 0, 0);
-
-    // Clientes que tiveram backup OK hoje
-    const backupsHoje = await Backup.find({
-      clienteId: { $in: idsVisiveis },
-      status: "ok",
-      dataBackup: { $gte: hoje }
-    }).select("clienteId");
-
-    const idsComBackup = new Set(backupsHoje.map(b => b.clienteId.toString()));
-
-    const totalClientes  = clientesVisiveis.length;
-    const comBackup      = idsComBackup.size;
-    const semBackup      = totalClientes - comBackup;
-    const semBackupLista = clientesVisiveis.filter(c => !idsComBackup.has(c._id.toString()));
-
-    // Último backup de cada cliente
-    const ultimosBackups = await Backup.aggregate([
-      { $match: { clienteId: { $in: idsVisiveis } } },
-      { $sort:  { dataBackup: -1 } },
-      { $group: { _id: "$clienteId", ultimo: { $first: "$$ROOT" } } }
-    ]);
-
-    res.json({ totalClientes, comBackup, semBackup, semBackupLista, ultimosBackups });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Atualizar/corrigir um registro de backup
 app.put("/api/backup/:id", verificarToken, async (req, res) => {
   try {
     const { status, tamanho, destino, observacao } = req.body;
     const dados = {};
-    if (status !== undefined)    dados.status    = status;
-    if (tamanho !== undefined)   dados.tamanho   = tamanho;
-    if (destino !== undefined)   dados.destino   = destino;
+    if (status     !== undefined) dados.status     = status;
+    if (tamanho    !== undefined) dados.tamanho    = tamanho;
+    if (destino    !== undefined) dados.destino    = destino;
     if (observacao !== undefined) dados.observacao = observacao;
     const atualizado = await Backup.findByIdAndUpdate(req.params.id, dados, { new: true });
     if (!atualizado) return res.status(404).json({ message: "Registro não encontrado" });
@@ -415,7 +431,6 @@ app.put("/api/backup/:id", verificarToken, async (req, res) => {
   }
 });
 
-// Excluir registro de backup
 app.delete("/api/backup/:id", verificarToken, async (req, res) => {
   try {
     await Backup.findByIdAndDelete(req.params.id);
@@ -424,186 +439,12 @@ app.delete("/api/backup/:id", verificarToken, async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 });
-
-
-// --------------------
-// INICIAR SERVIDOR
-// --------------------
-const PORT = process.env.PORT || 3000;
-
-// --------------------
-// ALERTAS — CONFIGURAÇÃO POR USUÁRIO
-// --------------------
-const AlertaConfigSchema = new mongoose.Schema({
-  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true, unique: true },
-  ativo:     { type: Boolean, default: true },
-  horarios:  { type: [String], default: ["08:00"] }
-});
-const AlertaConfig = mongoose.model("AlertaConfig", AlertaConfigSchema);
-
-// Ler configuração de alertas do usuário logado
-app.get("/api/alertas/config", verificarToken, async (req, res) => {
-  try {
-    let config = await AlertaConfig.findOne({ usuarioId: req.usuario.id });
-    if (!config) config = { ativo: true, horarios: ["08:00"] };
-    res.json(config);
-  } catch (err) { res.status(500).json({ message: err.message }); }
-});
-
-// Salvar configuração de alertas do usuário logado
-app.post("/api/alertas/config", verificarToken, async (req, res) => {
-  try {
-    const { ativo, horarios } = req.body;
-    const config = await AlertaConfig.findOneAndUpdate(
-      { usuarioId: req.usuario.id },
-      { usuarioId: req.usuario.id, ativo, horarios },
-      { upsert: true, new: true }
-    );
-    res.json(config);
-  } catch (err) { res.status(400).json({ message: err.message }); }
-});
-
-// --------------------
-// BACKUP — MONITORAMENTO
-// --------------------
-const BackupSchema = new mongoose.Schema({
-  clienteId:   { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
-  usuarioId:   { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
-  status:      { type: String, enum: ["ok", "falha", "pendente"], default: "pendente" },
-  tamanho:     { type: String },          // ex: "2.3 GB"
-  destino:     { type: String },          // ex: "S3", "Google Drive"
-  observacao:  { type: String },
-  dataBackup:  { type: Date, required: true },
-  criadoEm:    { type: Date, default: Date.now }
-});
-const Backup = mongoose.model("Backup", BackupSchema);
-
-// Registrar backup via script externo (API KEY via header)
-// O script chama: POST /api/backup com Authorization: Bearer <token>
-app.post("/api/backup", verificarToken, async (req, res) => {
-  try {
-    const { clienteId, status, tamanho, destino, observacao, dataBackup } = req.body;
-    if (!clienteId || !status) return res.status(400).json({ message: "clienteId e status são obrigatórios" });
-
-    // Verifica se cliente existe e pertence ao usuário (ou master vê tudo)
-    const cliente = await Cliente.findOne({ _id: clienteId, ...filtroPerfil(req) });
-    if (!cliente) return res.status(404).json({ message: "Cliente não encontrado" });
-
-    const backup = await Backup.create({
-      clienteId,
-      usuarioId: req.usuario.id,
-      status,
-      tamanho:    tamanho || null,
-      destino:    destino || null,
-      observacao: observacao || null,
-      dataBackup: dataBackup ? new Date(dataBackup) : new Date()
-    });
-    res.status(201).json(backup);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-// Listar backups com filtros opcionais: ?clienteId=&status=&dias=30
-app.get("/api/backup", verificarToken, async (req, res) => {
-  try {
-    const { clienteId, status, dias } = req.query;
-
-    // Só traz clientes visíveis para o perfil do usuário
-    const clientesVisiveis = await Cliente.find(filtroPerfil(req)).select("_id");
-    const idsVisiveis = clientesVisiveis.map(c => c._id);
-
-    const filtro = { clienteId: { $in: idsVisiveis } };
-    if (clienteId) filtro.clienteId = clienteId;
-    if (status)    filtro.status    = status;
-    if (dias) {
-      const limite = new Date();
-      limite.setDate(limite.getDate() - parseInt(dias));
-      filtro.dataBackup = { $gte: limite };
-    }
-
-    const backups = await Backup.find(filtro)
-      .populate("clienteId", "nome documento")
-      .populate("usuarioId", "nome")
-      .sort({ dataBackup: -1 })
-      .limit(500);
-
-    res.json(backups);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Resumo: quantos clientes sem backup hoje
-app.get("/api/backup/resumo", verificarToken, async (req, res) => {
-  try {
-    const clientesVisiveis = await Cliente.find(filtroPerfil(req)).select("_id nome");
-    const idsVisiveis = clientesVisiveis.map(c => c._id);
-
-    // Início do dia de hoje (Brasil)
-    const hoje = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-    hoje.setHours(0, 0, 0, 0);
-
-    // Clientes que tiveram backup OK hoje
-    const backupsHoje = await Backup.find({
-      clienteId: { $in: idsVisiveis },
-      status: "ok",
-      dataBackup: { $gte: hoje }
-    }).select("clienteId");
-
-    const idsComBackup = new Set(backupsHoje.map(b => b.clienteId.toString()));
-
-    const totalClientes  = clientesVisiveis.length;
-    const comBackup      = idsComBackup.size;
-    const semBackup      = totalClientes - comBackup;
-    const semBackupLista = clientesVisiveis.filter(c => !idsComBackup.has(c._id.toString()));
-
-    // Último backup de cada cliente
-    const ultimosBackups = await Backup.aggregate([
-      { $match: { clienteId: { $in: idsVisiveis } } },
-      { $sort:  { dataBackup: -1 } },
-      { $group: { _id: "$clienteId", ultimo: { $first: "$$ROOT" } } }
-    ]);
-
-    res.json({ totalClientes, comBackup, semBackup, semBackupLista, ultimosBackups });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Atualizar/corrigir um registro de backup
-app.put("/api/backup/:id", verificarToken, async (req, res) => {
-  try {
-    const { status, tamanho, destino, observacao } = req.body;
-    const dados = {};
-    if (status !== undefined)    dados.status    = status;
-    if (tamanho !== undefined)   dados.tamanho   = tamanho;
-    if (destino !== undefined)   dados.destino   = destino;
-    if (observacao !== undefined) dados.observacao = observacao;
-    const atualizado = await Backup.findByIdAndUpdate(req.params.id, dados, { new: true });
-    if (!atualizado) return res.status(404).json({ message: "Registro não encontrado" });
-    res.json(atualizado);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-// Excluir registro de backup
-app.delete("/api/backup/:id", verificarToken, async (req, res) => {
-  try {
-    await Backup.findByIdAndDelete(req.params.id);
-    res.json({ message: "Removido" });
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
 
 // --------------------
 // INICIAR SERVIDOR
 // Compatível com Vercel (serverless) e execução local
 // --------------------
-module.exports = app; // necessário para o Vercel
+module.exports = app;
 
 if (require.main === module) {
   const PORT = process.env.PORT || 3000;
