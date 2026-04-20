@@ -326,33 +326,3 @@ app.post("/api/alertas/config", verificarToken, async (req, res) => {
   } catch (err) { res.status(400).json({ message: err.message }); }
 });
 
-// --------------------
-// CONFIGURAÇÃO DE ALERTAS SPED
-// Salva/lê configuração no banco (por usuário)
-// --------------------
-const AlertaConfigSchema = new mongoose.Schema({
-  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true, unique: true },
-  ativo:     { type: Boolean, default: true },
-  horarios:  { type: [String], default: ["08:00"] } // ex: ["08:00","12:00","18:00"]
-});
-const AlertaConfig = mongoose.model("AlertaConfig", AlertaConfigSchema);
-
-app.get("/api/alertas/config", verificarToken, async (req, res) => {
-  try {
-    let config = await AlertaConfig.findOne({ usuarioId: req.usuario.id });
-    if (!config) config = { ativo: true, horarios: ["08:00"] };
-    res.json(config);
-  } catch (err) { res.status(500).json({ message: err.message }); }
-});
-
-app.post("/api/alertas/config", verificarToken, async (req, res) => {
-  try {
-    const { ativo, horarios } = req.body;
-    const config = await AlertaConfig.findOneAndUpdate(
-      { usuarioId: req.usuario.id },
-      { usuarioId: req.usuario.id, ativo, horarios },
-      { upsert: true, new: true }
-    );
-    res.json(config);
-  } catch (err) { res.status(400).json({ message: err.message }); }
-});
