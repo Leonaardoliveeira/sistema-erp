@@ -294,35 +294,41 @@ app.delete("/api/usuarios/:id", verificarToken, verificarMaster, async (req, res
 // INICIAR SERVIDOR
 // --------------------
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Servidor em http://localhost:" + PORT));
 
 // --------------------
-// CONFIG DE ALERTAS SPED (salva por usuário no banco)
+// ALERTAS — CONFIGURAÇÃO POR USUÁRIO
 // --------------------
 const AlertaConfigSchema = new mongoose.Schema({
   usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true, unique: true },
-  horarios:  { type: [String], default: ["08:00"] }, // ex: ["08:00","12:00","17:00"]
-  ativo:     { type: Boolean, default: true }
+  ativo:     { type: Boolean, default: true },
+  horarios:  { type: [String], default: ["08:00"] }
 });
 const AlertaConfig = mongoose.model("AlertaConfig", AlertaConfigSchema);
 
+// Ler configuração de alertas do usuário logado
 app.get("/api/alertas/config", verificarToken, async (req, res) => {
   try {
-    let cfg = await AlertaConfig.findOne({ usuarioId: req.usuario.id });
-    if (!cfg) cfg = { horarios: ["08:00"], ativo: true };
-    res.json(cfg);
+    let config = await AlertaConfig.findOne({ usuarioId: req.usuario.id });
+    if (!config) config = { ativo: true, horarios: ["08:00"] };
+    res.json(config);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
+// Salvar configuração de alertas do usuário logado
 app.post("/api/alertas/config", verificarToken, async (req, res) => {
   try {
-    const { horarios, ativo } = req.body;
-    const cfg = await AlertaConfig.findOneAndUpdate(
+    const { ativo, horarios } = req.body;
+    const config = await AlertaConfig.findOneAndUpdate(
       { usuarioId: req.usuario.id },
-      { usuarioId: req.usuario.id, horarios, ativo },
+      { usuarioId: req.usuario.id, ativo, horarios },
       { upsert: true, new: true }
     );
-    res.json(cfg);
+    res.json(config);
   } catch (err) { res.status(400).json({ message: err.message }); }
 });
 
+// --------------------
+// INICIAR SERVIDOR
+// --------------------
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚀 Servidor em http://localhost:${PORT}`));

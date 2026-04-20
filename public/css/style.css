@@ -521,78 +521,6 @@ button:active { transform: scale(.97); }
 .btn-add-acesso { align-self: flex-start; margin-top: 10px; }
 
 /* ==========================================================================
-   11. CONFIGURAÇÃO DE ALERTAS SPED
-   ========================================================================== */
-.alerta-config-box {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  padding: 22px 24px;
-  display: flex; flex-direction: column; gap: 20px;
-}
-
-.alerta-config-row { display: flex; align-items: flex-start; gap: 16px; }
-
-.toggle-label {
-  display: flex; align-items: center; gap: 12px;
-  cursor: pointer; font-size: 13.5px; font-weight: 500; color: var(--text);
-}
-.toggle-btn {
-  position: relative; width: 42px; height: 24px;
-  background: #d1d5db; border: none; border-radius: 12px;
-  cursor: pointer; transition: background .22s;
-  flex-shrink: 0; padding: 0;
-}
-.toggle-btn.ativo { background: var(--blue); }
-.toggle-thumb {
-  position: absolute; top: 3px; left: 3px;
-  width: 18px; height: 18px; border-radius: 50%;
-  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2);
-  transition: transform .22s cubic-bezier(.34,1.56,.64,1);
-}
-.toggle-btn.ativo .toggle-thumb { transform: translateX(18px); }
-
-.alerta-desc { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; }
-.alerta-toggle-wrap { display: flex; flex-direction: column; gap: 4px; }
-
-.alerta-label-horario { font-size: 12.5px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; display: block; }
-
-.horarios-lista { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
-
-.horario-item {
-  display: flex; align-items: center; gap: 8px;
-}
-.input-horario {
-  width: 120px; margin-bottom: 0;
-  padding: 8px 10px; font-size: 14px;
-  border-radius: var(--radius-sm); border: 1px solid var(--border);
-  background: var(--surface); color: var(--text);
-}
-.input-horario:focus { outline: none; border-color: #818cf8; box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
-
-.btn-remover-horario {
-  width: 30px; height: 30px; flex-shrink: 0;
-  border-radius: var(--radius-sm);
-  background: #f3f4f6; color: var(--red);
-  border: 1px solid var(--border); cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: background .15s;
-}
-.btn-remover-horario:hover { background: var(--red); color: #fff; border-color: var(--red); }
-
-.btn-add-horario {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 7px 13px; font-size: 12.5px; font-weight: 600;
-  border-radius: var(--radius-sm); background: transparent;
-  border: 1.5px dashed var(--border); color: var(--text-muted);
-  cursor: pointer; transition: all .16s;
-}
-.btn-add-horario:hover { border-color: var(--blue); color: var(--blue); background: rgba(79,70,229,.04); }
-
-.alerta-actions { display: flex; justify-content: flex-end; }
-
-/* ==========================================================================
    12. DARK MODE
    ========================================================================== */
 body.dark {
@@ -747,6 +675,221 @@ body.dark .modal-actions { border-color: #1f2937; }
 @media (max-width: 380px) {
   .cards { grid-template-columns: 1fr 1fr; gap: 8px; }
   .card p { font-size: 1.6rem; }
+}
+
+
+/* ==========================================================================
+   SEÇÃO DE ALERTAS SPED
+   ========================================================================== */
+
+.alerta-section {
+  margin-top: 28px;
+}
+
+.alerta-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Cabeçalho do card: título + toggle */
+.alerta-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.alerta-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Toggle switch nativo estilizado */
+.toggle-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.toggle-switch input[type="checkbox"] {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+  margin: 0;
+}
+
+.toggle-slider {
+  display: block;
+  width: 42px;
+  height: 24px;
+  background: #d1d5db;
+  border-radius: 12px;
+  transition: background .22s;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  transition: transform .22s cubic-bezier(.34,1.56,.64,1);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--blue);
+}
+
+.toggle-switch input:checked + .toggle-slider::after {
+  transform: translateX(18px);
+}
+
+/* Descrição */
+.alerta-card-desc {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin: -4px 0 0;
+}
+
+/* Label dos horários */
+.alerta-horarios-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+/* Lista de horários */
+.horarios-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.horario-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.input-horario {
+  width: 118px;
+  margin-bottom: 0 !important;
+  padding: 8px 10px !important;
+  font-size: 14px !important;
+  border-radius: var(--radius-sm) !important;
+  border: 1px solid var(--border) !important;
+  background: var(--surface) !important;
+  color: var(--text) !important;
+}
+
+.input-horario:focus {
+  outline: none;
+  border-color: #818cf8 !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,.1) !important;
+}
+
+.btn-remover-horario {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: #f3f4f6;
+  color: var(--red);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  transition: background .15s, color .15s;
+}
+.btn-remover-horario:hover:not(:disabled) {
+  background: var(--red);
+  color: #fff;
+  border-color: var(--red);
+}
+.btn-remover-horario:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn-add-horario {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 13px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1.5px dashed var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all .16s;
+}
+.btn-add-horario:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: rgba(79,70,229,.04);
+}
+
+/* Rodapé do card */
+.alerta-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+/* Dark mode */
+body.dark .alerta-card { border-color: #1f2937; }
+body.dark .alerta-card-footer { border-color: #1f2937; }
+body.dark .input-horario { background: #0f172a !important; border-color: #374151 !important; color: #e5e7eb !important; }
+body.dark .input-horario:focus { border-color: #818cf8 !important; }
+body.dark .btn-remover-horario { background: #1f2937; border-color: #374151; }
+body.dark .btn-remover-horario:hover:not(:disabled) { background: var(--red); border-color: var(--red); }
+body.dark .btn-add-horario { border-color: #374151; color: #9ca3af; }
+body.dark .btn-add-horario:hover { border-color: var(--blue); color: #818cf8; }
+body.dark .toggle-slider { background: #374151; }
+body.dark .toggle-switch input:checked + .toggle-slider { background: var(--blue); }
+
+/* Mobile */
+@media (max-width: 640px) {
+  .alerta-card { padding: 16px; gap: 14px; }
+  .alerta-card-header { flex-direction: row; align-items: center; }
+  .horarios-lista { flex-direction: column; gap: 8px; }
+  .horario-item { width: 100%; }
+  .input-horario { flex: 1; width: 100% !important; }
+  .alerta-card-footer { justify-content: stretch; }
+  .alerta-card-footer .btn-success { width: 100%; justify-content: center; }
+  .btn-add-horario { width: 100%; justify-content: center; }
 }
 
 /* ==========================================================================

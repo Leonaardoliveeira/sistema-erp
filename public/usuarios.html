@@ -27,10 +27,10 @@
 
       <div class="user-profile">
         <div class="avatar">
-          <img src="https://ui-avatars.com/api/?name=Leonardo&background=0D8ABC&color=fff" alt="Avatar" id="userAvatar">
+          <img src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="Avatar" id="userAvatar">
         </div>
         <div class="user-info">
-          <span class="user-name" id="usuarioLogado">Leonardo Silva</span>
+          <span class="user-name" id="usuarioLogado">Carregando...</span>
           <span class="user-role">Administrador</span>
         </div>
       </div>
@@ -38,7 +38,7 @@
       <nav class="sidebar-nav">
         <div class="nav-group">
           <span class="nav-title">Gestão</span>
-          <a href="dashboard.html" class="nav-item active">
+          <a href="dashboard.html" class="nav-item">
             <i data-lucide="layout-dashboard"></i> Dashboard
           </a>
           <a href="cadastro.html" class="nav-item">
@@ -73,11 +73,16 @@
   </aside>
 
   <div class="main">
+
+    <!-- TOPBAR -->
     <div class="topbar">
-      <h2 id="paginaTitulo">Gerenciamento de Usuários</h2>
-      <button class="btn-primary" onclick="abrirModal()">Novo Usuário</button>
+      <h2>Gerenciamento de Usuários</h2>
+      <button class="btn-primary" onclick="abrirModal()">
+        <i data-lucide="user-plus" style="width:14px;height:14px;"></i> Novo Usuário
+      </button>
     </div>
 
+    <!-- TABELA DE USUÁRIOS -->
     <div class="table-container">
       <table>
         <thead>
@@ -91,117 +96,82 @@
         <tbody id="tabelaUsuarios"></tbody>
       </table>
     </div>
-  </div>
 
+    <!-- CONFIGURAÇÃO DE ALERTAS SPED -->
+    <div class="alerta-section">
+      <div class="alerta-card">
 
-  <!-- ====== CONFIG ALERTAS SPED ====== -->
-  <div class="alerta-config-section">
-    <div class="alerta-config-card">
-      <div class="alerta-config-header">
-        <div class="alerta-config-title">
-          <i data-lucide="bell" style="width:18px;height:18px;color:var(--amber);"></i>
-          <span>Alertas de SPED Pendentes</span>
-        </div>
-        <label class="toggle-switch">
-          <input type="checkbox" id="alertaAtivo" checked>
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <p class="alerta-config-desc">Configure os horários em que o sistema irá notificar sobre SPEDs pendentes neste mês.</p>
-      <div id="listaHorarios" class="horarios-lista"></div>
-      <div class="alerta-config-actions">
-        <button class="btn-secondary" type="button" onclick="adicionarHorario()">
-          <i data-lucide="plus" style="width:14px;height:14px;"></i> Adicionar horário
-        </button>
-        <button class="btn-success" type="button" onclick="salvarConfigAlertas()">
-          <i data-lucide="save" style="width:14px;height:14px;"></i> Salvar configuração
-        </button>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- CONFIGURAÇÃO DE ALERTAS SPED -->
-  <div class="main-section" style="margin-top:28px;">
-    <div class="section-header">
-      <h3 class="section-title">
-        <i data-lucide="bell" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i>
-        Configuração de Alertas SPED
-      </h3>
-    </div>
-    <div class="alerta-config-box">
-      <div class="alerta-config-row">
-        <div class="alerta-toggle-wrap">
-          <label class="toggle-label">
-            <span>Alertas ativos</span>
-            <button type="button" class="toggle-btn" id="toggleAlerta" onclick="toggleAtivoAlerta()">
-              <span class="toggle-thumb"></span>
-            </button>
+        <div class="alerta-card-header">
+          <div class="alerta-card-title">
+            <i data-lucide="bell" style="width:16px;height:16px;color:var(--amber);flex-shrink:0;"></i>
+            <span>Alertas de SPED Pendentes</span>
+          </div>
+          <label class="toggle-switch" title="Ativar/desativar alertas">
+            <input type="checkbox" id="alertaAtivo" checked onchange="atualizarOpacidadeHorarios()">
+            <span class="toggle-slider"></span>
           </label>
-          <p class="alerta-desc">Quando ativo, você recebe notificações nos horários configurados sempre que houver SPEDs pendentes.</p>
         </div>
-      </div>
-      <div class="alerta-horarios-wrap" id="alertaHorariosWrap">
-        <label class="alerta-label-horario">Horários de notificação</label>
-        <div id="listaHorarios" class="horarios-lista"></div>
-        <button type="button" class="btn-add-horario" onclick="adicionarHorario()">
-          <i data-lucide="plus" style="width:14px;height:14px;"></i> Adicionar horário
-        </button>
-      </div>
-      <div class="alerta-actions">
-        <button class="btn-success" onclick="salvarConfigAlerta()">Salvar configuração</button>
+
+        <p class="alerta-card-desc">
+          Configure os horários em que o sistema notificará sobre SPEDs pendentes. O alerta aparece uma vez por horário, por dia.
+        </p>
+
+        <div id="alertaHorariosWrap">
+          <p class="alerta-horarios-label">Horários de notificação</p>
+          <div id="listaHorarios" class="horarios-lista"></div>
+          <button type="button" class="btn-add-horario" onclick="adicionarCampoHorario()">
+            <i data-lucide="plus" style="width:13px;height:13px;"></i> Adicionar horário
+          </button>
+        </div>
+
+        <div class="alerta-card-footer">
+          <button class="btn-success" type="button" onclick="salvarConfigAlertas()">
+            <i data-lucide="save" style="width:14px;height:14px;"></i> Salvar configuração
+          </button>
+        </div>
+
       </div>
     </div>
-  </div>
 
+  </div><!-- fim .main -->
+
+  <!-- MODAL USUÁRIO -->
   <div id="modalUsuario" class="modal" style="display:none;">
     <div class="modal-content">
-      <h3 id="uTitulo">Novo Cadastro de Acesso</h3>
+      <h3 id="uTitulo">Novo Usuário</h3>
 
       <input type="hidden" id="editId">
 
-      <div class="form-group" style="margin-bottom: 15px;">
-        <label style="display:block; margin-bottom:5px;">Nome Completo</label>
-        <input type="text" id="uNome" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
-      </div>
-      <div class="form-group" style="margin-bottom: 15px;">
-        <label style="display:block; margin-bottom:5px;">Login (Usuário)</label>
-        <input type="text" id="uLogin" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
-      </div>
-      <div class="form-group" style="margin-bottom: 15px;">
-        <label style="display:block; margin-bottom:5px;">Senha</label>
-        <input type="password" id="uSenha" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
-      </div>
-      <div class="form-group" style="margin-bottom: 15px;">
-        <label style="display:block; margin-bottom:5px;">Perfil</label>
-        <select id="uPerfil" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
-          <option value="user">Usuário (vê os próprios clientes)</option>
-          <option value="admin">Administrador (vê os próprios clientes + gerencia usuários)</option>
-          <option value="master">Mestre (vê todos os clientes + gerencia usuários)</option>
-        </select>
-      </div>
-      <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: center;">
-        <button class="btn-primary" onclick="salvarUsuario()">Salvar</button>
+      <label>Nome Completo</label>
+      <input type="text" id="uNome" placeholder="Nome do usuário">
+
+      <label>Login (Usuário)</label>
+      <input type="text" id="uLogin" placeholder="Login de acesso">
+
+      <label>Senha <span style="font-size:11px;color:var(--text-muted);">(deixe em branco para manter)</span></label>
+      <input type="password" id="uSenha" placeholder="Senha">
+
+      <label>Perfil</label>
+      <select id="uPerfil">
+        <option value="user">Usuário — vê apenas os próprios clientes</option>
+        <option value="admin">Administrador — vê os próprios clientes + gerencia usuários</option>
+        <option value="master">Mestre — vê todos os clientes + gerencia usuários</option>
+      </select>
+
+      <div class="modal-actions">
         <button class="btn-secondary" onclick="fecharModal()">Cancelar</button>
+        <button class="btn-primary" onclick="salvarUsuario()">Salvar</button>
       </div>
     </div>
   </div>
 
+  <div id="loading"><div class="spinner"></div></div>
+
   <script>
-    // Inicializa os ícones Lucide
     lucide.createIcons();
-
     function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      sidebar.classList.toggle('active');
+      document.getElementById('sidebar').classList.toggle('active');
     }
-    // Função para abrir/fechar menu no mobile
-    function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      sidebar.classList.toggle('active');
-    }
-
-    // Fecha o menu automaticamente ao clicar em um link no mobile
     document.querySelectorAll('.sidebar a').forEach(link => {
       link.addEventListener('click', () => {
         document.getElementById('sidebar').classList.remove('active');
@@ -211,11 +181,6 @@
   <script src="js/toast.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/usuarios.js"></script>
-  <!-- 🔥 LOADING -->
-  <div id="loading">
-    <div class="spinner"></div>
-  </div>
-  
-</body>
 
+</body>
 </html>
