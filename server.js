@@ -290,6 +290,10 @@ app.delete("/api/usuarios/:id", verificarToken, verificarMaster, async (req, res
   }
 });
 
+// --------------------
+// INICIAR SERVIDOR
+// --------------------
+const PORT = process.env.PORT || 3000;
 
 // --------------------
 // ALERTAS — CONFIGURAÇÃO POR USUÁRIO
@@ -325,6 +329,11 @@ app.post("/api/alertas/config", verificarToken, async (req, res) => {
 
 // --------------------
 // INICIAR SERVIDOR
+// Compatível com Vercel (serverless) e execução local
 // --------------------
-const PORT = process.env.PORT || 3000;
+module.exports = app; // necessário para o Vercel
 
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => console.log(`🚀 Servidor em http://localhost:${PORT}`));
+}
