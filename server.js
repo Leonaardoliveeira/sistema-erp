@@ -290,10 +290,6 @@ app.delete("/api/usuarios/:id", verificarToken, verificarMaster, async (req, res
   }
 });
 
-// --------------------
-// INICIAR SERVIDOR
-// --------------------
-const PORT = process.env.PORT || 3000;
 
 // --------------------
 // ALERTAS — CONFIGURAÇÃO POR USUÁRIO
