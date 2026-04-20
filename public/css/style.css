@@ -892,6 +892,128 @@ body.dark .toggle-switch input:checked + .toggle-slider { background: var(--blue
   .btn-add-horario { width: 100%; justify-content: center; }
 }
 
+
+/* ==========================================================================
+   MÓDULO DE BACKUP
+   ========================================================================== */
+
+/* Cards — 3 colunas no desktop */
+.backup-cards {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Status badges na tabela */
+.backup-status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .04em;
+  white-space: nowrap;
+}
+.backup-status.ok      { background: #dcfce7; color: #166534; }
+.backup-status.falha   { background: #fee2e2; color: #991b1b; }
+.backup-status.pendente{ background: #fef3c7; color: #92400e; }
+
+body.dark .backup-status.ok      { background: rgba(16,185,129,.15); color: #6ee7b7; }
+body.dark .backup-status.falha   { background: rgba(239,68,68,.15);  color: #fca5a5; }
+body.dark .backup-status.pendente{ background: rgba(245,158,11,.15); color: #fcd34d; }
+
+/* Caixa de alerta — clientes sem backup hoje */
+.backup-alerta-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--amber);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-top: 20px;
+}
+.backup-alerta-titulo {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600;
+  color: var(--text); margin-bottom: 12px;
+}
+.sem-backup-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.sem-backup-item:last-child { border-bottom: none; }
+.sem-backup-nome  { font-size: 13.5px; color: var(--text); }
+.sem-backup-badge {
+  font-size: 11px; font-weight: 700; padding: 2px 9px;
+  border-radius: 20px;
+  background: #fef3c7; color: #92400e;
+  white-space: nowrap;
+}
+body.dark .sem-backup-badge { background: rgba(245,158,11,.15); color: #fcd34d; }
+.backup-vazio { font-size: 13.5px; color: var(--green); padding: 4px 0; }
+
+/* Filtros */
+.backup-filtros { margin-top: 20px; }
+.backup-filtros-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr 1fr;
+  gap: 14px;
+  align-items: end;
+}
+.backup-filtros-grid label { margin-bottom: 4px; }
+.backup-filtros-grid input,
+.backup-filtros-grid select { margin-bottom: 0; }
+
+/* Documentação da API */
+.backup-api-doc {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  margin-top: 24px;
+  box-shadow: var(--shadow-sm);
+}
+.backup-api-titulo {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600; color: var(--text);
+  margin-bottom: 10px;
+}
+.backup-api-desc {
+  font-size: 12.5px; color: var(--text-muted);
+  line-height: 1.6; margin-bottom: 12px;
+}
+.backup-api-desc code {
+  background: rgba(99,102,241,.1);
+  color: var(--blue);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+}
+.backup-api-code {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  font-family: monospace;
+  font-size: 12.5px;
+  line-height: 1.65;
+  overflow-x: auto;
+  white-space: pre;
+}
+body.dark .backup-api-doc { border-color: #1f2937; }
+body.dark .backup-api-desc code { background: rgba(99,102,241,.2); }
+
+/* Responsivo mobile */
+@media (max-width: 992px) {
+  .backup-cards { grid-template-columns: repeat(3, 1fr); }
+  .backup-filtros-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 640px) {
+  .backup-cards { grid-template-columns: 1fr 1fr; }
+  .backup-filtros-grid { grid-template-columns: 1fr; gap: 10px; }
+  .backup-api-code { font-size: 11px; padding: 12px; }
+}
+
 /* ==========================================================================
    LOADING
    ========================================================================== */

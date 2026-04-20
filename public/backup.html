@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Franquia ERP - Monitoramento de Backup</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body onload="verificarLogin(); mostrarUsuarioLogado(); inicializarBackup();">
+
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-content">
+      <div class="sidebar-header">
+        <div class="logo">
+          <i data-lucide="layers" class="logo-icon"></i>
+          <span>Franquia ERP</span>
+        </div>
+        <button class="theme-switch" onclick="toggleDark()">
+          <i data-lucide="moon"></i>
+        </button>
+      </div>
+
+      <div class="user-profile">
+        <div class="avatar">
+          <img src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="Avatar" id="userAvatar">
+        </div>
+        <div class="user-info">
+          <span class="user-name" id="usuarioLogado">Carregando...</span>
+          <span class="user-role">Administrador</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-group">
+          <span class="nav-title">Gestão</span>
+          <a href="dashboard.html" class="nav-item">
+            <i data-lucide="layout-dashboard"></i> Dashboard
+          </a>
+          <a href="cadastro.html" class="nav-item">
+            <i data-lucide="user-plus"></i> Cadastro de Cliente
+          </a>
+        </div>
+        <div class="nav-group">
+          <span class="nav-title">Operacional</span>
+          <a href="clientes.html" class="nav-item">
+            <i data-lucide="file-text"></i> Gerenciamento Sped
+          </a>
+          <a href="backup.html" class="nav-item active">
+            <i data-lucide="database"></i> Backup
+          </a>
+          <a href="usuarios.html" id="menuUsuarios" class="nav-item">
+            <i data-lucide="users"></i> Usuários
+          </a>
+        </div>
+        <div class="nav-group">
+          <span class="nav-title">Ajuda</span>
+          <a href="suporte.html" class="nav-item">
+            <i data-lucide="help-circle"></i> Suporte
+          </a>
+        </div>
+        <div class="nav-footer">
+          <a href="#" onclick="logout()" class="nav-item logout">
+            <i data-lucide="log-out"></i> Sair
+          </a>
+        </div>
+      </nav>
+    </div>
+  </aside>
+
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <h2>Monitoramento de Backup</h2>
+      <button class="btn-primary" onclick="abrirModalNovo()">
+        <i data-lucide="plus" style="width:14px;height:14px;"></i> Registrar Backup
+      </button>
+    </div>
+
+    <!-- CARDS RESUMO -->
+    <section class="cards backup-cards">
+      <div class="card card-gerado">
+        <div class="card-content">
+          <h3>Total de Clientes</h3>
+          <p id="totalClientes">—</p>
+          <small>monitorados</small>
+        </div>
+      </div>
+      <div class="card card-enviado">
+        <div class="card-content">
+          <h3>Com Backup Hoje</h3>
+          <p id="comBackup">—</p>
+          <small>realizados</small>
+        </div>
+      </div>
+      <div class="card card-erro">
+        <div class="card-content">
+          <h3>Sem Backup Hoje</h3>
+          <p id="semBackup">—</p>
+          <small>pendentes</small>
+        </div>
+      </div>
+    </section>
+
+    <!-- LISTA DE CLIENTES SEM BACKUP HOJE -->
+    <div class="backup-alerta-box" id="boxSemBackup">
+      <div class="backup-alerta-titulo">
+        <i data-lucide="alert-triangle" style="width:15px;height:15px;color:var(--amber);"></i>
+        <span>Clientes sem backup hoje</span>
+      </div>
+      <div id="listaSemBackup"></div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="backup-filtros form-box">
+      <div class="backup-filtros-grid">
+        <div>
+          <label>Pesquisar</label>
+          <input type="text" id="campoPesquisa" placeholder="🔎 Cliente, destino..."
+            oninput="filtrarTabela()">
+        </div>
+        <div>
+          <label>Status</label>
+          <select id="filtroStatus" onchange="aplicarFiltros()">
+            <option value="">Todos</option>
+            <option value="ok">OK</option>
+            <option value="falha">Falha</option>
+            <option value="pendente">Pendente</option>
+          </select>
+        </div>
+        <div>
+          <label>Cliente</label>
+          <select id="filtroCliente" onchange="aplicarFiltros()">
+            <option value="">Todos os clientes</option>
+          </select>
+        </div>
+        <div>
+          <label>Período</label>
+          <select id="filtroDias" onchange="aplicarFiltros()">
+            <option value="7">Últimos 7 dias</option>
+            <option value="30" selected>Últimos 30 dias</option>
+            <option value="90">Últimos 90 dias</option>
+            <option value="365">Último ano</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABELA DE HISTÓRICO -->
+    <div class="table-container">
+      <div class="table-title">
+        <i data-lucide="list" style="width:15px;height:15px;"></i>
+        <span>Histórico de Backups</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Data / Hora</th>
+            <th>Status</th>
+            <th>Tamanho</th>
+            <th>Destino</th>
+            <th>Responsável</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaBackup"></tbody>
+      </table>
+    </div>
+
+    <!-- DOCUMENTAÇÃO DA API -->
+    <div class="backup-api-doc">
+      <div class="backup-api-titulo">
+        <i data-lucide="code" style="width:15px;height:15px;color:var(--blue);"></i>
+        <span>Integração via Script (API)</span>
+      </div>
+      <p class="backup-api-desc">Chame esta rota no seu script de backup para registrar automaticamente após o upload para a nuvem:</p>
+      <pre class="backup-api-code">POST /api/backup
+Authorization: Bearer &lt;seu_token&gt;
+Content-Type: application/json
+
+{
+  "clienteId": "&lt;id_do_cliente&gt;",
+  "status":    "ok",
+  "tamanho":   "2.3 GB",
+  "destino":   "S3",
+  "dataBackup":"2024-01-15T03:00:00"
+}</pre>
+      <p class="backup-api-desc" style="margin-top:10px;">
+        Para obter seu token, faça login via <code>POST /api/login</code> e use o token retornado.<br>
+        O campo <code>status</code> aceita: <code>"ok"</code>, <code>"falha"</code> ou <code>"pendente"</code>.
+      </p>
+    </div>
+
+  </div><!-- fim .main -->
+
+  <!-- MODAL REGISTRO/EDIÇÃO -->
+  <div id="modalBackup" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h3 id="modalTitulo">Registrar Backup</h3>
+      <input type="hidden" id="backupId">
+
+      <div id="campoCliente">
+        <label>Cliente</label>
+        <select id="backupClienteId">
+          <option value="">Selecione o cliente</option>
+        </select>
+      </div>
+
+      <label>Status</label>
+      <select id="backupStatus">
+        <option value="ok">OK — Backup realizado com sucesso</option>
+        <option value="falha">Falha — Erro no backup</option>
+        <option value="pendente">Pendente — Aguardando confirmação</option>
+      </select>
+
+      <label>Data e Hora do Backup</label>
+      <input type="datetime-local" id="backupData">
+
+      <label>Tamanho <span style="font-size:11px;color:var(--text-muted);">(ex: 2.3 GB)</span></label>
+      <input type="text" id="backupTamanho" placeholder="ex: 2.3 GB">
+
+      <label>Destino <span style="font-size:11px;color:var(--text-muted);">(ex: S3, Google Drive)</span></label>
+      <input type="text" id="backupDestino" placeholder="ex: S3 / Google Drive">
+
+      <label>Observação</label>
+      <input type="text" id="backupObservacao" placeholder="Opcional">
+
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="fecharModal()">Cancelar</button>
+        <button class="btn-success" onclick="salvarBackup()">
+          <i data-lucide="save" style="width:14px;height:14px;"></i> Salvar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="loading"><div class="spinner"></div></div>
+
+  <script>
+    lucide.createIcons();
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('active');
+    }
+    document.querySelectorAll('.sidebar a').forEach(link => {
+      link.addEventListener('click', () => {
+        document.getElementById('sidebar').classList.remove('active');
+      });
+    });
+
+    // Esconde campo cliente ao editar (já fixo)
+    const modalBackup = document.getElementById("modalBackup");
+    const observer = new MutationObserver(() => {
+      const id = document.getElementById("backupId").value;
+      const campo = document.getElementById("campoCliente");
+      if (campo) campo.style.display = id ? "none" : "";
+    });
+    observer.observe(modalBackup, { attributes: true, attributeFilter: ["style"] });
+  </script>
+
+  <script src="js/toast.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/backup.js"></script>
+</body>
+</html>
