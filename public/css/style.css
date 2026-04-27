@@ -1030,3 +1030,143 @@ body.dark .backup-api-desc code { background: rgba(99,102,241,.2); }
   animation: spin .8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Toggle switch (backup enable/disable) ─────────────────────────────────── */
+.toggle-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.toggle-wrap input[type="checkbox"] { display: none; }
+.toggle-slider {
+  position: relative;
+  display: inline-block;
+  width: 36px; height: 20px;
+  background: var(--border, #d1d5db);
+  border-radius: 20px;
+  transition: background .2s;
+  flex-shrink: 0;
+}
+.toggle-slider::after {
+  content: "";
+  position: absolute;
+  left: 3px; top: 3px;
+  width: 14px; height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.toggle-wrap input:checked ~ .toggle-slider             { background: var(--green, #10b981); }
+.toggle-wrap input:checked ~ .toggle-slider::after       { transform: translateX(16px); }
+.toggle-label { font-size: 12px; color: var(--text-muted); }
+.toggle-wrap input:checked ~ .toggle-slider ~ .toggle-label { color: var(--green, #10b981); }
+
+/* Input nome do agent */
+.input-agent-nome {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 9px;
+  font-size: 12px;
+  background: var(--surface);
+  color: var(--text);
+  width: 100%;
+  max-width: 220px;
+}
+.input-agent-nome:focus { outline: none; border-color: var(--blue); }
+
+/* Botão salvar agent nome */
+.btn-salvar-agent {
+  font-size: 11px;
+  padding: 4px 10px;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.btn-salvar-agent:hover { opacity: .85; }
+
+body.dark .input-agent-nome  { background: var(--surface-dark, #1e293b); border-color: #334155; color: #e2e8f0; }
+body.dark .toggle-slider      { background: #334155; }
+
+/* ── Seção de boleto no modal ────────────────────────────────────────────────── */
+.boleto-section-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin: 14px 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.boleto-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.boleto-pago-wrap { display: flex; flex-direction: column; }
+.boleto-status {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: .03em;
+}
+.boleto-status.pago     { background: #dcfce7; color: #166534; }
+.boleto-status.vencido  { background: #fee2e2; color: #991b1b; }
+.boleto-status.hoje     { background: #fef3c7; color: #92400e; }
+.boleto-status.pendente { background: #eff6ff; color: #1e40af; }
+.boleto-status.indefinido { background: var(--surface); color: var(--text-muted); }
+body.dark .boleto-status.pago     { background: rgba(16,185,129,.15); color: #6ee7b7; }
+body.dark .boleto-status.vencido  { background: rgba(239,68,68,.15);  color: #fca5a5; }
+body.dark .boleto-status.hoje     { background: rgba(245,158,11,.15); color: #fcd34d; }
+body.dark .boleto-status.pendente { background: rgba(59,130,246,.15); color: #93c5fd; }
+
+/* ── Painel de boletos vencidos na tela de backup ───────────────────────────── */
+.boleto-alerta-box {
+  border-color: #ef4444 !important;
+  margin-top: 0;
+}
+.boleto-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.boleto-item:last-child { border-bottom: none; }
+.boleto-item-info { display: flex; flex-direction: column; gap: 3px; }
+.boleto-item-info strong { font-size: 13px; color: var(--text); }
+.boleto-venc-label { font-size: 11px; color: var(--text-muted); }
+.boleto-atraso { color: #ef4444; font-weight: 700; margin-left: 4px; }
+.boleto-item-acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn-boleto-pago {
+  font-size: 11px; padding: 5px 12px;
+  background: #10b981; color: #fff;
+  border: none; border-radius: 6px; cursor: pointer;
+  transition: opacity .15s;
+}
+.btn-boleto-pago:hover { opacity: .85; }
+
+.btn-boleto-bloquear {
+  font-size: 11px; padding: 5px 12px;
+  background: transparent; color: var(--text-muted);
+  border: 1px solid var(--border); border-radius: 6px; cursor: pointer;
+  transition: all .15s;
+}
+.btn-boleto-bloquear:hover  { border-color: #ef4444; color: #ef4444; }
+.btn-boleto-bloquear.bloqueado { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }

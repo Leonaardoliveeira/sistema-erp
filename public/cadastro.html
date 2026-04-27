@@ -129,6 +129,28 @@
         <option value="Nao">Não Gera SPED</option>
       </select>
 
+      <!-- BOLETO — visível apenas para usuários com permissão -->
+      <div id="secaoBoleto" style="display:none;">
+        <div class="boleto-section-titulo">
+          <span>💰 Boleto / Cobrança</span>
+          <span id="boletoPagamentoStatus" class="boleto-status indefinido">—</span>
+        </div>
+        <div class="boleto-row">
+          <div>
+            <label>Data de Vencimento do Boleto</label>
+            <input type="date" id="editBoletoVencimento" oninput="atualizarCorBoleto()">
+          </div>
+          <div class="boleto-pago-wrap">
+            <label>Status</label>
+            <label class="toggle-wrap" style="margin-top:8px;">
+              <input type="checkbox" id="editBoletoPago" checked onchange="atualizarCorBoleto()">
+              <span class="toggle-slider"></span>
+              <span class="toggle-label">Marcar como Pago</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
       <!-- 🔥 ACESSO DINÂMICO -->
       <div class="acesso-remoto">
         <h3>Acessos Remotos</h3>

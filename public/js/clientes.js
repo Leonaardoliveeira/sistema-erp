@@ -199,6 +199,24 @@ async function abrirModalEdicao(id) {
         const titulo = document.getElementById("tituloModal");
         if (titulo) titulo.innerText = "Editar Cliente";
 
+        // Campos de boleto — visíveis só para quem tem permissão
+        const secBoleto = document.getElementById("secaoBoleto");
+        const usuario   = JSON.parse(localStorage.getItem("usuario") || "{}");
+        if (secBoleto) {
+            if (usuario.perfil === "master" || usuario.acessoBoleto) {
+                secBoleto.style.display = "block";
+                const venc = document.getElementById("editBoletoVencimento");
+                if (venc && cliente.boletoVencimento)
+                    venc.value = new Date(cliente.boletoVencimento).toISOString().slice(0, 10);
+                else if (venc) venc.value = "";
+                const pago = document.getElementById("editBoletoPago");
+                if (pago) pago.checked = cliente.boletoPago !== false;
+                atualizarCorBoleto();
+            } else {
+                secBoleto.style.display = "none";
+            }
+        }
+
         const lista = document.getElementById("listaAcessos");
         lista.innerHTML = "";
         if (cliente.acessosRemotos?.length) {
@@ -254,6 +272,21 @@ async function salvarEdicao() {
         }
 
         toast.sucesso("Cliente atualizado!");
+
+        // Salva boleto separadamente se o campo estiver visível
+        const secBoleto = document.getElementById("secaoBoleto");
+        const usuario   = JSON.parse(localStorage.getItem("usuario") || "{}");
+        if (secBoleto && secBoleto.style.display !== "none" &&
+            (usuario.perfil === "master" || usuario.acessoBoleto)) {
+            const vencimento = document.getElementById("editBoletoVencimento")?.value || null;
+            const pago       = document.getElementById("editBoletoPago")?.checked ?? true;
+            await fetch("/api/clientes/" + id + "/boleto", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + getToken() },
+                body: JSON.stringify({ boletoVencimento: vencimento || null, boletoPago: pago })
+            });
+        }
+
         fecharModal();
 
         if (window.location.pathname.includes("clientes.html")) {
@@ -370,6 +403,37 @@ function mascaraDocumento(valor) {
         valor = valor.replace(/(\d{4})(\d)/, "$1-$2");
     }
     return valor;
+}
+
+// =======================================
+// BOLETO
+// =======================================
+function atualizarCorBoleto() {
+    const vencInput = document.getElementById("editBoletoVencimento");
+    const pagoCheck = document.getElementById("editBoletoPago");
+    const statusEl  = document.getElementById("boletoPagamentoStatus");
+    if (!vencInput || !pagoCheck || !statusEl) return;
+
+    const pago = pagoCheck.checked;
+    const venc = vencInput.value ? new Date(vencInput.value + "T00:00:00") : null;
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+
+    if (pago) {
+        statusEl.className = "boleto-status pago";
+        statusEl.textContent = "✅ Pago";
+    } else if (venc && venc < hoje) {
+        statusEl.className = "boleto-status vencido";
+        statusEl.textContent = "🔴 Vencido — backup suspenso";
+    } else if (venc && venc.getTime() === hoje.getTime()) {
+        statusEl.className = "boleto-status hoje";
+        statusEl.textContent = "⚠️ Vence hoje!";
+    } else if (venc) {
+        statusEl.className = "boleto-status pendente";
+        statusEl.textContent = "⏳ Aguardando pagamento";
+    } else {
+        statusEl.className = "boleto-status indefinido";
+        statusEl.textContent = "—";
+    }
 }
 
 // =======================================

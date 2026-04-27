@@ -28,20 +28,29 @@ const UsuarioSchema = new mongoose.Schema({
   // master: vê todos os clientes + gerencia usuários
   // admin:  vê apenas os próprios + gerencia usuários
   // user:   vê apenas os próprios, não gerencia usuários
-  perfil:  { type: String, enum: ["master", "admin", "user"], default: "user" }
+  perfil:      { type: String, enum: ["master", "admin", "user"], default: "user" },
+  acessoBackup: { type: Boolean, default: false },  // master sempre tem acesso, outros só se true
+  acessoBoleto: { type: Boolean, default: false }   // pode ver/editar dados de boleto do cliente
 });
 
 const ClienteSchema = new mongoose.Schema({
-  nome:           { type: String, required: true },
-  documento:      String,
-  email:          String,
-  telefone:       String,
-  regime:         String,
-  sped:           { type: String, enum: ["Sim", "Nao"], default: "Nao" },
-  acessosRemotos: [{ nome: String, anydesk: String }],
-  status:         { type: String, default: "Pendente" },
-  usuarioId:      { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
-  criadoEm:       { type: Date, default: Date.now }
+  nome:              { type: String, required: true },
+  documento:         String,
+  email:             String,
+  telefone:          String,
+  regime:            String,
+  sped:              { type: String, enum: ["Sim", "Nao"], default: "Nao" },
+  acessosRemotos:    [{ nome: String, anydesk: String }],
+  status:            { type: String, default: "Pendente" },
+  usuarioId:         { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
+  criadoEm:          { type: Date, default: Date.now },
+  // Controle de backup
+  backupHabilitado:  { type: Boolean, default: false },
+  backupClienteNome:  { type: String },  // nome/identificador usado no Backup Agent Pro
+  // Controle financeiro / boleto
+  boletoVencimento:   { type: Date },                                         // data de vencimento do boleto
+  boletoPago:         { type: Boolean, default: true },                       // false = boleto vencido não pago → bloqueia backup
+  backupBloqueado:    { type: Boolean, default: false }                       // bloqueio manual pelo sistema
 });
 
 const SpedSchema = new mongoose.Schema({
@@ -134,6 +143,22 @@ function verificarAdmin(req, res, next) {
   next();
 }
 
+// Acesso a dados de boleto: master sempre tem, outros precisam de acessoBoleto=true
+async function verificarAcessoBoleto(req, res, next) {
+  if (req.usuario.perfil === "master") return next();
+  const user = await Usuario.findById(req.usuario.id).select("acessoBoleto");
+  if (user && user.acessoBoleto) return next();
+  return res.status(403).json({ message: "Sem permissão para acessar dados de boleto" });
+}
+
+// Acesso à tela de backup: master sempre tem, outros precisam de acessoBackup=true
+async function verificarAcessoBackup(req, res, next) {
+  if (req.usuario.perfil === "master") return next();
+  const user = await Usuario.findById(req.usuario.id).select("acessoBackup");
+  if (user && user.acessoBackup) return next();
+  return res.status(403).json({ message: "Sem permissão para acessar backups" });
+}
+
 // --------------------
 // LOGIN
 // --------------------
@@ -145,7 +170,8 @@ app.post("/api/login", async (req, res) => {
     const match = await bcrypt.compare(senha, user.senha);
     if (!match) return res.status(401).json({ message: "Credenciais inválidas" });
     const token = jwt.sign({ id: user._id, perfil: user.perfil }, process.env.JWT_SECRET, { expiresIn: "8h" });
-    res.json({ token, usuario: { nome: user.nome, usuario: user.usuario, perfil: user.perfil } });
+    res.json({ token, usuario: { nome: user.nome, usuario: user.usuario, perfil: user.perfil,
+      acessoBackup: user.acessoBackup, acessoBoleto: user.acessoBoleto } });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -337,7 +363,7 @@ app.delete("/api/usuarios/:id", verificarToken, verificarAdmin, async (req, res)
 // --------------------
 // BACKUP
 // --------------------
-app.post("/api/backup", verificarToken, async (req, res) => {
+app.post("/api/backup", verificarToken, verificarAcessoBackup, async (req, res) => {
   try {
     const { clienteId, status, tamanho, destino, observacao, dataBackup } = req.body;
     if (!clienteId || !status) return res.status(400).json({ message: "clienteId e status são obrigatórios" });
@@ -356,7 +382,7 @@ app.post("/api/backup", verificarToken, async (req, res) => {
   }
 });
 
-app.get("/api/backup/resumo", verificarToken, async (req, res) => {
+app.get("/api/backup/resumo", verificarToken, verificarAcessoBackup, async (req, res) => {
   try {
     const clientesVisiveis = await Cliente.find(filtroPerfil(req)).select("_id nome");
     const idsVisiveis = clientesVisiveis.map(c => c._id);
@@ -388,7 +414,7 @@ app.get("/api/backup/resumo", verificarToken, async (req, res) => {
   }
 });
 
-app.get("/api/backup", verificarToken, async (req, res) => {
+app.get("/api/backup", verificarToken, verificarAcessoBackup, async (req, res) => {
   try {
     const { clienteId, status, dias } = req.query;
     const clientesVisiveis = await Cliente.find(filtroPerfil(req)).select("_id");
@@ -415,7 +441,7 @@ app.get("/api/backup", verificarToken, async (req, res) => {
   }
 });
 
-app.put("/api/backup/:id", verificarToken, async (req, res) => {
+app.put("/api/backup/:id", verificarToken, verificarAcessoBackup, async (req, res) => {
   try {
     const { status, tamanho, destino, observacao } = req.body;
     const dados = {};
@@ -431,13 +457,158 @@ app.put("/api/backup/:id", verificarToken, async (req, res) => {
   }
 });
 
-app.delete("/api/backup/:id", verificarToken, async (req, res) => {
+app.delete("/api/backup/:id", verificarToken, verificarAcessoBackup, async (req, res) => {
   try {
     await Backup.findByIdAndDelete(req.params.id);
     res.json({ message: "Removido" });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
+});
+
+// --------------------
+// PERMISSÃO DE BACKUP — gerenciar acesso por usuário (apenas master)
+// --------------------
+app.get("/api/backup/permissoes", verificarToken, async (req, res) => {
+  if (req.usuario.perfil !== "master")
+    return res.status(403).json({ message: "Apenas o mestre pode gerenciar permissões" });
+  try {
+    const usuarios = await Usuario.find({ perfil: { $ne: "master" } }).select("nome usuario perfil acessoBackup");
+    res.json(usuarios);
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+app.patch("/api/usuarios/:id/acesso-backup", verificarToken, async (req, res) => {
+  if (req.usuario.perfil !== "master")
+    return res.status(403).json({ message: "Apenas o mestre pode alterar permissões" });
+  try {
+    const { acessoBackup } = req.body;
+    const u = await Usuario.findByIdAndUpdate(req.params.id, { acessoBackup }, { new: true }).select("-senha");
+    if (!u) return res.status(404).json({ message: "Usuário não encontrado" });
+    res.json(u);
+  } catch (err) { res.status(400).json({ message: err.message }); }
+});
+
+// --------------------
+// CLIENTES — habilitar/desabilitar backup por cliente (master ou admin)
+// --------------------
+app.patch("/api/clientes/:id/backup", verificarToken, verificarAcessoBackup, async (req, res) => {
+  try {
+    const { backupHabilitado, backupClienteNome } = req.body;
+    const filtro = { _id: req.params.id, ...filtroPerfil(req) };
+    const dados  = {};
+    if (backupHabilitado  !== undefined) dados.backupHabilitado  = backupHabilitado;
+    if (backupClienteNome !== undefined) dados.backupClienteNome = backupClienteNome;
+    const atualizado = await Cliente.findOneAndUpdate(filtro, dados, { new: true });
+    if (!atualizado) return res.status(404).json({ message: "Cliente não encontrado" });
+    res.json(atualizado);
+  } catch (err) { res.status(400).json({ message: err.message }); }
+});
+
+// Rota para checar se o usuário logado tem acesso à tela de backup
+app.get("/api/backup/meu-acesso", verificarToken, async (req, res) => {
+  try {
+    if (req.usuario.perfil === "master") return res.json({ acesso: true });
+    const user = await Usuario.findById(req.usuario.id).select("acessoBackup");
+    res.json({ acesso: !!(user && user.acessoBackup) });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+// --------------------
+// BOLETO — atualizar vencimento e status de pagamento
+// --------------------
+app.patch("/api/clientes/:id/boleto", verificarToken, verificarAcessoBoleto, async (req, res) => {
+  try {
+    const { boletoVencimento, boletoPago } = req.body;
+    const filtro = { _id: req.params.id, ...filtroPerfil(req) };
+    const dados  = {};
+    if (boletoVencimento !== undefined) dados.boletoVencimento = boletoVencimento ? new Date(boletoVencimento) : null;
+    if (boletoPago       !== undefined) {
+      dados.boletoPago    = boletoPago;
+      // Quando marcado como pago, desbloqueia backup automaticamente
+      if (boletoPago) dados.backupBloqueado = false;
+    }
+    const atualizado = await Cliente.findOneAndUpdate(filtro, dados, { new: true });
+    if (!atualizado) return res.status(404).json({ message: "Cliente não encontrado" });
+    res.json(atualizado);
+  } catch (err) { res.status(400).json({ message: err.message }); }
+});
+
+// Bloquear/desbloquear backup manualmente
+app.patch("/api/clientes/:id/bloqueio-backup", verificarToken, verificarAcessoBackup, async (req, res) => {
+  try {
+    const { backupBloqueado } = req.body;
+    const filtro  = { _id: req.params.id, ...filtroPerfil(req) };
+    const atualizado = await Cliente.findOneAndUpdate(filtro, { backupBloqueado }, { new: true });
+    if (!atualizado) return res.status(404).json({ message: "Cliente não encontrado" });
+    res.json(atualizado);
+  } catch (err) { res.status(400).json({ message: err.message }); }
+});
+
+// Retorna dados de boleto do cliente para o Backup Agent verificar antes de rodar
+// Rota pública (autenticada) para o Agent checar status antes de fazer backup
+app.get("/api/clientes/:id/status-backup", verificarToken, async (req, res) => {
+  try {
+    const cliente = await Cliente.findOne({ _id: req.params.id, ...filtroPerfil(req) })
+      .select("nome boletoVencimento boletoPago backupBloqueado backupHabilitado");
+    if (!cliente) return res.status(404).json({ message: "Cliente não encontrado" });
+
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    let bloqueado = false;
+    let motivo    = null;
+
+    if (cliente.backupBloqueado) {
+      bloqueado = true;
+      motivo    = "Backup bloqueado manualmente";
+    } else if (cliente.boletoVencimento && !cliente.boletoPago) {
+      const venc = new Date(cliente.boletoVencimento);
+      venc.setHours(0, 0, 0, 0);
+      if (venc <= hoje) {
+        bloqueado = true;
+        motivo    = `Boleto vencido em ${venc.toLocaleDateString("pt-BR")} — marque como pago para liberar o backup`;
+      }
+    }
+
+    res.json({
+      clienteId:        cliente._id,
+      nome:             cliente.nome,
+      backupHabilitado: cliente.backupHabilitado,
+      bloqueado,
+      motivo,
+      boletoVencimento: cliente.boletoVencimento,
+      boletoPago:       cliente.boletoPago,
+    });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+// Clientes com boleto vencido — para o resumo do dashboard de backup
+app.get("/api/backup/boletos-vencidos", verificarToken, verificarAcessoBoleto, async (req, res) => {
+  try {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const filtro = {
+      ...filtroPerfil(req),
+      backupHabilitado: true,
+      boletoPago:       false,
+      boletoVencimento: { $lte: hoje },
+    };
+    const clientes = await Cliente.find(filtro).select("nome boletoVencimento boletoPago backupBloqueado");
+    res.json(clientes);
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+// Permissão de boleto por usuário (só master)
+app.patch("/api/usuarios/:id/acesso-boleto", verificarToken, async (req, res) => {
+  if (req.usuario.perfil !== "master")
+    return res.status(403).json({ message: "Apenas o mestre pode alterar permissões" });
+  try {
+    const { acessoBoleto } = req.body;
+    const u = await Usuario.findByIdAndUpdate(req.params.id, { acessoBoleto }, { new: true }).select("-senha");
+    if (!u) return res.status(404).json({ message: "Usuário não encontrado" });
+    res.json(u);
+  } catch (err) { res.status(400).json({ message: err.message }); }
 });
 
 // --------------------
