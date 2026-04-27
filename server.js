@@ -1,10 +1,10 @@
 require("dotenv").config();
-const express   = require("express");
-const path      = require("path");
-const cors      = require("cors");
-const mongoose  = require("mongoose");
-const bcrypt    = require("bcryptjs");
-const jwt       = require("jsonwebtoken");
+const express = require("express");
+const path = require("path");
+const cors = require("cors");
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 app.use(cors());
@@ -22,74 +22,74 @@ mongoose.connect(process.env.MONGO_URI)
 // SCHEMAS
 // --------------------
 const UsuarioSchema = new mongoose.Schema({
-  nome:    { type: String, required: true },
+  nome: { type: String, required: true },
   usuario: { type: String, required: true, unique: true },
-  senha:   { type: String, required: true },
+  senha: { type: String, required: true },
   // master: vê todos os clientes + gerencia usuários
   // admin:  vê apenas os próprios + gerencia usuários
   // user:   vê apenas os próprios, não gerencia usuários
-  perfil:      { type: String, enum: ["master", "admin", "user"], default: "user" },
+  perfil: { type: String, enum: ["master", "admin", "user"], default: "user" },
   acessoBackup: { type: Boolean, default: false },  // master sempre tem acesso, outros só se true
   acessoBoleto: { type: Boolean, default: false }   // pode ver/editar dados de boleto do cliente
 });
 
 const ClienteSchema = new mongoose.Schema({
-  nome:              { type: String, required: true },
-  documento:         String,
-  email:             String,
-  telefone:          String,
-  regime:            String,
-  sped:              { type: String, enum: ["Sim", "Nao"], default: "Nao" },
-  acessosRemotos:    [{ nome: String, anydesk: String }],
-  status:            { type: String, default: "Pendente" },
-  usuarioId:         { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
-  criadoEm:          { type: Date, default: Date.now },
+  nome: { type: String, required: true },
+  documento: String,
+  email: String,
+  telefone: String,
+  regime: String,
+  sped: { type: String, enum: ["Sim", "Nao"], default: "Nao" },
+  acessosRemotos: [{ nome: String, anydesk: String }],
+  status: { type: String, default: "Pendente" },
+  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
+  criadoEm: { type: Date, default: Date.now },
   // Controle de backup
-  backupHabilitado:  { type: Boolean, default: false },
-  backupClienteNome:  { type: String },  // nome/identificador usado no Backup Agent Pro
+  backupHabilitado: { type: Boolean, default: false },
+  backupClienteNome: { type: String },  // nome/identificador usado no Backup Agent Pro
   // Controle financeiro / boleto
-  boletoVencimento:   { type: Date },                                         // data de vencimento do boleto
-  boletoPago:         { type: Boolean, default: true },                       // false = boleto vencido não pago → bloqueia backup
-  backupBloqueado:    { type: Boolean, default: false }                       // bloqueio manual pelo sistema
+  boletoVencimento: { type: Date },                                         // data de vencimento do boleto
+  boletoPago: { type: Boolean, default: true },                       // false = boleto vencido não pago → bloqueia backup
+  backupBloqueado: { type: Boolean, default: false }                       // bloqueio manual pelo sistema
 });
 
 const SpedSchema = new mongoose.Schema({
   clienteId: { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
-  mes:       { type: String, required: true },
-  status:    { type: String, enum: ["nao", "gerado", "ok"], default: "nao" },
+  mes: { type: String, required: true },
+  status: { type: String, enum: ["nao", "gerado", "ok"], default: "nao" },
   usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario" }
 });
 
 const ConfigSchema = new mongoose.Schema({
   chave: { type: String, unique: true },
-  mes:   Number,
-  ano:   Number
+  mes: Number,
+  ano: Number
 });
 
 const AlertaConfigSchema = new mongoose.Schema({
   usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true, unique: true },
-  ativo:     { type: Boolean, default: true },
-  horarios:  { type: [String], default: ["08:00"] }
+  ativo: { type: Boolean, default: true },
+  horarios: { type: [String], default: ["08:00"] }
 });
 
 const BackupSchema = new mongoose.Schema({
-  clienteId:  { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
-  usuarioId:  { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
-  status:     { type: String, enum: ["ok", "falha", "pendente"], default: "pendente" },
-  tamanho:    { type: String },
-  destino:    { type: String },
+  clienteId: { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
+  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
+  status: { type: String, enum: ["ok", "falha", "pendente"], default: "pendente" },
+  tamanho: { type: String },
+  destino: { type: String },
   observacao: { type: String },
   dataBackup: { type: Date, required: true },
-  criadoEm:  { type: Date, default: Date.now }
+  criadoEm: { type: Date, default: Date.now }
 });
 
 // Registra models apenas uma vez (evita erro no Vercel com hot-reload)
-const Usuario      = mongoose.models.Usuario      || mongoose.model("Usuario",      UsuarioSchema);
-const Cliente      = mongoose.models.Cliente      || mongoose.model("Cliente",      ClienteSchema);
-const Sped         = mongoose.models.Sped         || mongoose.model("Sped",         SpedSchema);
-const Config       = mongoose.models.Config       || mongoose.model("Config",       ConfigSchema);
+const Usuario = mongoose.models.Usuario || mongoose.model("Usuario", UsuarioSchema);
+const Cliente = mongoose.models.Cliente || mongoose.model("Cliente", ClienteSchema);
+const Sped = mongoose.models.Sped || mongoose.model("Sped", SpedSchema);
+const Config = mongoose.models.Config || mongoose.model("Config", ConfigSchema);
 const AlertaConfig = mongoose.models.AlertaConfig || mongoose.model("AlertaConfig", AlertaConfigSchema);
-const Backup       = mongoose.models.Backup       || mongoose.model("Backup",       BackupSchema);
+const Backup = mongoose.models.Backup || mongoose.model("Backup", BackupSchema);
 
 // --------------------
 // RESET MENSAL
@@ -169,9 +169,14 @@ app.post("/api/login", async (req, res) => {
     if (!user) return res.status(401).json({ message: "Credenciais inválidas" });
     const match = await bcrypt.compare(senha, user.senha);
     if (!match) return res.status(401).json({ message: "Credenciais inválidas" });
-    const token = jwt.sign({ id: user._id, perfil: user.perfil }, process.env.JWT_SECRET, { expiresIn: "8h" });
-    res.json({ token, usuario: { nome: user.nome, usuario: user.usuario, perfil: user.perfil,
-      acessoBackup: user.acessoBackup, acessoBoleto: user.acessoBoleto } });
+    const expiracao = user.usuario === "backup_agent" ? "365d" : "8h";
+    const token = jwt.sign({ id: user._id, perfil: user.perfil }, process.env.JWT_SECRET, { expiresIn: expiracao });
+    res.json({
+      token, usuario: {
+        nome: user.nome, usuario: user.usuario, perfil: user.perfil,
+        acessoBackup: user.acessoBackup, acessoBoleto: user.acessoBoleto
+      }
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -218,14 +223,14 @@ app.put("/api/clientes/:id", verificarToken, async (req, res) => {
     const filtro = { _id: req.params.id, ...filtroPerfil(req) };
     const { nome, documento, email, telefone, regime, sped, acessosRemotos, status } = req.body;
     const dados = {};
-    if (nome          !== undefined) dados.nome          = nome;
-    if (documento     !== undefined) dados.documento     = documento;
-    if (email         !== undefined) dados.email         = email;
-    if (telefone      !== undefined) dados.telefone      = telefone;
-    if (regime        !== undefined) dados.regime        = regime;
-    if (sped          !== undefined) dados.sped          = sped;
-    if (acessosRemotos!== undefined) dados.acessosRemotos= acessosRemotos;
-    if (status        !== undefined) dados.status        = status;
+    if (nome !== undefined) dados.nome = nome;
+    if (documento !== undefined) dados.documento = documento;
+    if (email !== undefined) dados.email = email;
+    if (telefone !== undefined) dados.telefone = telefone;
+    if (regime !== undefined) dados.regime = regime;
+    if (sped !== undefined) dados.sped = sped;
+    if (acessosRemotos !== undefined) dados.acessosRemotos = acessosRemotos;
+    if (status !== undefined) dados.status = status;
     const atualizado = await Cliente.findOneAndUpdate(filtro, dados, { new: true });
     if (!atualizado) return res.status(404).json({ message: "Cliente não encontrado" });
     res.json(atualizado);
@@ -371,8 +376,8 @@ app.post("/api/backup", verificarToken, verificarAcessoBackup, async (req, res) 
     if (!cliente) return res.status(404).json({ message: "Cliente não encontrado" });
     const backup = await Backup.create({
       clienteId, usuarioId: req.usuario.id, status,
-      tamanho:    tamanho    || null,
-      destino:    destino    || null,
+      tamanho: tamanho || null,
+      destino: destino || null,
       observacao: observacao || null,
       dataBackup: dataBackup ? new Date(dataBackup) : new Date()
     });
@@ -396,15 +401,15 @@ app.get("/api/backup/resumo", verificarToken, verificarAcessoBackup, async (req,
       dataBackup: { $gte: hoje }
     }).select("clienteId");
 
-    const idsComBackup   = new Set(backupsHoje.map(b => b.clienteId.toString()));
-    const totalClientes  = clientesVisiveis.length;
-    const comBackup      = idsComBackup.size;
-    const semBackup      = totalClientes - comBackup;
+    const idsComBackup = new Set(backupsHoje.map(b => b.clienteId.toString()));
+    const totalClientes = clientesVisiveis.length;
+    const comBackup = idsComBackup.size;
+    const semBackup = totalClientes - comBackup;
     const semBackupLista = clientesVisiveis.filter(c => !idsComBackup.has(c._id.toString()));
 
     const ultimosBackups = await Backup.aggregate([
       { $match: { clienteId: { $in: idsVisiveis } } },
-      { $sort:  { dataBackup: -1 } },
+      { $sort: { dataBackup: -1 } },
       { $group: { _id: "$clienteId", ultimo: { $first: "$$ROOT" } } }
     ]);
 
@@ -422,7 +427,7 @@ app.get("/api/backup", verificarToken, verificarAcessoBackup, async (req, res) =
 
     const filtro = { clienteId: { $in: idsVisiveis } };
     if (clienteId) filtro.clienteId = clienteId;
-    if (status)    filtro.status    = status;
+    if (status) filtro.status = status;
     if (dias) {
       const limite = new Date();
       limite.setDate(limite.getDate() - parseInt(dias));
@@ -445,9 +450,9 @@ app.put("/api/backup/:id", verificarToken, verificarAcessoBackup, async (req, re
   try {
     const { status, tamanho, destino, observacao } = req.body;
     const dados = {};
-    if (status     !== undefined) dados.status     = status;
-    if (tamanho    !== undefined) dados.tamanho    = tamanho;
-    if (destino    !== undefined) dados.destino    = destino;
+    if (status !== undefined) dados.status = status;
+    if (tamanho !== undefined) dados.tamanho = tamanho;
+    if (destino !== undefined) dados.destino = destino;
     if (observacao !== undefined) dados.observacao = observacao;
     const atualizado = await Backup.findByIdAndUpdate(req.params.id, dados, { new: true });
     if (!atualizado) return res.status(404).json({ message: "Registro não encontrado" });
@@ -496,8 +501,8 @@ app.patch("/api/clientes/:id/backup", verificarToken, verificarAcessoBackup, asy
   try {
     const { backupHabilitado, backupClienteNome } = req.body;
     const filtro = { _id: req.params.id, ...filtroPerfil(req) };
-    const dados  = {};
-    if (backupHabilitado  !== undefined) dados.backupHabilitado  = backupHabilitado;
+    const dados = {};
+    if (backupHabilitado !== undefined) dados.backupHabilitado = backupHabilitado;
     if (backupClienteNome !== undefined) dados.backupClienteNome = backupClienteNome;
     const atualizado = await Cliente.findOneAndUpdate(filtro, dados, { new: true });
     if (!atualizado) return res.status(404).json({ message: "Cliente não encontrado" });
@@ -521,10 +526,10 @@ app.patch("/api/clientes/:id/boleto", verificarToken, verificarAcessoBoleto, asy
   try {
     const { boletoVencimento, boletoPago } = req.body;
     const filtro = { _id: req.params.id, ...filtroPerfil(req) };
-    const dados  = {};
+    const dados = {};
     if (boletoVencimento !== undefined) dados.boletoVencimento = boletoVencimento ? new Date(boletoVencimento) : null;
-    if (boletoPago       !== undefined) {
-      dados.boletoPago    = boletoPago;
+    if (boletoPago !== undefined) {
+      dados.boletoPago = boletoPago;
       // Quando marcado como pago, desbloqueia backup automaticamente
       if (boletoPago) dados.backupBloqueado = false;
     }
@@ -538,7 +543,7 @@ app.patch("/api/clientes/:id/boleto", verificarToken, verificarAcessoBoleto, asy
 app.patch("/api/clientes/:id/bloqueio-backup", verificarToken, verificarAcessoBackup, async (req, res) => {
   try {
     const { backupBloqueado } = req.body;
-    const filtro  = { _id: req.params.id, ...filtroPerfil(req) };
+    const filtro = { _id: req.params.id, ...filtroPerfil(req) };
     const atualizado = await Cliente.findOneAndUpdate(filtro, { backupBloqueado }, { new: true });
     if (!atualizado) return res.status(404).json({ message: "Cliente não encontrado" });
     res.json(atualizado);
@@ -557,28 +562,28 @@ app.get("/api/clientes/:id/status-backup", verificarToken, async (req, res) => {
     hoje.setHours(0, 0, 0, 0);
 
     let bloqueado = false;
-    let motivo    = null;
+    let motivo = null;
 
     if (cliente.backupBloqueado) {
       bloqueado = true;
-      motivo    = "Backup bloqueado manualmente";
+      motivo = "Backup bloqueado manualmente";
     } else if (cliente.boletoVencimento && !cliente.boletoPago) {
       const venc = new Date(cliente.boletoVencimento);
       venc.setHours(0, 0, 0, 0);
       if (venc <= hoje) {
         bloqueado = true;
-        motivo    = `Boleto vencido em ${venc.toLocaleDateString("pt-BR")} — marque como pago para liberar o backup`;
+        motivo = `Boleto vencido em ${venc.toLocaleDateString("pt-BR")} — marque como pago para liberar o backup`;
       }
     }
 
     res.json({
-      clienteId:        cliente._id,
-      nome:             cliente.nome,
+      clienteId: cliente._id,
+      nome: cliente.nome,
       backupHabilitado: cliente.backupHabilitado,
       bloqueado,
       motivo,
       boletoVencimento: cliente.boletoVencimento,
-      boletoPago:       cliente.boletoPago,
+      boletoPago: cliente.boletoPago,
     });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -591,7 +596,7 @@ app.get("/api/backup/boletos-vencidos", verificarToken, verificarAcessoBoleto, a
     const filtro = {
       ...filtroPerfil(req),
       backupHabilitado: true,
-      boletoPago:       false,
+      boletoPago: false,
       boletoVencimento: { $lte: hoje },
     };
     const clientes = await Cliente.find(filtro).select("nome boletoVencimento boletoPago backupBloqueado");
