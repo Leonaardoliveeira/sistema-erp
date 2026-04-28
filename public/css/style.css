@@ -899,7 +899,7 @@ body.dark .toggle-switch input:checked + .toggle-slider { background: var(--blue
 
 /* Cards — 3 colunas no desktop */
 .backup-cards {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
 }
 
 /* Status badges na tabela */
@@ -1004,7 +1004,7 @@ body.dark .backup-api-desc code { background: rgba(99,102,241,.2); }
 
 /* Responsivo mobile */
 @media (max-width: 992px) {
-  .backup-cards { grid-template-columns: repeat(3, 1fr); }
+  .backup-cards { grid-template-columns: repeat(2, 1fr); }
   .backup-filtros-grid { grid-template-columns: 1fr 1fr; }
 }
 

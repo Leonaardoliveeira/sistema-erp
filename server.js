@@ -207,6 +207,17 @@ app.get("/api/clientes", verificarToken, async (req, res) => {
   }
 });
 
+// Busca ObjectID por nome — DEVE vir antes de /:id para não ser capturado como id
+app.get("/api/clientes/buscar-id", verificarToken, async (req, res) => {
+  try {
+    const { nome } = req.query;
+    const filtro = { ...filtroPerfil(req) };
+    if (nome) filtro.nome = { $regex: nome, $options: "i" };
+    const clientes = await Cliente.find(filtro).select("_id nome backupClienteNome").limit(10);
+    res.json(clientes);
+  } catch (e) { res.status(500).json({ message: e.message }); }
+});
+
 app.get("/api/clientes/:id", verificarToken, async (req, res) => {
   try {
     const cliente = await Cliente.findOne({ _id: req.params.id, ...filtroPerfil(req) });
@@ -787,16 +798,7 @@ app.delete("/api/boletos/:id", verificarToken, verificarAcessoBoleto, async (req
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
-// Rota para pegar ObjectID do cliente pelo nome (facilita configuração do Agent)
-app.get("/api/clientes/buscar-id", verificarToken, async (req, res) => {
-  try {
-    const { nome } = req.query;
-    const filtro = { ...filtroPerfil(req) };
-    if (nome) filtro.nome = { $regex: nome, $options: "i" };
-    const clientes = await Cliente.find(filtro).select("_id nome backupClienteNome").limit(10);
-    res.json(clientes);
-  } catch (e) { res.status(500).json({ message: e.message }); }
-});
+// [buscar-id moved above /:id]
 
 // --------------------
 // INICIAR SERVIDOR

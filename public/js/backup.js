@@ -230,6 +230,12 @@ async function togglePermissaoUsuario(id, checkbox, tipo) {
     const res = await fetch(url, { method:"PATCH", headers:{"Content-Type":"application/json","Authorization":"Bearer "+getToken()}, body: JSON.stringify(body) });
     if (!res.ok) { checkbox.checked = !permitido; toast.erro("Erro ao atualizar"); return; }
     if (label) label.textContent = permitido ? "Permitido" : "Bloqueado";
+    // Atualiza localStorage do usuário atual se for ele mesmo
+    const usuAtual = getUsuario();
+    if (usuAtual._id === id || usuAtual.id === id) {
+      const atualizado = { ...usuAtual, [tipo === "boleto" ? "acessoBoleto" : "acessoBackup"]: permitido };
+      localStorage.setItem("usuario", JSON.stringify(atualizado));
+    }
     toast.sucesso(permitido ? "Acesso liberado!" : "Acesso revogado.");
   } catch (_) { checkbox.checked = !permitido; toast.erro("Erro ao atualizar"); }
 }
