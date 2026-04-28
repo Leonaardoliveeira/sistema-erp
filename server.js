@@ -187,7 +187,7 @@ app.post("/api/login", async (req, res) => {
     const match = await bcrypt.compare(senha, user.senha);
     if (!match) return res.status(401).json({ message: "Credenciais inválidas" });
     const token = jwt.sign({ id: user._id, perfil: user.perfil }, process.env.JWT_SECRET, { expiresIn: "8h" });
-    res.json({ token, usuario: { nome: user.nome, usuario: user.usuario, perfil: user.perfil,
+    res.json({ token, usuario: { id: user._id, nome: user.nome, usuario: user.usuario, perfil: user.perfil,
       acessoBackup: user.acessoBackup, acessoBoleto: user.acessoBoleto } });
   } catch (err) {
     res.status(500).json({ message: err.message });
