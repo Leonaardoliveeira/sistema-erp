@@ -111,9 +111,14 @@ async function toggleBloqueioBackup(clienteId, bloquear, btn) {
 async function carregarClientes() {
   try {
     const res = await fetch("/api/clientes", { headers: { "Authorization": "Bearer " + getToken() } });
-    if (!res.ok) return;
-    clientesCache = await res.json();
+    if (!res.ok) {
+      console.error("carregarClientes: resposta não ok", res.status);
+      return;
+    }
+    const data = await res.json();
+    clientesCache = Array.isArray(data) ? data : [];
 
+    // Popula select de filtro (só habilitados)
     const habilitados = clientesCache.filter(c => c.backupHabilitado);
     const sel = document.getElementById("filtroCliente");
     if (sel) {
@@ -122,32 +127,52 @@ async function carregarClientes() {
     }
 
     renderizarClientesConfig();
-  } catch (e) { console.error("Erro clientes:", e); }
+  } catch (e) {
+    console.error("Erro carregarClientes:", e);
+  }
 }
 
 function renderizarClientesConfig() {
   const tbody = document.getElementById("tabelaClientesConfig");
   if (!tbody) return;
-  if (clientesCache.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-muted)">Nenhum cliente cadastrado</td></tr>`; return; }
-  tbody.innerHTML = clientesCache.map(c => `
-    <tr>
-      <td><strong>${c.nome}</strong></td>
-      <td><input type="text" class="input-agent-nome" value="${(c.backupClienteNome||"").replace(/"/g,"&quot;")}"
-        placeholder="Nome no Agent" data-id="${c._id}" oninput="marcarAlterado('${c._id}')"></td>
+
+  if (!clientesCache || clientesCache.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-muted)">
+      Nenhum cliente cadastrado. Cadastre clientes em <a href="cadastro.html">Cadastro de Cliente</a>.
+    </td></tr>`;
+    return;
+  }
+
+  const usuario = getUsuario();
+  const temBoleto = usuario.acessoBoleto || usuario.perfil === "master";
+
+  tbody.innerHTML = clientesCache.map(c => {
+    const nomeEscaped = (c.backupClienteNome || "").replace(/"/g, "&quot;");
+    return `<tr>
+      <td><strong>${c.nome || "—"}</strong></td>
+      <td>
+        <input type="text" class="input-agent-nome"
+          value="${nomeEscaped}"
+          placeholder="Nome no Agent (opcional)"
+          data-id="${c._id}"
+          oninput="marcarAlterado('${c._id}')">
+      </td>
       <td>
         <label class="toggle-wrap">
-          <input type="checkbox" data-id="${c._id}" ${c.backupHabilitado?"checked":""} onchange="toggleBackupCliente('${c._id}',this)">
+          <input type="checkbox" data-id="${c._id}"
+            ${c.backupHabilitado ? "checked" : ""}
+            onchange="toggleBackupCliente('${c._id}', this)">
           <span class="toggle-slider"></span>
-          <span class="toggle-label">${c.backupHabilitado?"Habilitado":"Desabilitado"}</span>
+          <span class="toggle-label">${c.backupHabilitado ? "Habilitado" : "Desabilitado"}</span>
         </label>
       </td>
-      <td>
-        <button class="btn-salvar-agent" id="btn-agent-${c._id}" onclick="salvarNomeAgent('${c._id}')" style="display:none">Salvar</button>
-        ${getUsuario().acessoBoleto || getUsuario().perfil === "master"
-          ? `<button class="btn-boleto-mini" onclick="abrirModalBoletos('${c._id}','${c.nome}')">💰 Boletos</button>`
-          : ""}
+      <td style="white-space:nowrap;">
+        <button class="btn-salvar-agent" id="btn-agent-${c._id}"
+          onclick="salvarNomeAgent('${c._id}')" style="display:none">Salvar</button>
+        ${temBoleto ? `<button class="btn-boleto-mini" onclick="abrirModalBoletos('${c._id}','${c.nome}')">💰 Boletos</button>` : ""}
       </td>
-    </tr>`).join("");
+    </tr>`;
+  }).join("");
 }
 
 function marcarAlterado(id) {

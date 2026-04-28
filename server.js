@@ -99,6 +99,20 @@ const BoletoSchema = new mongoose.Schema({
   criadoEm:     { type: Date, default: Date.now }
 });
 
+// ── Migração: garante que clientes antigos tenham backupHabilitado definido ──
+async function migrarCamposBackup() {
+  try {
+    const resultado = await Cliente.updateMany(
+      { backupHabilitado: { $exists: false } },
+      { $set: { backupHabilitado: false, boletoPago: true, backupBloqueado: false } }
+    );
+    if (resultado.modifiedCount > 0)
+      console.log(`[MIGRAÇÃO] ${resultado.modifiedCount} cliente(s) atualizados com campos de backup.`);
+  } catch (e) {
+    console.error("[MIGRAÇÃO] Erro:", e.message);
+  }
+}
+
 // Registra models apenas uma vez (evita erro no Vercel com hot-reload)
 const Usuario      = mongoose.models.Usuario      || mongoose.model("Usuario",      UsuarioSchema);
 const Cliente      = mongoose.models.Cliente      || mongoose.model("Cliente",      ClienteSchema);
@@ -187,7 +201,7 @@ app.post("/api/login", async (req, res) => {
     const match = await bcrypt.compare(senha, user.senha);
     if (!match) return res.status(401).json({ message: "Credenciais inválidas" });
     const token = jwt.sign({ id: user._id, perfil: user.perfil }, process.env.JWT_SECRET, { expiresIn: "8h" });
-    res.json({ token, usuario: { id: user._id, nome: user.nome, usuario: user.usuario, perfil: user.perfil,
+    res.json({ token, usuario: { nome: user.nome, usuario: user.usuario, perfil: user.perfil,
       acessoBackup: user.acessoBackup, acessoBoleto: user.acessoBoleto } });
   } catch (err) {
     res.status(500).json({ message: err.message });
