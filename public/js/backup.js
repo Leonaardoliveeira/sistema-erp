@@ -121,7 +121,7 @@ async function carregarClientes() {
 
     const data = await res.json();
 
-    // 🔥 CORREÇÃO AQUI
+    // 🔥 TRATAMENTO COMPLETO
     if (Array.isArray(data)) {
       clientesCache = data;
     } else if (Array.isArray(data.clientes)) {
@@ -129,18 +129,18 @@ async function carregarClientes() {
     } else if (Array.isArray(data.data)) {
       clientesCache = data.data;
     } else {
-      clientesCache = [];
       console.warn("Formato inesperado da API:", data);
+      clientesCache = [];
     }
 
-    // Popula select de filtro
-    const habilitados = clientesCache.filter(c => c.backupHabilitado);
+    console.log("Clientes carregados:", clientesCache);
 
+    // 🔥 NÃO FILTRA MAIS (ESSA ERA A CAUSA DO SUMIÇO)
     const sel = document.getElementById("filtroCliente");
     if (sel) {
       sel.innerHTML =
-        '<option value="">Todos os clientes habilitados</option>' +
-        habilitados.map(c =>
+        '<option value="">Todos os clientes</option>' +
+        clientesCache.map(c =>
           `<option value="${c._id}">${c.nome}</option>`
         ).join("");
     }
