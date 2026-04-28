@@ -1,10 +1,10 @@
 require("dotenv").config();
-const express = require("express");
-const path = require("path");
-const cors = require("cors");
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+const express   = require("express");
+const path      = require("path");
+const cors      = require("cors");
+const mongoose  = require("mongoose");
+const bcrypt    = require("bcryptjs");
+const jwt       = require("jsonwebtoken");
 
 const app = express();
 app.use(cors());
@@ -22,74 +22,91 @@ mongoose.connect(process.env.MONGO_URI)
 // SCHEMAS
 // --------------------
 const UsuarioSchema = new mongoose.Schema({
-  nome: { type: String, required: true },
+  nome:    { type: String, required: true },
   usuario: { type: String, required: true, unique: true },
-  senha: { type: String, required: true },
+  senha:   { type: String, required: true },
   // master: vê todos os clientes + gerencia usuários
   // admin:  vê apenas os próprios + gerencia usuários
   // user:   vê apenas os próprios, não gerencia usuários
-  perfil: { type: String, enum: ["master", "admin", "user"], default: "user" },
+  perfil:      { type: String, enum: ["master", "admin", "user"], default: "user" },
   acessoBackup: { type: Boolean, default: false },  // master sempre tem acesso, outros só se true
   acessoBoleto: { type: Boolean, default: false }   // pode ver/editar dados de boleto do cliente
 });
 
 const ClienteSchema = new mongoose.Schema({
-  nome: { type: String, required: true },
-  documento: String,
-  email: String,
-  telefone: String,
-  regime: String,
-  sped: { type: String, enum: ["Sim", "Nao"], default: "Nao" },
-  acessosRemotos: [{ nome: String, anydesk: String }],
-  status: { type: String, default: "Pendente" },
-  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
-  criadoEm: { type: Date, default: Date.now },
+  nome:              { type: String, required: true },
+  documento:         String,
+  email:             String,
+  telefone:          String,
+  regime:            String,
+  sped:              { type: String, enum: ["Sim", "Nao"], default: "Nao" },
+  acessosRemotos:    [{ nome: String, anydesk: String }],
+  status:            { type: String, default: "Pendente" },
+  usuarioId:         { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
+  criadoEm:          { type: Date, default: Date.now },
   // Controle de backup
-  backupHabilitado: { type: Boolean, default: false },
-  backupClienteNome: { type: String },  // nome/identificador usado no Backup Agent Pro
+  backupHabilitado:  { type: Boolean, default: false },
+  backupClienteNome:  { type: String },  // nome/identificador usado no Backup Agent Pro
   // Controle financeiro / boleto
-  boletoVencimento: { type: Date },                                         // data de vencimento do boleto
-  boletoPago: { type: Boolean, default: true },                       // false = boleto vencido não pago → bloqueia backup
-  backupBloqueado: { type: Boolean, default: false }                       // bloqueio manual pelo sistema
+  boletoVencimento:   { type: Date },                                         // data de vencimento do boleto
+  boletoPago:         { type: Boolean, default: true },                       // false = boleto vencido não pago → bloqueia backup
+  backupBloqueado:    { type: Boolean, default: false }                       // bloqueio manual pelo sistema
 });
 
 const SpedSchema = new mongoose.Schema({
   clienteId: { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
-  mes: { type: String, required: true },
-  status: { type: String, enum: ["nao", "gerado", "ok"], default: "nao" },
+  mes:       { type: String, required: true },
+  status:    { type: String, enum: ["nao", "gerado", "ok"], default: "nao" },
   usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario" }
 });
 
 const ConfigSchema = new mongoose.Schema({
   chave: { type: String, unique: true },
-  mes: Number,
-  ano: Number
+  mes:   Number,
+  ano:   Number
 });
 
 const AlertaConfigSchema = new mongoose.Schema({
   usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true, unique: true },
-  ativo: { type: Boolean, default: true },
-  horarios: { type: [String], default: ["08:00"] }
+  ativo:     { type: Boolean, default: true },
+  horarios:  { type: [String], default: ["08:00"] }
 });
 
 const BackupSchema = new mongoose.Schema({
-  clienteId: { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
-  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
-  status: { type: String, enum: ["ok", "falha", "pendente"], default: "pendente" },
-  tamanho: { type: String },
-  destino: { type: String },
+  clienteId:  { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
+  usuarioId:  { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
+  status:     { type: String, enum: ["ok", "falha", "pendente"], default: "pendente" },
+  tamanho:    { type: String },
+  destino:    { type: String },
   observacao: { type: String },
   dataBackup: { type: Date, required: true },
-  criadoEm: { type: Date, default: Date.now }
+  criadoEm:  { type: Date, default: Date.now }
+});
+
+// ── Schema de Boletos (parcelas mensais por cliente) ─────────────────────────
+const BoletoSchema = new mongoose.Schema({
+  clienteId:    { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
+  usuarioId:    { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
+  mes:          { type: Number, required: true },   // 1-12
+  ano:          { type: Number, required: true },
+  parcela:      { type: Number, required: true },   // 1 de 12, 2 de 12 ...
+  totalParcelas:{ type: Number, default: 12 },
+  vencimento:   { type: Date, required: true },
+  valor:        { type: Number, default: 0 },
+  pago:         { type: Boolean, default: false },
+  dataPagamento:{ type: Date },
+  observacao:   { type: String },
+  criadoEm:     { type: Date, default: Date.now }
 });
 
 // Registra models apenas uma vez (evita erro no Vercel com hot-reload)
-const Usuario = mongoose.models.Usuario || mongoose.model("Usuario", UsuarioSchema);
-const Cliente = mongoose.models.Cliente || mongoose.model("Cliente", ClienteSchema);
-const Sped = mongoose.models.Sped || mongoose.model("Sped", SpedSchema);
-const Config = mongoose.models.Config || mongoose.model("Config", ConfigSchema);
+const Usuario      = mongoose.models.Usuario      || mongoose.model("Usuario",      UsuarioSchema);
+const Cliente      = mongoose.models.Cliente      || mongoose.model("Cliente",      ClienteSchema);
+const Sped         = mongoose.models.Sped         || mongoose.model("Sped",         SpedSchema);
+const Config       = mongoose.models.Config       || mongoose.model("Config",       ConfigSchema);
 const AlertaConfig = mongoose.models.AlertaConfig || mongoose.model("AlertaConfig", AlertaConfigSchema);
-const Backup = mongoose.models.Backup || mongoose.model("Backup", BackupSchema);
+const Backup       = mongoose.models.Backup       || mongoose.model("Backup",       BackupSchema);
+const Boleto       = mongoose.models.Boleto       || mongoose.model("Boleto",       BoletoSchema);
 
 // --------------------
 // RESET MENSAL
@@ -169,14 +186,9 @@ app.post("/api/login", async (req, res) => {
     if (!user) return res.status(401).json({ message: "Credenciais inválidas" });
     const match = await bcrypt.compare(senha, user.senha);
     if (!match) return res.status(401).json({ message: "Credenciais inválidas" });
-    const expiracao = user.usuario === "backup_agent" ? "365d" : "8h";
-    const token = jwt.sign({ id: user._id, perfil: user.perfil }, process.env.JWT_SECRET, { expiresIn: expiracao });
-    res.json({
-      token, usuario: {
-        nome: user.nome, usuario: user.usuario, perfil: user.perfil,
-        acessoBackup: user.acessoBackup, acessoBoleto: user.acessoBoleto
-      }
-    });
+    const token = jwt.sign({ id: user._id, perfil: user.perfil }, process.env.JWT_SECRET, { expiresIn: "8h" });
+    res.json({ token, usuario: { nome: user.nome, usuario: user.usuario, perfil: user.perfil,
+      acessoBackup: user.acessoBackup, acessoBoleto: user.acessoBoleto } });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -223,14 +235,14 @@ app.put("/api/clientes/:id", verificarToken, async (req, res) => {
     const filtro = { _id: req.params.id, ...filtroPerfil(req) };
     const { nome, documento, email, telefone, regime, sped, acessosRemotos, status } = req.body;
     const dados = {};
-    if (nome !== undefined) dados.nome = nome;
-    if (documento !== undefined) dados.documento = documento;
-    if (email !== undefined) dados.email = email;
-    if (telefone !== undefined) dados.telefone = telefone;
-    if (regime !== undefined) dados.regime = regime;
-    if (sped !== undefined) dados.sped = sped;
-    if (acessosRemotos !== undefined) dados.acessosRemotos = acessosRemotos;
-    if (status !== undefined) dados.status = status;
+    if (nome          !== undefined) dados.nome          = nome;
+    if (documento     !== undefined) dados.documento     = documento;
+    if (email         !== undefined) dados.email         = email;
+    if (telefone      !== undefined) dados.telefone      = telefone;
+    if (regime        !== undefined) dados.regime        = regime;
+    if (sped          !== undefined) dados.sped          = sped;
+    if (acessosRemotos!== undefined) dados.acessosRemotos= acessosRemotos;
+    if (status        !== undefined) dados.status        = status;
     const atualizado = await Cliente.findOneAndUpdate(filtro, dados, { new: true });
     if (!atualizado) return res.status(404).json({ message: "Cliente não encontrado" });
     res.json(atualizado);
@@ -376,8 +388,8 @@ app.post("/api/backup", verificarToken, verificarAcessoBackup, async (req, res) 
     if (!cliente) return res.status(404).json({ message: "Cliente não encontrado" });
     const backup = await Backup.create({
       clienteId, usuarioId: req.usuario.id, status,
-      tamanho: tamanho || null,
-      destino: destino || null,
+      tamanho:    tamanho    || null,
+      destino:    destino    || null,
       observacao: observacao || null,
       dataBackup: dataBackup ? new Date(dataBackup) : new Date()
     });
@@ -389,7 +401,7 @@ app.post("/api/backup", verificarToken, verificarAcessoBackup, async (req, res) 
 
 app.get("/api/backup/resumo", verificarToken, verificarAcessoBackup, async (req, res) => {
   try {
-    const clientesVisiveis = await Cliente.find(filtroPerfil(req)).select("_id nome");
+    const clientesVisiveis = await Cliente.find({ ...filtroPerfil(req), backupHabilitado: true }).select("_id nome backupBloqueado boletoPago boletoVencimento");
     const idsVisiveis = clientesVisiveis.map(c => c._id);
 
     const hoje = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
@@ -401,19 +413,27 @@ app.get("/api/backup/resumo", verificarToken, verificarAcessoBackup, async (req,
       dataBackup: { $gte: hoje }
     }).select("clienteId");
 
-    const idsComBackup = new Set(backupsHoje.map(b => b.clienteId.toString()));
-    const totalClientes = clientesVisiveis.length;
-    const comBackup = idsComBackup.size;
-    const semBackup = totalClientes - comBackup;
+    const idsComBackup   = new Set(backupsHoje.map(b => b.clienteId.toString()));
+    const totalClientes  = clientesVisiveis.length;
+    const comBackup      = idsComBackup.size;
+    const semBackup      = totalClientes - comBackup;
     const semBackupLista = clientesVisiveis.filter(c => !idsComBackup.has(c._id.toString()));
 
     const ultimosBackups = await Backup.aggregate([
       { $match: { clienteId: { $in: idsVisiveis } } },
-      { $sort: { dataBackup: -1 } },
+      { $sort:  { dataBackup: -1 } },
       { $group: { _id: "$clienteId", ultimo: { $first: "$$ROOT" } } }
     ]);
 
-    res.json({ totalClientes, comBackup, semBackup, semBackupLista, ultimosBackups });
+    // Clientes com backup bloqueado (boleto vencido ou manual)
+    const hoje2 = new Date(); hoje2.setHours(0,0,0,0);
+    const suspensos = clientesVisiveis.filter(c =>
+      c.backupBloqueado ||
+      (c.boletoVencimento && !c.boletoPago && new Date(c.boletoVencimento) <= hoje2)
+    );
+
+    res.json({ totalClientes, comBackup, semBackup, semBackupLista, ultimosBackups,
+      totalSuspensos: suspensos.length, suspensosLista: suspensos.map(c => ({ _id: c._id, nome: c.nome })) });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -427,7 +447,7 @@ app.get("/api/backup", verificarToken, verificarAcessoBackup, async (req, res) =
 
     const filtro = { clienteId: { $in: idsVisiveis } };
     if (clienteId) filtro.clienteId = clienteId;
-    if (status) filtro.status = status;
+    if (status)    filtro.status    = status;
     if (dias) {
       const limite = new Date();
       limite.setDate(limite.getDate() - parseInt(dias));
@@ -450,9 +470,9 @@ app.put("/api/backup/:id", verificarToken, verificarAcessoBackup, async (req, re
   try {
     const { status, tamanho, destino, observacao } = req.body;
     const dados = {};
-    if (status !== undefined) dados.status = status;
-    if (tamanho !== undefined) dados.tamanho = tamanho;
-    if (destino !== undefined) dados.destino = destino;
+    if (status     !== undefined) dados.status     = status;
+    if (tamanho    !== undefined) dados.tamanho    = tamanho;
+    if (destino    !== undefined) dados.destino    = destino;
     if (observacao !== undefined) dados.observacao = observacao;
     const atualizado = await Backup.findByIdAndUpdate(req.params.id, dados, { new: true });
     if (!atualizado) return res.status(404).json({ message: "Registro não encontrado" });
@@ -501,8 +521,8 @@ app.patch("/api/clientes/:id/backup", verificarToken, verificarAcessoBackup, asy
   try {
     const { backupHabilitado, backupClienteNome } = req.body;
     const filtro = { _id: req.params.id, ...filtroPerfil(req) };
-    const dados = {};
-    if (backupHabilitado !== undefined) dados.backupHabilitado = backupHabilitado;
+    const dados  = {};
+    if (backupHabilitado  !== undefined) dados.backupHabilitado  = backupHabilitado;
     if (backupClienteNome !== undefined) dados.backupClienteNome = backupClienteNome;
     const atualizado = await Cliente.findOneAndUpdate(filtro, dados, { new: true });
     if (!atualizado) return res.status(404).json({ message: "Cliente não encontrado" });
@@ -526,10 +546,10 @@ app.patch("/api/clientes/:id/boleto", verificarToken, verificarAcessoBoleto, asy
   try {
     const { boletoVencimento, boletoPago } = req.body;
     const filtro = { _id: req.params.id, ...filtroPerfil(req) };
-    const dados = {};
+    const dados  = {};
     if (boletoVencimento !== undefined) dados.boletoVencimento = boletoVencimento ? new Date(boletoVencimento) : null;
-    if (boletoPago !== undefined) {
-      dados.boletoPago = boletoPago;
+    if (boletoPago       !== undefined) {
+      dados.boletoPago    = boletoPago;
       // Quando marcado como pago, desbloqueia backup automaticamente
       if (boletoPago) dados.backupBloqueado = false;
     }
@@ -543,7 +563,7 @@ app.patch("/api/clientes/:id/boleto", verificarToken, verificarAcessoBoleto, asy
 app.patch("/api/clientes/:id/bloqueio-backup", verificarToken, verificarAcessoBackup, async (req, res) => {
   try {
     const { backupBloqueado } = req.body;
-    const filtro = { _id: req.params.id, ...filtroPerfil(req) };
+    const filtro  = { _id: req.params.id, ...filtroPerfil(req) };
     const atualizado = await Cliente.findOneAndUpdate(filtro, { backupBloqueado }, { new: true });
     if (!atualizado) return res.status(404).json({ message: "Cliente não encontrado" });
     res.json(atualizado);
@@ -562,28 +582,28 @@ app.get("/api/clientes/:id/status-backup", verificarToken, async (req, res) => {
     hoje.setHours(0, 0, 0, 0);
 
     let bloqueado = false;
-    let motivo = null;
+    let motivo    = null;
 
     if (cliente.backupBloqueado) {
       bloqueado = true;
-      motivo = "Backup bloqueado manualmente";
+      motivo    = "Backup bloqueado manualmente";
     } else if (cliente.boletoVencimento && !cliente.boletoPago) {
       const venc = new Date(cliente.boletoVencimento);
       venc.setHours(0, 0, 0, 0);
       if (venc <= hoje) {
         bloqueado = true;
-        motivo = `Boleto vencido em ${venc.toLocaleDateString("pt-BR")} — marque como pago para liberar o backup`;
+        motivo    = `Boleto vencido em ${venc.toLocaleDateString("pt-BR")} — marque como pago para liberar o backup`;
       }
     }
 
     res.json({
-      clienteId: cliente._id,
-      nome: cliente.nome,
+      clienteId:        cliente._id,
+      nome:             cliente.nome,
       backupHabilitado: cliente.backupHabilitado,
       bloqueado,
       motivo,
       boletoVencimento: cliente.boletoVencimento,
-      boletoPago: cliente.boletoPago,
+      boletoPago:       cliente.boletoPago,
     });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -596,7 +616,7 @@ app.get("/api/backup/boletos-vencidos", verificarToken, verificarAcessoBoleto, a
     const filtro = {
       ...filtroPerfil(req),
       backupHabilitado: true,
-      boletoPago: false,
+      boletoPago:       false,
       boletoVencimento: { $lte: hoje },
     };
     const clientes = await Cliente.find(filtro).select("nome boletoVencimento boletoPago backupBloqueado");
@@ -614,6 +634,168 @@ app.patch("/api/usuarios/:id/acesso-boleto", verificarToken, async (req, res) =>
     if (!u) return res.status(404).json({ message: "Usuário não encontrado" });
     res.json(u);
   } catch (err) { res.status(400).json({ message: err.message }); }
+});
+
+// --------------------
+// LIMPEZA DE HISTÓRICO DE BACKUP
+// --------------------
+// Limpar automaticamente registros com mais de 5 dias
+async function limparHistoricoAntigo() {
+  try {
+    const limite = new Date();
+    limite.setDate(limite.getDate() - 5);
+    const res = await Backup.deleteMany({ dataBackup: { $lt: limite } });
+    if (res.deletedCount > 0) console.log(`[CLEANUP] ${res.deletedCount} registro(s) de backup removidos.`);
+  } catch (e) { console.error("[CLEANUP] Erro:", e.message); }
+}
+
+// Roda a cada 24h (verifica se passaram 5 dias desde o último)
+setInterval(limparHistoricoAntigo, 24 * 60 * 60 * 1000);
+// Roda uma vez na inicialização também
+limparHistoricoAntigo();
+
+// Limpar manualmente (só master/admin com acesso backup)
+app.delete("/api/backup/historico", verificarToken, verificarAcessoBackup, async (req, res) => {
+  try {
+    const dias   = parseInt(req.query.dias || "0");
+    const filtro = {};
+    if (req.usuario.perfil !== "master") {
+      // admin só limpa seus próprios clientes
+      const meus = await Cliente.find(filtroPerfil(req)).select("_id");
+      filtro.clienteId = { $in: meus.map(c => c._id) };
+    }
+    if (dias > 0) {
+      const limite = new Date();
+      limite.setDate(limite.getDate() - dias);
+      filtro.dataBackup = { $lt: limite };
+    }
+    const result = await Backup.deleteMany(filtro);
+    res.json({ ok: true, removidos: result.deletedCount });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+// --------------------
+// LIMPEZA AUTOMÁTICA DE HISTÓRICO (a cada 5 dias)
+// --------------------
+async function limparHistoricoAntigo() {
+  try {
+    const limite = new Date();
+    limite.setDate(limite.getDate() - 5);
+    const res = await Backup.deleteMany({ criadoEm: { $lt: limite } });
+    if (res.deletedCount > 0)
+      console.log(`[AUTO-LIMPEZA] ${res.deletedCount} registro(s) de backup removidos.`);
+  } catch (e) {
+    console.error("[AUTO-LIMPEZA] Erro:", e.message);
+  }
+}
+// Executa na inicialização e a cada 24 horas
+limparHistoricoAntigo();
+setInterval(limparHistoricoAntigo, 24 * 60 * 60 * 1000);
+
+// Limpeza manual (botão na tela)
+app.delete("/api/backup/historico", verificarToken, verificarAcessoBackup, async (req, res) => {
+  try {
+    const { dias } = req.query; // ?dias=5 ou limpa tudo se não passar
+    const filtro = {};
+    if (dias) {
+      const limite = new Date();
+      limite.setDate(limite.getDate() - parseInt(dias));
+      filtro.criadoEm = { $lt: limite };
+    }
+    // Filtra pelo perfil do usuário
+    if (req.usuario.perfil !== "master") {
+      const clientesIds = (await Cliente.find({ usuarioId: req.usuario.id }).select("_id")).map(c => c._id);
+      filtro.clienteId = { $in: clientesIds };
+    }
+    const result = await Backup.deleteMany(filtro);
+    res.json({ ok: true, removidos: result.deletedCount });
+  } catch (e) { res.status(500).json({ message: e.message }); }
+});
+
+// --------------------
+// BOLETOS — parcelas mensais
+// --------------------
+
+// Gerar 12 parcelas a partir de uma data inicial
+app.post("/api/boletos/gerar", verificarToken, verificarAcessoBoleto, async (req, res) => {
+  try {
+    const { clienteId, primeiroVencimento, valor, totalParcelas } = req.body;
+    if (!clienteId || !primeiroVencimento) return res.status(400).json({ message: "clienteId e primeiroVencimento são obrigatórios" });
+
+    // Remove boletos existentes deste cliente antes de gerar novos
+    await Boleto.deleteMany({ clienteId, usuarioId: req.usuario.perfil === "master" ? { $exists: true } : req.usuario.id });
+
+    const total = parseInt(totalParcelas) || 12;
+    const base  = new Date(primeiroVencimento);
+    const parcelas = [];
+
+    for (let i = 0; i < total; i++) {
+      const venc = new Date(base);
+      venc.setMonth(venc.getMonth() + i);
+      parcelas.push({
+        clienteId,
+        usuarioId:     req.usuario.id,
+        mes:           venc.getMonth() + 1,
+        ano:           venc.getFullYear(),
+        parcela:       i + 1,
+        totalParcelas: total,
+        vencimento:    venc,
+        valor:         parseFloat(valor) || 0,
+        pago:          false,
+      });
+    }
+
+    await Boleto.insertMany(parcelas);
+    res.json({ ok: true, geradas: total });
+  } catch (e) { res.status(500).json({ message: e.message }); }
+});
+
+// Listar boletos de um cliente
+app.get("/api/boletos/:clienteId", verificarToken, verificarAcessoBoleto, async (req, res) => {
+  try {
+    const boletos = await Boleto.find({ clienteId: req.params.clienteId }).sort({ vencimento: 1 });
+    res.json(boletos);
+  } catch (e) { res.status(500).json({ message: e.message }); }
+});
+
+// Dar baixa em uma parcela (marcar como pago)
+app.patch("/api/boletos/:id/baixa", verificarToken, verificarAcessoBoleto, async (req, res) => {
+  try {
+    const { pago, dataPagamento, observacao } = req.body;
+    const b = await Boleto.findByIdAndUpdate(req.params.id, {
+      pago:          pago !== false,
+      dataPagamento: pago !== false ? (dataPagamento ? new Date(dataPagamento) : new Date()) : null,
+      observacao:    observacao || "",
+    }, { new: true });
+    if (!b) return res.status(404).json({ message: "Boleto não encontrado" });
+
+    // Se todas as parcelas do cliente estiverem pagas, libera o backup
+    const pendentes = await Boleto.countDocuments({ clienteId: b.clienteId, pago: false, vencimento: { $lte: new Date() } });
+    if (pendentes === 0) {
+      await Cliente.findByIdAndUpdate(b.clienteId, { boletoPago: true, backupBloqueado: false });
+    }
+
+    res.json(b);
+  } catch (e) { res.status(400).json({ message: e.message }); }
+});
+
+// Deletar boleto individual
+app.delete("/api/boletos/:id", verificarToken, verificarAcessoBoleto, async (req, res) => {
+  try {
+    await Boleto.findByIdAndDelete(req.params.id);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ message: e.message }); }
+});
+
+// Rota para pegar ObjectID do cliente pelo nome (facilita configuração do Agent)
+app.get("/api/clientes/buscar-id", verificarToken, async (req, res) => {
+  try {
+    const { nome } = req.query;
+    const filtro = { ...filtroPerfil(req) };
+    if (nome) filtro.nome = { $regex: nome, $options: "i" };
+    const clientes = await Cliente.find(filtro).select("_id nome backupClienteNome").limit(10);
+    res.json(clientes);
+  } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
 // --------------------

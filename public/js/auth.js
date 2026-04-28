@@ -27,6 +27,15 @@ function verificarLogin() {
         menuUsuarios.style.display =
             (usuario.perfil === "master" || usuario.perfil === "admin") ? "" : "none";
     }
+    // Oculta link de Backup para quem não tem permissão
+    const menuBackup = document.getElementById("menuBackup");
+    if (menuBackup) {
+        if (usuario.perfil === "master" || usuario.acessoBackup) {
+            menuBackup.style.display = "";
+        } else {
+            menuBackup.style.display = "none";
+        }
+    }
     agendarAlertasSped();
 }
 

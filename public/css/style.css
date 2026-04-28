@@ -1170,3 +1170,136 @@ body.dark .boleto-status.pendente { background: rgba(59,130,246,.15); color: #93
 }
 .btn-boleto-bloquear:hover  { border-color: #ef4444; color: #ef4444; }
 .btn-boleto-bloquear.bloqueado { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+
+/* ── Histórico agrupado por cliente ──────────────────────────────────────────── */
+.historico-grupo {
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.historico-grupo-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 700;
+}
+.historico-grupo-count {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.historico-grupo-table { width: 100%; border-collapse: collapse; }
+.historico-grupo-table th {
+  background: var(--surface);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-muted);
+  padding: 7px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.historico-grupo-table td { padding: 9px 14px; font-size: 12px; border-bottom: 1px solid var(--border); }
+.historico-grupo-table tr:last-child td { border-bottom: none; }
+.historico-grupo-table tr:hover td { background: rgba(0,0,0,.02); }
+body.dark .historico-grupo-table tr:hover td { background: rgba(255,255,255,.03); }
+
+/* ── Cards clicáveis com estado ativo ────────────────────────────────────────── */
+.card-clicavel { cursor: pointer; transition: transform .15s, box-shadow .15s; }
+.card-clicavel:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.1); }
+.card-clicavel.ativo  { outline: 3px solid var(--blue); transform: translateY(-1px); }
+.card-suspenso .card-content h3 { color: #9ca3af; }
+.card-suspenso .card-content p  { color: #6366f1; }
+
+/* ── ObjectID search ─────────────────────────────────────────────────────────── */
+.objectid-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.objectid-item:last-child { border-bottom: none; }
+.objectid-code {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--blue);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 8px;
+  margin-top: 4px;
+  word-break: break-all;
+  user-select: all;
+}
+.btn-copy-id {
+  font-size: 11px;
+  padding: 5px 12px;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity .15s;
+}
+.btn-copy-id:hover { opacity: .85; }
+
+/* ── Botão mini boleto na config ─────────────────────────────────────────────── */
+.btn-boleto-mini {
+  font-size: 11px;
+  padding: 4px 9px;
+  background: transparent;
+  color: var(--blue);
+  border: 1px solid var(--blue);
+  border-radius: 6px;
+  cursor: pointer;
+  margin-left: 4px;
+  transition: all .15s;
+}
+.btn-boleto-mini:hover { background: var(--blue); color: #fff; }
+
+/* ── Modal Boletos - parcelas ────────────────────────────────────────────────── */
+.boletos-lista { display: flex; flex-direction: column; gap: 6px; max-height: 360px; overflow-y: auto; }
+.boleto-parcela-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  transition: border-color .15s;
+}
+.boleto-parcela-item.pago     { border-color: #10b981; background: rgba(16,185,129,.05); }
+.boleto-parcela-item.atrasado { border-color: #ef4444; background: rgba(239,68,68,.05); }
+.boleto-parcela-item.hoje     { border-color: #f59e0b; background: rgba(245,158,11,.05); }
+.boleto-parcela-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.boleto-parcela-num  { font-weight: 700; font-size: 12px; min-width: 36px; }
+.boleto-parcela-venc { font-size: 12px; color: var(--text-muted); }
+.boleto-parcela-valor { font-size: 12px; font-weight: 600; }
+.boleto-parcela-pago-em { font-size: 11px; color: #10b981; }
+.boleto-parcela-acoes { display: flex; gap: 5px; }
+.btn-baixa {
+  font-size: 11px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.btn-baixa.pagar    { background: #10b981; color: #fff; }
+.btn-baixa.estornar { background: #f59e0b; color: #fff; }
+.btn-baixa.excluir  { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+.btn-baixa:hover    { opacity: .82; }
