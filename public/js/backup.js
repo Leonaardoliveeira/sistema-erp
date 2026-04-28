@@ -14,7 +14,9 @@ let filtroDias        = "30";
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function inicializarBackup() {
   await verificarPermissaoBackup();
-  await Promise.all([carregarResumo(), carregarClientes(), carregarBackups(), carregarBoletosVencidos()]);
+  // carregarClientes DEVE terminar antes de carregarBackups (backups filtra por clientesCache)
+  await carregarClientes();
+  await Promise.all([carregarResumo(), carregarBackups(), carregarBoletosVencidos()]);
   const painel = document.getElementById("painelPermissoes");
   if (painel) {
     if (getUsuario().perfil === "master") { painel.style.display = "block"; await carregarPermissoes(); }
@@ -252,8 +254,14 @@ async function carregarBackups() {
     if (!res.ok) return;
     // Filtra somente clientes habilitados para backup
     const todos     = await res.json();
-    const habIds    = new Set(clientesCache.filter(c => c.backupHabilitado).map(c => c._id));
-    backupsCache    = todos.filter(b => habIds.size === 0 || habIds.has(b.clienteId?._id || b.clienteId));
+    const habIds    = new Set(clientesCache.filter(c => c.backupHabilitado).map(c => String(c._id)));
+    // Se não há nenhum habilitado ainda, mostra todos (evita tela vazia)
+    backupsCache    = habIds.size === 0
+      ? todos
+      : todos.filter(b => {
+          const id = String(b.clienteId?._id || b.clienteId || "");
+          return habIds.has(id);
+        });
     renderizarHistoricoAgrupado(backupsCache);
   } catch (e) { console.error(e); }
   finally { esconderLoading(); }
