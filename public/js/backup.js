@@ -110,18 +110,23 @@ async function toggleBloqueioBackup(clienteId, bloquear, btn) {
 // ── Clientes ──────────────────────────────────────────────────────────────────
 async function carregarClientes() {
   try {
+    console.log("🔄 Buscando clientes...");
+
     const res = await fetch("/api/clientes", {
       headers: { "Authorization": "Bearer " + getToken() }
     });
 
     if (!res.ok) {
-      console.error("carregarClientes: resposta não ok", res.status);
+      console.error("❌ Erro ao buscar clientes:", res.status);
+      clientesCache = [];
+      renderizarClientesConfig();
       return;
     }
 
     const data = await res.json();
+    console.log("📦 Clientes recebidos:", data);
 
-    // 🔥 TRATAMENTO COMPLETO
+    // Normaliza resposta
     if (Array.isArray(data)) {
       clientesCache = data;
     } else if (Array.isArray(data.clientes)) {
@@ -129,13 +134,18 @@ async function carregarClientes() {
     } else if (Array.isArray(data.data)) {
       clientesCache = data.data;
     } else {
-      console.warn("Formato inesperado da API:", data);
+      console.warn("⚠️ Formato inesperado:", data);
       clientesCache = [];
     }
 
-    console.log("Clientes carregados:", clientesCache);
+    // 🔥 GARANTE ARRAY
+    if (!Array.isArray(clientesCache)) {
+      clientesCache = [];
+    }
 
-    // 🔥 NÃO FILTRA MAIS (ESSA ERA A CAUSA DO SUMIÇO)
+    console.log("✅ Clientes carregados:", clientesCache.length);
+
+    // 🔥 SELECT (SEM FILTRAR!)
     const sel = document.getElementById("filtroCliente");
     if (sel) {
       sel.innerHTML =
@@ -148,7 +158,9 @@ async function carregarClientes() {
     renderizarClientesConfig();
 
   } catch (e) {
-    console.error("Erro carregarClientes:", e);
+    console.error("💥 Erro carregarClientes:", e);
+    clientesCache = [];
+    renderizarClientesConfig();
   }
 }
 
@@ -299,7 +311,8 @@ async function carregarBackups() {
     if (!res.ok) return;
     // Filtra somente clientes habilitados para backup
     const todos = await res.json();
-    const habIds = new Set(clientesCache.filter(c => c.backupHabilitado).map(c => String(c._id)));
+    // 🔥 NÃO filtra por habilitado aqui
+    const habIds = new Set(clientesCache.map(c => String(c._id)));
     // Se não há nenhum habilitado ainda, mostra todos (evita tela vazia)
     backupsCache = habIds.size === 0
       ? todos
