@@ -111,6 +111,33 @@
     </section>
 
 
+    <div class="form-box search-section">
+      <div class="search-box" style="max-width:480px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="campoPesquisa" placeholder="Nome, Documento ou Telefone..." onkeyup="filtrarClientes()">
+      </div>
+    </div>
+
+    <div class="table-container">
+      <div class="table-title">
+        <i data-lucide="list" style="width:15px;height:15px;"></i>
+        <span>Clientes com SPED</span>
+        <span class="table-title-filtro" id="tituloFiltroAtivo"></span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Documento</th>
+            <th>Regime</th>
+            <th>Telefone</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaDashboard"></tbody>
+      </table>
+    </div>
+
   </main>
 
   <script>
