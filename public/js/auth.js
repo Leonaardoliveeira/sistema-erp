@@ -45,6 +45,7 @@ function verificarLogin() {
 async function agendarAlertasSped() {
     try {
         const token = localStorage.getItem("token");
+        if (!token) return;
 
         // Busca configuração do usuário
         const cfgRes = await fetch("/api/alertas/config", {
@@ -55,18 +56,22 @@ async function agendarAlertasSped() {
 
         const horarios = cfg.horarios || ["08:00"];
 
-        // Verifica quais horários ainda não foram exibidos hoje
+        // Verifica quais horários já foram exibidos hoje
         const hoje        = new Date().toDateString();
         const exibidosRaw = localStorage.getItem("alertasSpedExibidos");
         let exibidos      = {};
         try { exibidos = JSON.parse(exibidosRaw) || {}; } catch(e) {}
-        // Limpa registros de outros dias
         if (exibidos._dia !== hoje) exibidos = { _dia: hoje };
 
-        const agora     = new Date();
-        const minAgora  = agora.getHours() * 60 + agora.getMinutes();
+        const agora    = new Date();
+        const minAgora = agora.getHours() * 60 + agora.getMinutes();
 
-        // Para cada horário configurado, verifica se já passou e ainda não foi exibido
+        // Exibe imediatamente ao abrir o sistema (horário especial "startup")
+        if (!exibidos["_startup"]) {
+            await exibirAlertaSped(token, "_startup", exibidos, hoje);
+        }
+
+        // Para cada horário configurado, verifica se já passou e não foi exibido
         for (const h of horarios) {
             const [hh, mm] = h.split(":").map(Number);
             const minAlerta = hh * 60 + mm;
@@ -75,7 +80,7 @@ async function agendarAlertasSped() {
             }
         }
 
-        // Agenda verificação a cada 60 segundos para pegar novos horários
+        // Agenda verificação a cada 60 segundos
         setTimeout(agendarAlertasSped, 60000);
 
     } catch(e) { /* silencioso */ }

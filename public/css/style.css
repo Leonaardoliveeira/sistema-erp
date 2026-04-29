@@ -1303,3 +1303,72 @@ body.dark .historico-grupo-table tr:hover td { background: rgba(255,255,255,.03)
 .btn-baixa.estornar { background: #f59e0b; color: #fff; }
 .btn-baixa.excluir  { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
 .btn-baixa:hover    { opacity: .82; }
+
+/* ── Search input unificado (igual suporte.html) ─────────────────────────────── */
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 0 14px;
+  max-width: 480px;
+  transition: border-color .2s, box-shadow .2s;
+}
+.search-box:focus-within {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(59,130,246,.1);
+}
+.search-box svg { color: var(--text-muted); flex-shrink: 0; }
+.search-box input {
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+  padding: 11px 0 !important;
+  font-size: 13px;
+  width: 100%;
+  color: var(--text);
+}
+.search-box input::placeholder { color: var(--text-muted); }
+.search-section { margin-bottom: 18px; }
+
+/* ── Card hover/active igual dashboard ──────────────────────────────────────── */
+.card-clicavel {
+  cursor: pointer;
+  transition: transform .18s, box-shadow .18s, outline .15s !important;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+.card-clicavel:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.13) !important;
+}
+.card-clicavel.ativo {
+  outline: 2.5px solid var(--blue) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* ── Botão limpar histórico no header da tabela ──────────────────────────────── */
+.btn-limpar-hist {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 11px;
+  background: transparent;
+  color: var(--red, #ef4444);
+  border: 1px solid rgba(239,68,68,.3);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-limpar-hist:hover {
+  background: rgba(239,68,68,.08);
+  border-color: var(--red, #ef4444);
+}
+body.dark .btn-limpar-hist { color: #fca5a5; border-color: rgba(252,165,165,.3); }
+body.dark .btn-limpar-hist:hover { background: rgba(252,165,165,.08); }

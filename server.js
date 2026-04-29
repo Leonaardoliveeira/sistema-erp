@@ -15,7 +15,10 @@ app.use(express.static(path.join(__dirname, "public")));
 // CONEXÃO MONGODB
 // --------------------
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ Conectado ao MongoDB"))
+  .then(async () => {
+    console.log("✅ Conectado ao MongoDB");
+    await migrarCamposBackup();
+  })
   .catch(err => console.error("❌ Erro ao conectar:", err));
 
 // --------------------
