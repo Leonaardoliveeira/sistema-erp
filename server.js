@@ -506,6 +506,21 @@ app.get("/api/backup", verificarToken, verificarAcessoBackup, async (req, res) =
   }
 });
 
+// Lista de clientes para a tela de configuração de backup
+app.get("/api/backup/clientes-config", verificarToken, verificarAcessoBackup, async (req, res) => {
+  try {
+    // Quem tem perfil master/admin no backup pode configurar todos os clientes
+    // Usuário comum com acesso backup vê apenas os próprios.
+    const filtro = req.usuario.perfil === "master" || req.usuario.perfil === "admin"
+      ? {}
+      : filtroPerfil(req);
+    const clientes = await Cliente.find(filtro).sort({ nome: 1 });
+    res.json(clientes);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 app.put("/api/backup/:id", verificarToken, verificarAcessoBackup, async (req, res) => {
   try {
     const { status, tamanho, destino, observacao } = req.body;

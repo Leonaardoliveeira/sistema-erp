@@ -63,7 +63,7 @@ function mostrarSemPermissao() {
 // ── CLIENTES ──────────────────────────────────────────────────────────────────
 async function carregarClientes() {
   try {
-    const res = await fetch("/api/clientes", {
+    const res = await fetch("/api/backup/clientes-config", {
       headers: { "Authorization": "Bearer " + getToken() }
     });
 
