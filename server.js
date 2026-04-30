@@ -509,9 +509,10 @@ app.get("/api/backup", verificarToken, verificarAcessoBackup, async (req, res) =
 // Lista de clientes para a tela de configuração de backup
 app.get("/api/backup/clientes-config", verificarToken, verificarAcessoBackup, async (req, res) => {
   try {
-    // Quem tem perfil master/admin no backup pode configurar todos os clientes
+    // Perfis administrativos configuram todos os clientes.
     // Usuário comum com acesso backup vê apenas os próprios.
-    const filtro = req.usuario.perfil === "master" || req.usuario.perfil === "admin"
+    const perfil = String(req.usuario.perfil || "").toLowerCase();
+    const filtro = perfil !== "user"
       ? {}
       : filtroPerfil(req);
     const clientes = await Cliente.find(filtro).sort({ nome: 1 });

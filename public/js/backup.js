@@ -63,9 +63,16 @@ function mostrarSemPermissao() {
 // ── CLIENTES ──────────────────────────────────────────────────────────────────
 async function carregarClientes() {
   try {
-    const res = await fetch("/api/backup/clientes-config", {
+    let res = await fetch("/api/backup/clientes-config", {
       headers: { "Authorization": "Bearer " + getToken() }
     });
+
+    // Fallback de compatibilidade caso a rota nova não esteja disponível no ambiente.
+    if (res.status === 404 || res.status === 405) {
+      res = await fetch("/api/clientes", {
+        headers: { "Authorization": "Bearer " + getToken() }
+      });
+    }
 
     if (!res.ok) {
       console.error("carregarClientes HTTP", res.status);
