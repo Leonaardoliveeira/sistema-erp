@@ -782,75 +782,85 @@ app.delete("/api/backup/historico", verificarToken, verificarAcessoBackup, async
 // BOLETOS — parcelas mensais
 // --------------------
 
-// Gerar 12 parcelas a partir de uma data inicial
+// Gerar 12 parcelas (ou quantidade definida) a partir de uma data inicial
 app.post("/api/boletos/gerar", verificarToken, verificarAcessoBoleto, async (req, res) => {
   try {
-    const { clienteId, primeiroVencimento, valor, totalParcelas } = req.body;
-    if (!clienteId || !primeiroVencimento) return res.status(400).json({ message: "clienteId e primeiroVencimento são obrigatórios" });
+    const { clienteId, primeiroVencimento, valor, totalParcelas = 12 } = req.body;
 
-    // Remove boletos existentes deste cliente antes de gerar novos
-    await Boleto.deleteMany({ clienteId, usuarioId: req.usuario.perfil === "master" ? { $exists: true } : req.usuario.id });
+    if (!clienteId || !primeiroVencimento) {
+      return res.status(400).json({ message: "clienteId e primeiroVencimento são obrigatórios" });
+    }
 
-    const total = parseInt(totalParcelas) || 12;
-    const base  = new Date(primeiroVencimento);
-    const parcelas = [];
+    const parcelasGeradas = [];
+    let dataBase = new Date(primeiroVencimento);
 
-    for (let i = 0; i < total; i++) {
-      const venc = new Date(base);
-      venc.setMonth(venc.getMonth() + i);
-      parcelas.push({
+    for (let i = 1; i <= totalParcelas; i++) {
+      const novaData = new Date(dataBase);
+      // Incrementa os meses conforme a parcela
+      novaData.setMonth(dataBase.getMonth() + (i - 1));
+
+      parcelasGeradas.push({
         clienteId,
-        usuarioId:     req.usuario.id,
-        mes:           venc.getMonth() + 1,
-        ano:           venc.getFullYear(),
-        parcela:       i + 1,
-        totalParcelas: total,
-        vencimento:    venc,
-        valor:         parseFloat(valor) || 0,
-        pago:          false,
+        usuarioId: req.usuario.id,
+        mes: novaData.getMonth() + 1,
+        ano: novaData.getFullYear(),
+        parcela: i,
+        totalParcelas,
+        vencimento: novaData,
+        valor: valor || 0,
+        pago: false
       });
     }
 
-    await Boleto.insertMany(parcelas);
-    res.json({ ok: true, geradas: total });
-  } catch (e) { res.status(500).json({ message: e.message }); }
+    const resultado = await Boleto.insertMany(parcelasGeradas);
+    
+    // Opcional: Atualiza o campo boletoVencimento no Cliente com a primeira parcela
+    await Cliente.findByIdAndUpdate(clienteId, { 
+      boletoVencimento: parcelasGeradas[0].vencimento,
+      boletoPago: false 
+    });
+
+    res.status(201).json({ message: `${totalParcelas} parcelas geradas com sucesso`, resultado });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 // Listar boletos de um cliente
-app.get("/api/boletos/:clienteId", verificarToken, verificarAcessoBoleto, async (req, res) => {
+app.get("/api/boletos/cliente/:clienteId", verificarToken, verificarAcessoBoleto, async (req, res) => {
   try {
     const boletos = await Boleto.find({ clienteId: req.params.clienteId }).sort({ vencimento: 1 });
     res.json(boletos);
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
-// Dar baixa em uma parcela (marcar como pago)
-app.patch("/api/boletos/:id/baixa", verificarToken, verificarAcessoBoleto, async (req, res) => {
+// Dar baixa em um boleto individual
+app.patch("/api/boletos/:id/pagar", verificarToken, verificarAcessoBoleto, async (req, res) => {
   try {
-    const { pago, dataPagamento, observacao } = req.body;
-    const b = await Boleto.findByIdAndUpdate(req.params.id, {
-      pago:          pago !== false,
-      dataPagamento: pago !== false ? (dataPagamento ? new Date(dataPagamento) : new Date()) : null,
-      observacao:    observacao || "",
-    }, { new: true });
-    if (!b) return res.status(404).json({ message: "Boleto não encontrado" });
+    const { pago } = req.body;
+    const boleto = await Boleto.findByIdAndUpdate(
+      req.params.id, 
+      { pago, dataPagamento: pago ? new Date() : null }, 
+      { new: true }
+    );
 
-    // Se todas as parcelas do cliente estiverem pagas, libera o backup
-    const pendentes = await Boleto.countDocuments({ clienteId: b.clienteId, pago: false, vencimento: { $lte: new Date() } });
-    if (pendentes === 0) {
-      await Cliente.findByIdAndUpdate(b.clienteId, { boletoPago: true, backupBloqueado: false });
+    if (!boleto) return res.status(404).json({ message: "Boleto não encontrado" });
+
+    // Lógica importante: Se for o boleto do mês atual, atualiza o status no Cliente
+    const hoje = new Date();
+    if (boleto.mes === (hoje.getMonth() + 1) && boleto.ano === hoje.getFullYear()) {
+      await Cliente.findByIdAndUpdate(boleto.clienteId, { 
+        boletoPago: pago,
+        backupBloqueado: !pago // Se pagou, desbloqueia. Se desmarcou, bloqueia.
+      });
     }
 
-    res.json(b);
-  } catch (e) { res.status(400).json({ message: e.message }); }
-});
-
-// Deletar boleto individual
-app.delete("/api/boletos/:id", verificarToken, verificarAcessoBoleto, async (req, res) => {
-  try {
-    await Boleto.findByIdAndDelete(req.params.id);
-    res.json({ ok: true });
-  } catch (e) { res.status(500).json({ message: e.message }); }
+    res.json(boleto);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 // [buscar-id moved above /:id]
