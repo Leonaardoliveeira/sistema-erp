@@ -1,14 +1,23 @@
-const getToken = () => localStorage.getItem("token");
-const getUsuario = () => { try { return JSON.parse(localStorage.getItem("usuario") || "{}"); } catch (_) { return {}; } };
-const mostrarLoading = () => { const el = document.getElementById("loading"); if (el) el.style.display = "flex"; };
-const esconderLoading = () => { const el = document.getElementById("loading"); if (el) el.style.display = "none"; };
+const getToken   = () => localStorage.getItem("token");
+const getUsuario = () => { try { return JSON.parse(localStorage.getItem("usuario") || "{}"); } catch(_){ return {}; } };
+const mostrarLoading  = () => { const el = document.getElementById("loading"); if(el) el.style.display = "flex"; };
+const esconderLoading = () => { const el = document.getElementById("loading"); if(el) el.style.display = "none"; };
 
-let backupsCache = [];
-let clientesCache = [];
-let filtroStatus = "";
+let backupsCache    = [];
+let clientesCache   = [];
+let filtroStatus    = "";
 let filtroClienteId = "";
-let filtroDias = "30";
+let filtroDias      = "30";
 let _filtroCardTipo = null;
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function inicializarBackup() {
@@ -52,8 +61,6 @@ function mostrarSemPermissao() {
 }
 
 // ── CLIENTES ──────────────────────────────────────────────────────────────────
-/* LINHAS 54-84 - CORRIGIR CARREGAMENTO DE CLIENTES */
-/* ANTES: */
 async function carregarClientes() {
   try {
     const res = await fetch("/api/clientes", {
@@ -68,47 +75,6 @@ async function carregarClientes() {
 
     const data = await res.json();
     clientesCache = Array.isArray(data) ? data : [];
-
-    // Select de filtro — mostra só os habilitados
-    const sel = document.getElementById("filtroCliente");
-    if (sel) {
-      const hab = clientesCache.filter(c => c.backupHabilitado);
-      sel.innerHTML = '<option value="">Todos os clientes</option>' +
-        hab.map(c => `<option value="${c._id}">${c.nome}</option>`).join("");
-    }
-
-    renderizarClientesConfig();
-
-  } catch (e) {
-    console.error("Erro carregarClientes:", e);
-    mostrarErroConfig("Erro de rede ao carregar clientes: " + e.message);
-  }
-}
-
-/* DEPOIS: Adicionar verificação de dados vazios */
-async function carregarClientes() {
-  try {
-    const res = await fetch("/api/clientes", {
-      headers: { "Authorization": "Bearer " + getToken() }
-    });
-
-    if (!res.ok) {
-      console.error("carregarClientes HTTP", res.status);
-      mostrarErroConfig("Erro ao carregar clientes (HTTP " + res.status + ")");
-      return;
-    }
-
-    const data = await res.json();
-    clientesCache = Array.isArray(data) ? data : [];
-
-    // DEBUG: Verificar se clientes foram carregados
-    console.log("Clientes carregados:", clientesCache.length);
-
-    if (!clientesCache || clientesCache.length === 0) {
-      console.warn("Nenhum cliente foi carregado da API");
-      mostrarErroConfig("Nenhum cliente encontrado. Cadastre clientes em 'Cadastro de Cliente'.");
-      return;
-    }
 
     // Select de filtro — mostra só os habilitados
     const sel = document.getElementById("filtroCliente");
@@ -146,9 +112,11 @@ function renderizarClientesConfig() {
   const temBoleto = u.perfil === "master" || u.acessoBoleto;
 
   tbody.innerHTML = clientesCache.map(c => {
-    const nomeEsc = (c.backupClienteNome || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+    const nomeCliente = c.nome || "Cliente sem nome";
+    const nomeEsc = escapeHtml(c.backupClienteNome || "");
+    const nomeModal = String(nomeCliente).replace(/'/g, "\\'");
     return `<tr>
-      <td><strong>${c.nome || "—"}</strong></td>
+      <td><strong>${escapeHtml(nomeCliente)}</strong></td>
       <td>
         <input type="text" class="input-agent-nome"
           value="${nomeEsc}"
@@ -167,67 +135,10 @@ function renderizarClientesConfig() {
       <td style="white-space:nowrap;">
         <button class="btn-salvar-agent" id="btn-agent-${c._id}"
           onclick="salvarNomeAgent('${c._id}')" style="display:none;">Salvar</button>
-        ${temBoleto ? `<button class="btn-boleto-mini" onclick="abrirModalBoletos('${c._id}','${c.nome.replace(/'/g, "\\'")}')">💰</button>` : ""}
+        ${temBoleto ? `<button class="btn-boleto-mini" onclick="abrirModalBoletos('${c._id}','${nomeModal}')">💰</button>` : ""}
       </td>
     </tr>`;
   }).join("");
-}
-
-/* DEPOIS: Adicionar validação completa */
-function renderizarClientesConfig() {
-  const tbody = document.getElementById("tabelaClientesConfig");
-  if (!tbody) {
-    console.warn("tabelaClientesConfig não encontrado no DOM");
-    return;
-  }
-
-  if (!clientesCache || clientesCache.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-muted);">
-      Nenhum cliente encontrado. <a href="cadastro.html">Cadastre clientes aqui.</a>
-    </td></tr>`;
-    return;
-  }
-
-  const u = getUsuario();
-  const temBoleto = u.perfil === "master" || u.acessoBoleto;
-
-  tbody.innerHTML = clientesCache.map(c => {
-    // Validar dados do cliente
-    const clienteNome = c.nome || "Cliente sem nome";
-    const clienteId = c._id || "";
-    const nomeEsc = (c.backupClienteNome || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;");
-
-    if (!clienteId) {
-      console.warn("Cliente sem _id:", c);
-      return "";
-    }
-
-    return `<tr>
-      <td><strong>${clienteNome}</strong></td>
-      <td>
-        <input type="text" class="input-agent-nome"
-          value="${nomeEsc}"
-          placeholder="Nome no Agent (opcional)"
-          data-id="${clienteId}"
-          oninput="marcarAlterado('${clienteId}')">
-      </td>
-      <td>
-        <label class="toggle-wrap">
-          <input type="checkbox" ${c.backupHabilitado ? "checked" : ""}
-            onchange="toggleBackupCliente('${clienteId}', this)">
-          <span class="toggle-slider"></span>
-          <span class="toggle-label">${c.backupHabilitado ? "Habilitado" : "Desabilitado"}</span>
-        </label>
-      </td>
-      <td style="white-space:nowrap;">
-        <button class="btn-salvar-agent" id="btn-agent-${clienteId}"
-          onclick="salvarNomeAgent('${clienteId}')" style="display:none;">Salvar</button>
-        ${temBoleto ? `<button class="btn-boleto-mini" onclick="abrirModalBoletos('${clienteId}','${clienteNome.replace(/'/g, "\\'")}')">💰</button>` : ""}
-      </td>
-    </tr>`;
-  }).filter(row => row !== "").join("");
-
-  console.log("Tabela renderizada com", clientesCache.length, "clientes");
 }
 
 function marcarAlterado(id) {
@@ -279,10 +190,10 @@ async function carregarResumo() {
     });
     if (!res.ok) return;
     const data = await res.json();
-    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? "—"; };
-    set("totalClientes", data.totalClientes);
-    set("comBackup", data.comBackup);
-    set("semBackup", data.semBackup);
+    const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val ?? "—"; };
+    set("totalClientes",  data.totalClientes);
+    set("comBackup",      data.comBackup);
+    set("semBackup",      data.semBackup);
     set("totalSuspensos", data.suspensos);
     if (data.semBackup > 0) setTimeout(() => toast.aviso(`⚠️ ${data.semBackup} cliente(s) sem backup hoje!`, 6000), 800);
   } catch (e) { console.error("Erro resumo:", e); }
@@ -296,28 +207,28 @@ async function carregarBoletosVencidos() {
     });
     if (!res.ok) return;
     renderizarBoletosVencidos(await res.json());
-  } catch (_) { }
+  } catch (_) {}
 }
 
 function renderizarBoletosVencidos(lista) {
   const box = document.getElementById("boxBoletosVencidos");
-  const el = document.getElementById("listaBoletosVencidos");
+  const el  = document.getElementById("listaBoletosVencidos");
   if (!box || !el) return;
   if (!lista || !lista.length) { box.style.display = "none"; return; }
   box.style.display = "block";
   el.innerHTML = lista.map(c => {
-    const venc = new Date(c.boletoVencimento);
+    const venc    = new Date(c.boletoVencimento);
     const diasAtr = Math.floor((new Date() - venc) / 86400000);
     return `<div class="boleto-item">
       <div class="boleto-item-info">
         <strong>${c.nome}</strong>
         <span class="boleto-venc-label">Venceu em ${venc.toLocaleDateString("pt-BR")}
-          ${diasAtr > 0 ? `<span class="boleto-atraso">(${diasAtr} dia${diasAtr > 1 ? "s" : ""} em atraso)</span>` : ""}
+          ${diasAtr > 0 ? `<span class="boleto-atraso">(${diasAtr} dia${diasAtr>1?"s":""} em atraso)</span>` : ""}
         </span>
       </div>
       <div class="boleto-item-acoes">
-        <button class="btn-boleto-pago" onclick="abrirModalBoletos('${c._id}','${c.nome.replace(/'/g, "\\'")}')">💰 Ver Boletos</button>
-        <button class="btn-boleto-bloquear ${c.backupBloqueado ? "bloqueado" : ""}"
+        <button class="btn-boleto-pago" onclick="abrirModalBoletos('${c._id}','${c.nome.replace(/'/g,"\\'")}')">💰 Ver Boletos</button>
+        <button class="btn-boleto-bloquear ${c.backupBloqueado?"bloqueado":""}"
           onclick="toggleBloqueioBackup('${c._id}',${!c.backupBloqueado},this)">
           ${c.backupBloqueado ? "🔓 Liberar" : "🔒 Bloquear"}
         </button>
@@ -347,9 +258,9 @@ async function carregarBackups() {
   mostrarLoading();
   try {
     const params = new URLSearchParams();
-    if (filtroStatus) params.append("status", filtroStatus);
+    if (filtroStatus)    params.append("status",    filtroStatus);
     if (filtroClienteId) params.append("clienteId", filtroClienteId);
-    if (filtroDias) params.append("dias", filtroDias);
+    if (filtroDias)      params.append("dias",       filtroDias);
 
     const res = await fetch("/api/backup?" + params, {
       headers: { "Authorization": "Bearer " + getToken() }
@@ -386,9 +297,16 @@ function renderizarHistoricoAgrupado(lista) {
 
   const grupos = {};
   lista.forEach(b => {
-    const id = String(b.clienteId?._id || b.clienteId || "sem-cliente");
+    const id   = String(b.clienteId?._id || b.clienteId || "sem-cliente");
     const nome = b.clienteId?.nome || "Cliente não identificado";
-    if (!grupos[id]) grupos[id] = { nome, itens: [] };
+    if (!grupos[id]) {
+      grupos[id] = {
+        nome,
+        documento: b.clienteId?.documento || "",
+        telefone: b.clienteId?.telefone || "",
+        itens: []
+      };
+    }
     grupos[id].itens.push(b);
   });
 
@@ -396,11 +314,8 @@ function renderizarHistoricoAgrupado(lista) {
     <div class="historico-grupo">
       <div class="historico-grupo-header">
         <i data-lucide="hard-drive" style="width:14px;height:14px;"></i>
-        <strong>${g.nome}</strong>
+        <strong>${escapeHtml(g.nome)}</strong>
         <span class="historico-grupo-count">${g.itens.length} registro(s)</span>
-        <button onclick="confirmarLimparHistorico()" class="btn-limpar-hist" title="Limpar histórico">
-          <i data-lucide="trash-2" style="width:12px;height:12px;"></i> Limpar
-        </button>
       </div>
       <table class="historico-grupo-table">
         <thead><tr>
@@ -408,18 +323,18 @@ function renderizarHistoricoAgrupado(lista) {
         </tr></thead>
         <tbody>
           ${g.itens.map(b => {
-    const dt = new Date(b.dataBackup);
-    const obs = b.observacao || "";
-    const bancoM = obs.match(/Banco:\s*([^\s|]+)/);
-    const banco = bancoM ? bancoM[1] : (obs || "—");
-    return `<tr>
-              <td>${dt.toLocaleDateString("pt-BR")} <span style="color:var(--text-muted);font-size:11px;">${dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span></td>
-              <td><span class="backup-status ${b.status}">${b.status === "ok" ? "✔ OK" : b.status === "falha" ? "✘ Falha" : "⏳ Pendente"}</span></td>
-              <td style="font-size:11px;">${banco}</td>
-              <td style="font-size:11px;">${b.tamanho || "—"}</td>
+            const dt = new Date(b.dataBackup);
+            const obs = b.observacao || "";
+            const bancoM = obs.match(/Banco:\s*([^\s|]+)/);
+            const banco = bancoM ? bancoM[1] : (obs || "—");
+            return `<tr>
+              <td>${dt.toLocaleDateString("pt-BR")} <span style="color:var(--text-muted);font-size:11px;">${dt.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</span></td>
+              <td><span class="backup-status ${b.status}">${b.status==="ok"?"✔ OK":b.status==="falha"?"✘ Falha":"⏳ Pendente"}</span></td>
+              <td style="font-size:11px;" data-doc="${escapeHtml(g.documento)}" data-tel="${escapeHtml(g.telefone)}">${escapeHtml(banco)}</td>
+              <td style="font-size:11px;">${b.tamanho||"—"}</td>
               <td><button class="btn-danger" style="font-size:10px;padding:2px 7px;" onclick="excluirBackup('${b._id}')">✕</button></td>
             </tr>`;
-  }).join("")}
+          }).join("")}
         </tbody>
       </table>
     </div>`).join("");
@@ -445,11 +360,11 @@ function filtrarPorCard(tipo, el) {
   _filtroCardTipo = tipo;
   if (el) el.classList.add("ativo");
   const LABELS = { ok: "Com Backup Hoje", sem: "Sem Backup Hoje", suspenso: "Suspensos" };
-  if (labelEl) { labelEl.style.display = "block"; if (labelTx) labelTx.textContent = LABELS[tipo] || tipo; }
+  if (labelEl) { labelEl.style.display = "block"; if(labelTx) labelTx.textContent = LABELS[tipo] || tipo; }
 
   if (tipo === "ok") { filtroStatus = "ok"; carregarBackups(); }
   else if (tipo === "sem") {
-    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
     const idsHoje = new Set(backupsCache.filter(b => new Date(b.dataBackup) >= hoje).map(b => String(b.clienteId?._id || b.clienteId)));
     renderizarHistoricoAgrupado(backupsCache.filter(b => !idsHoje.has(String(b.clienteId?._id || b.clienteId))));
   } else if (tipo === "suspenso") {
@@ -459,9 +374,9 @@ function filtrarPorCard(tipo, el) {
 }
 
 function aplicarFiltros() {
-  filtroStatus = document.getElementById("filtroStatus")?.value || "";
+  filtroStatus    = document.getElementById("filtroStatus")?.value  || "";
   filtroClienteId = document.getElementById("filtroCliente")?.value || "";
-  filtroDias = document.getElementById("filtroDias")?.value || "30";
+  filtroDias      = document.getElementById("filtroDias")?.value    || "30";
   _filtroCardTipo = null;
   document.querySelectorAll(".card-clicavel").forEach(c => c.classList.remove("ativo"));
   const labelEl = document.getElementById("filtroAtivoLabel");
@@ -471,9 +386,56 @@ function aplicarFiltros() {
 
 function filtrarTabela() {
   const termo = (document.getElementById("campoPesquisa")?.value || "").toLowerCase();
+  const campo = document.getElementById("filtroPesquisaCampo")?.value || "todos";
   document.querySelectorAll(".historico-grupo").forEach(g => {
-    g.style.display = g.innerText.toLowerCase().includes(termo) ? "" : "none";
+    const textoNome = (g.querySelector(".historico-grupo-header strong")?.innerText || "").toLowerCase();
+    const textoDocumento = (g.querySelector("td[data-doc]")?.dataset.doc || "").toLowerCase();
+    const textoTelefone = (g.querySelector("td[data-tel]")?.dataset.tel || "").toLowerCase();
+    const alvo = campo === "documento"
+      ? textoDocumento
+      : campo === "telefone"
+        ? textoTelefone
+        : campo === "nome"
+          ? textoNome
+          : `${textoNome} ${textoDocumento} ${textoTelefone}`;
+    const encontrado = alvo.includes(termo);
+    g.style.display = encontrado ? "" : "none";
+    atualizarDestaqueGrupo(g, campo, termo, {
+      nome: textoNome,
+      documento: textoDocumento,
+      telefone: textoTelefone
+    }, encontrado);
   });
+}
+
+function atualizarDestaqueGrupo(grupoEl, campo, termo, textos, encontrado) {
+  const header = grupoEl.querySelector(".historico-grupo-header");
+  if (!header) return;
+
+  let badge = header.querySelector(".historico-match-chip");
+  if (!badge) {
+    badge = document.createElement("span");
+    badge.className = "historico-match-chip";
+    const countEl = header.querySelector(".historico-grupo-count");
+    if (countEl) header.insertBefore(badge, countEl);
+    else header.appendChild(badge);
+  }
+
+  if (!termo || campo === "todos" || campo === "nome" || !encontrado) {
+    badge.style.display = "none";
+    badge.textContent = "";
+    return;
+  }
+
+  const textoBase = campo === "documento" ? textos.documento : textos.telefone;
+  if (!textoBase || !textoBase.includes(termo)) {
+    badge.style.display = "none";
+    badge.textContent = "";
+    return;
+  }
+
+  badge.style.display = "inline-flex";
+  badge.textContent = `${campo === "documento" ? "Doc" : "Tel"} encontrado`;
 }
 
 async function excluirBackup(id) {
@@ -492,7 +454,7 @@ async function confirmarLimparHistorico() {
   if (dias === null) return;
   mostrarLoading();
   try {
-    const url = dias === "0" ? "/api/backup/historico" : `/api/backup/historico?dias=${parseInt(dias) || 5}`;
+    const url = dias === "0" ? "/api/backup/historico" : `/api/backup/historico?dias=${parseInt(dias)||5}`;
     const res = await fetch(url, { method: "DELETE", headers: { "Authorization": "Bearer " + getToken() } });
     const data = await res.json();
     toast.sucesso(`${data.removidos} registro(s) removidos.`);
@@ -503,12 +465,17 @@ async function confirmarLimparHistorico() {
 
 // ── OBJECTID ─────────────────────────────────────────────────────────────────
 async function buscarIdCliente() {
-  const nome = (document.getElementById("buscaIdCliente")?.value || "").trim();
-  const el = document.getElementById("resultadoIdCliente");
+  const termo = (document.getElementById("buscaIdCliente")?.value || "").trim();
+  const campo = document.getElementById("buscaIdCampo")?.value || "todos";
+  const el   = document.getElementById("resultadoIdCliente");
   if (!el) return;
-  if (!nome) { el.innerHTML = ""; return; }
+  if (!termo) {
+    el.innerHTML = `<p style="font-size:12px;color:var(--text-muted);">Digite para buscar por nome, documento ou telefone.</p>`;
+    return;
+  }
   try {
-    const res = await fetch(`/api/clientes/buscar-id?nome=${encodeURIComponent(nome)}`, {
+    const qs = new URLSearchParams({ campo, termo });
+    const res = await fetch(`/api/clientes/buscar-id?${qs.toString()}`, {
       headers: { "Authorization": "Bearer " + getToken() }
     });
     const lista = await res.json();
@@ -519,8 +486,10 @@ async function buscarIdCliente() {
     el.innerHTML = lista.map(c => `
       <div class="objectid-item">
         <div>
-          <strong style="font-size:13px;">${c.nome}</strong>
-          ${c.backupClienteNome ? `<span style="font-size:11px;color:var(--text-muted);margin-left:6px;">(${c.backupClienteNome})</span>` : ""}
+          <strong style="font-size:13px;">${escapeHtml(c.nome || "—")}</strong>
+          ${c.documento ? `<span style="font-size:11px;color:var(--text-muted);margin-left:6px;">Doc: ${escapeHtml(c.documento)}</span>` : ""}
+          ${c.telefone ? `<span style="font-size:11px;color:var(--text-muted);margin-left:6px;">Tel: ${escapeHtml(c.telefone)}</span>` : ""}
+          ${c.backupClienteNome ? `<span style="font-size:11px;color:var(--text-muted);margin-left:6px;">(${escapeHtml(c.backupClienteNome)})</span>` : ""}
           <code class="objectid-code" id="oid-${c._id}">${c._id}</code>
         </div>
         <button class="btn-copy-id" onclick="copiarId('${c._id}')">📋 Copiar ID</button>
@@ -556,19 +525,19 @@ async function carregarPermissoes() {
     tbody.innerHTML = usuarios.map(u => `
       <tr>
         <td>${u.nome}</td><td>${u.usuario}</td>
-        <td><span class="status ${u.perfil}">${L[u.perfil] || u.perfil}</span></td>
+        <td><span class="status ${u.perfil}">${L[u.perfil]||u.perfil}</span></td>
         <td>
           <label class="toggle-wrap">
-            <input type="checkbox" ${u.acessoBackup ? "checked" : ""} onchange="togglePermissaoUsuario('${u._id}',this,'backup')">
+            <input type="checkbox" ${u.acessoBackup?"checked":""} onchange="togglePermissaoUsuario('${u._id}',this,'backup')">
             <span class="toggle-slider"></span>
-            <span class="toggle-label">${u.acessoBackup ? "Permitido" : "Bloqueado"}</span>
+            <span class="toggle-label">${u.acessoBackup?"Permitido":"Bloqueado"}</span>
           </label>
         </td>
         <td>
           <label class="toggle-wrap">
-            <input type="checkbox" ${u.acessoBoleto ? "checked" : ""} onchange="togglePermissaoUsuario('${u._id}',this,'boleto')">
+            <input type="checkbox" ${u.acessoBoleto?"checked":""} onchange="togglePermissaoUsuario('${u._id}',this,'boleto')">
             <span class="toggle-slider"></span>
-            <span class="toggle-label">${u.acessoBoleto ? "Permitido" : "Bloqueado"}</span>
+            <span class="toggle-label">${u.acessoBoleto?"Permitido":"Bloqueado"}</span>
           </label>
         </td>
       </tr>`).join("");
@@ -577,9 +546,9 @@ async function carregarPermissoes() {
 
 async function togglePermissaoUsuario(id, checkbox, tipo) {
   const permitido = checkbox.checked;
-  const label = checkbox.parentElement.querySelector(".toggle-label");
-  const url = tipo === "boleto" ? `/api/usuarios/${id}/acesso-boleto` : `/api/usuarios/${id}/acesso-backup`;
-  const body = tipo === "boleto" ? { acessoBoleto: permitido } : { acessoBackup: permitido };
+  const label     = checkbox.parentElement.querySelector(".toggle-label");
+  const url       = tipo === "boleto" ? `/api/usuarios/${id}/acesso-boleto` : `/api/usuarios/${id}/acesso-backup`;
+  const body      = tipo === "boleto" ? { acessoBoleto: permitido } : { acessoBackup: permitido };
   try {
     const res = await fetch(url, {
       method: "PATCH",
@@ -590,7 +559,7 @@ async function togglePermissaoUsuario(id, checkbox, tipo) {
     if (label) label.textContent = permitido ? "Permitido" : "Bloqueado";
     const u = getUsuario();
     if (String(u._id || u.id) === String(id)) {
-      localStorage.setItem("usuario", JSON.stringify({ ...u, [tipo === "boleto" ? "acessoBoleto" : "acessoBackup"]: permitido }));
+      localStorage.setItem("usuario", JSON.stringify({ ...u, [tipo==="boleto"?"acessoBoleto":"acessoBackup"]: permitido }));
     }
     toast.sucesso(permitido ? "Acesso liberado!" : "Acesso revogado.");
   } catch (_) { checkbox.checked = !permitido; toast.erro("Erro ao atualizar"); }
@@ -623,7 +592,7 @@ async function carregarBoletos(clienteId) {
     if (!boletos.length) { el.innerHTML = `<p style="text-align:center;color:var(--text-muted);padding:12px;">Nenhuma parcela cadastrada. Gere acima.</p>`; return; }
 
     const fmt = d => d ? new Date(d).toLocaleDateString("pt-BR") : "—";
-    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
     const vencidos = boletos.filter(b => !b.pago && new Date(b.vencimento) < hoje).length;
 
     el.innerHTML = `
@@ -633,10 +602,10 @@ async function carregarBoletos(clienteId) {
       </div>
       <div class="boletos-lista">
         ${boletos.map(b => {
-      const venc = new Date(b.vencimento);
-      const atrasado = !b.pago && venc < hoje;
-      const isHoje = venc.toDateString() === new Date().toDateString();
-      return `<div class="boleto-parcela-item ${b.pago ? "pago" : atrasado ? "atrasado" : isHoje ? "hoje" : ""}">
+          const venc = new Date(b.vencimento);
+          const atrasado = !b.pago && venc < hoje;
+          const isHoje = venc.toDateString() === new Date().toDateString();
+          return `<div class="boleto-parcela-item ${b.pago?"pago":atrasado?"atrasado":isHoje?"hoje":""}">
             <div class="boleto-parcela-info">
               <span class="boleto-parcela-num">${b.parcela}/${b.totalParcelas}</span>
               <span class="boleto-parcela-venc">Venc: ${fmt(b.vencimento)}</span>
@@ -645,27 +614,27 @@ async function carregarBoletos(clienteId) {
             </div>
             <div class="boleto-parcela-acoes">
               ${b.pago
-          ? `<button class="btn-baixa estornar" onclick="darBaixa('${b._id}',false,'${clienteId}')">↩ Estornar</button>`
-          : `<button class="btn-baixa pagar"   onclick="darBaixa('${b._id}',true,'${clienteId}')">✅ Dar Baixa</button>`}
+                ? `<button class="btn-baixa estornar" onclick="darBaixa('${b._id}',false,'${clienteId}')">↩ Estornar</button>`
+                : `<button class="btn-baixa pagar"   onclick="darBaixa('${b._id}',true,'${clienteId}')">✅ Dar Baixa</button>`}
               <button class="btn-baixa excluir" onclick="excluirBoleto('${b._id}','${clienteId}')">✕</button>
             </div>
           </div>`;
-    }).join("")}
+        }).join("")}
       </div>`;
   } catch (e) { el.innerHTML = `<p style="color:var(--danger)">Erro: ${e.message}</p>`; }
 }
 
 async function gerarParcelas() {
-  const clienteId = document.getElementById("boletoClienteIdAtual").value;
+  const clienteId  = document.getElementById("boletoClienteIdAtual").value;
   const dataInicial = document.getElementById("boletoDataInicial").value;
-  const valor = document.getElementById("boletoValor").value;
-  const totalP = document.getElementById("boletoParcelas").value;
+  const valor       = document.getElementById("boletoValor").value;
+  const totalP      = document.getElementById("boletoParcelas").value;
   if (!dataInicial) { toast.aviso("Informe a data do 1º vencimento"); return; }
   try {
     const res = await fetch("/api/boletos/gerar", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + getToken() },
-      body: JSON.stringify({ clienteId, primeiroVencimento: dataInicial, valor: parseFloat(valor) || 0, totalParcelas: parseInt(totalP) || 12 })
+      body: JSON.stringify({ clienteId, primeiroVencimento: dataInicial, valor: parseFloat(valor)||0, totalParcelas: parseInt(totalP)||12 })
     });
     if (!res.ok) { toast.erro("Erro ao gerar parcelas"); return; }
     toast.sucesso(`${totalP} parcelas geradas!`);

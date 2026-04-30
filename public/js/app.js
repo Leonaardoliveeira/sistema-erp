@@ -121,7 +121,8 @@ function filtrarClientes() {
 
     const filtrados = lista.filter(c =>
         (c.nome && c.nome.toLowerCase().includes(termo)) ||
-        (c.documento && c.documento.toLowerCase().includes(termo))
+        (c.documento && c.documento.toLowerCase().includes(termo)) ||
+        (c.telefone && c.telefone.toLowerCase().includes(termo))
     );
 
     renderizarTabelaDashboard(filtrados);

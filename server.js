@@ -227,10 +227,22 @@ app.get("/api/clientes", verificarToken, async (req, res) => {
 // Busca ObjectID por nome — DEVE vir antes de /:id para não ser capturado como id
 app.get("/api/clientes/buscar-id", verificarToken, async (req, res) => {
   try {
-    const { nome } = req.query;
+    const { nome, termo, campo } = req.query;
     const filtro = { ...filtroPerfil(req) };
-    if (nome) filtro.nome = { $regex: nome, $options: "i" };
-    const clientes = await Cliente.find(filtro).select("_id nome backupClienteNome").limit(10);
+    const termoBusca = (termo || nome || "").trim();
+    const campoPermitido = ["nome", "documento", "telefone", "todos"].includes(campo) ? campo : "todos";
+    if (termoBusca) {
+      if (campoPermitido === "todos") {
+        filtro.$or = [
+          { nome: { $regex: termoBusca, $options: "i" } },
+          { documento: { $regex: termoBusca, $options: "i" } },
+          { telefone: { $regex: termoBusca, $options: "i" } }
+        ];
+      } else {
+        filtro[campoPermitido] = { $regex: termoBusca, $options: "i" };
+      }
+    }
+    const clientes = await Cliente.find(filtro).select("_id nome documento telefone backupClienteNome").sort({ nome: 1 }).limit(20);
     res.json(clientes);
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
@@ -483,7 +495,7 @@ app.get("/api/backup", verificarToken, verificarAcessoBackup, async (req, res) =
     }
 
     const backups = await Backup.find(filtro)
-      .populate("clienteId", "nome documento")
+      .populate("clienteId", "nome documento telefone")
       .populate("usuarioId", "nome")
       .sort({ dataBackup: -1 })
       .limit(500);

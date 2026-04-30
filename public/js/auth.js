@@ -68,7 +68,7 @@ async function agendarAlertasSped() {
 
         // Exibe imediatamente ao abrir o sistema (horário especial "startup")
         if (!exibidos["_startup"]) {
-            await exibirAlertaSped(token, "_startup", exibidos, hoje);
+            await exibirAlertaSped(token, "_startup", exibidos, hoje, horarios);
         }
 
         // Para cada horário configurado, verifica se já passou e não foi exibido
@@ -76,7 +76,7 @@ async function agendarAlertasSped() {
             const [hh, mm] = h.split(":").map(Number);
             const minAlerta = hh * 60 + mm;
             if (minAgora >= minAlerta && !exibidos[h]) {
-                await exibirAlertaSped(token, h, exibidos, hoje);
+                await exibirAlertaSped(token, h, exibidos, hoje, horarios);
             }
         }
 
@@ -86,21 +86,27 @@ async function agendarAlertasSped() {
     } catch(e) { /* silencioso */ }
 }
 
-async function exibirAlertaSped(token, horario, exibidos, hoje) {
+async function exibirAlertaSped(token, horario, exibidos, hoje, horarios = []) {
     try {
         const res = await fetch("/api/alertas/sped-pendentes", {
             headers: { "Authorization": "Bearer " + token }
         });
         if (!res.ok) return;
         const { total } = await res.json();
-        if (total > 0) {
+        const horariosTxt = horarios.length ? horarios.join(", ") : "08:00";
+        const msgBase = total === 1
+            ? "⚠️ Há 1 cliente com SPED pendente!"
+            : total > 1
+                ? "⚠️ Há " + total + " clientes com SPED pendente!"
+                : "✅ Nenhum cliente com SPED pendente no momento.";
+
+        if (horario === "_startup") {
             setTimeout(() => {
-                toast.aviso(
-                    total === 1
-                        ? "⚠️ Há 1 cliente com SPED pendente!"
-                        : "⚠️ Há " + total + " clientes com SPED pendente!",
-                    8000
-                );
+                toast.aviso(`${msgBase} Horários configurados: ${horariosTxt}.`, 9000);
+            }, 800);
+        } else if (total > 0) {
+            setTimeout(() => {
+                toast.aviso(`${msgBase} (Aviso ${horario})`, 8000);
             }, 800);
         }
         exibidos[horario] = true;

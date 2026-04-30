@@ -117,8 +117,17 @@
             <label>Pesquisar</label>
             <div class="search-box" style="max-width:100%;">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              <input type="text" id="campoPesquisa" placeholder="Nome do cliente..." oninput="filtrarTabela()">
+              <input type="text" id="campoPesquisa" placeholder="Nome, documento ou telefone..." oninput="filtrarTabela()">
             </div>
+          </div>
+          <div>
+            <label>Pesquisar por</label>
+            <select id="filtroPesquisaCampo" onchange="filtrarTabela()">
+              <option value="todos" selected>Todos os campos</option>
+              <option value="nome">Nome</option>
+              <option value="documento">Documento</option>
+              <option value="telefone">Telefone</option>
+            </select>
           </div>
           <div>
             <label>Status</label>
@@ -156,6 +165,9 @@
           <i data-lucide="list" style="width:15px;height:15px;"></i>
           <span>Histórico de Backups</span>
           <span id="tabelaTitulo" style="font-size:11px;color:var(--text-muted);margin-left:8px;"></span>
+          <button onclick="confirmarLimparHistorico()" class="btn-limpar-hist" title="Limpar histórico">
+            <i data-lucide="trash-2" style="width:12px;height:12px;"></i> Limpar histórico
+          </button>
         </div>
         <div id="historicoAgrupado"></div>
       </div>
@@ -167,10 +179,19 @@
           <span>Pegar ObjectID do Cliente (para o Backup Agent)</span>
         </div>
         <p class="backup-api-desc" style="margin-bottom:10px;">
-          Digite o nome do cliente para encontrar o ID que deve ser inserido no campo <strong>ID do cliente no ERP</strong> do Backup Agent Pro.
+          Digite nome, documento ou telefone para encontrar o ID que deve ser inserido no campo <strong>ID do cliente no ERP</strong> do Backup Agent Pro.
         </p>
         <div style="display:flex;gap:8px;margin-bottom:10px;">
-          <input type="text" id="buscaIdCliente" placeholder="Nome do cliente..." style="flex:1;" oninput="buscarIdCliente()">
+          <select id="buscaIdCampo" style="max-width:170px;" onchange="buscarIdCliente()">
+            <option value="todos" selected>Todos os campos</option>
+            <option value="nome">Nome</option>
+            <option value="documento">Documento</option>
+            <option value="telefone">Telefone</option>
+          </select>
+          <div class="search-box" style="flex:1;max-width:100%;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="buscaIdCliente" placeholder="Pesquisar cliente..." oninput="buscarIdCliente()">
+          </div>
         </div>
         <div id="resultadoIdCliente"></div>
       </div>
