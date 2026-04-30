@@ -173,6 +173,63 @@ function renderizarClientesConfig() {
   }).join("");
 }
 
+/* DEPOIS: Adicionar validação completa */
+function renderizarClientesConfig() {
+  const tbody = document.getElementById("tabelaClientesConfig");
+  if (!tbody) {
+    console.warn("tabelaClientesConfig não encontrado no DOM");
+    return;
+  }
+
+  if (!clientesCache || clientesCache.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-muted);">
+      Nenhum cliente encontrado. <a href="cadastro.html">Cadastre clientes aqui.</a>
+    </td></tr>`;
+    return;
+  }
+
+  const u = getUsuario();
+  const temBoleto = u.perfil === "master" || u.acessoBoleto;
+
+  tbody.innerHTML = clientesCache.map(c => {
+    // Validar dados do cliente
+    const clienteNome = c.nome || "Cliente sem nome";
+    const clienteId = c._id || "";
+    const nomeEsc = (c.backupClienteNome || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+
+    if (!clienteId) {
+      console.warn("Cliente sem _id:", c);
+      return "";
+    }
+
+    return `<tr>
+      <td><strong>${clienteNome}</strong></td>
+      <td>
+        <input type="text" class="input-agent-nome"
+          value="${nomeEsc}"
+          placeholder="Nome no Agent (opcional)"
+          data-id="${clienteId}"
+          oninput="marcarAlterado('${clienteId}')">
+      </td>
+      <td>
+        <label class="toggle-wrap">
+          <input type="checkbox" ${c.backupHabilitado ? "checked" : ""}
+            onchange="toggleBackupCliente('${clienteId}', this)">
+          <span class="toggle-slider"></span>
+          <span class="toggle-label">${c.backupHabilitado ? "Habilitado" : "Desabilitado"}</span>
+        </label>
+      </td>
+      <td style="white-space:nowrap;">
+        <button class="btn-salvar-agent" id="btn-agent-${clienteId}"
+          onclick="salvarNomeAgent('${clienteId}')" style="display:none;">Salvar</button>
+        ${temBoleto ? `<button class="btn-boleto-mini" onclick="abrirModalBoletos('${clienteId}','${clienteNome.replace(/'/g, "\\'")}')">💰</button>` : ""}
+      </td>
+    </tr>`;
+  }).filter(row => row !== "").join("");
+
+  console.log("Tabela renderizada com", clientesCache.length, "clientes");
+}
+
 function marcarAlterado(id) {
   const btn = document.getElementById("btn-agent-" + id);
   if (btn) btn.style.display = "inline-block";
