@@ -152,7 +152,8 @@ async function verificarResetMensal() {
 // --------------------
 // master vê todos; admin e user veem só os próprios
 function filtroPerfil(req) {
-  if (req.usuario.perfil === "master") return {};
+  const perfil = String(req.usuario?.perfil || "").toLowerCase().trim();
+  if (perfil === "master") return {};
   return { usuarioId: req.usuario.id };
 }
 
@@ -172,14 +173,16 @@ function verificarToken(req, res, next) {
 
 // Apenas user não pode gerenciar usuários
 function verificarAdmin(req, res, next) {
-  if (req.usuario.perfil === "user")
+  const perfil = String(req.usuario?.perfil || "").toLowerCase().trim();
+  if (perfil === "user")
     return res.status(403).json({ message: "Acesso negado" });
   next();
 }
 
 // Acesso a dados de boleto: master sempre tem, outros precisam de acessoBoleto=true
 async function verificarAcessoBoleto(req, res, next) {
-  if (req.usuario.perfil === "master") return next();
+  const perfil = String(req.usuario?.perfil || "").toLowerCase().trim();
+  if (perfil === "master") return next();
   const user = await Usuario.findById(req.usuario.id).select("acessoBoleto");
   if (user && user.acessoBoleto) return next();
   return res.status(403).json({ message: "Sem permissão para acessar dados de boleto" });
@@ -187,7 +190,8 @@ async function verificarAcessoBoleto(req, res, next) {
 
 // Acesso à tela de backup: master sempre tem, outros precisam de acessoBackup=true
 async function verificarAcessoBackup(req, res, next) {
-  if (req.usuario.perfil === "master") return next();
+  const perfil = String(req.usuario?.perfil || "").toLowerCase().trim();
+  if (perfil === "master") return next();
   const user = await Usuario.findById(req.usuario.id).select("acessoBackup");
   if (user && user.acessoBackup) return next();
   return res.status(403).json({ message: "Sem permissão para acessar backups" });
@@ -589,7 +593,8 @@ app.patch("/api/clientes/:id/backup", verificarToken, verificarAcessoBackup, asy
 // Rota para checar se o usuário logado tem acesso à tela de backup
 app.get("/api/backup/meu-acesso", verificarToken, async (req, res) => {
   try {
-    if (req.usuario.perfil === "master") return res.json({ acesso: true });
+    const perfil = String(req.usuario?.perfil || "").toLowerCase().trim();
+    if (perfil === "master") return res.json({ acesso: true });
     const user = await Usuario.findById(req.usuario.id).select("acessoBackup");
     res.json({ acesso: !!(user && user.acessoBackup) });
   } catch (err) { res.status(500).json({ message: err.message }); }
