@@ -15,10 +15,7 @@ app.use(express.static(path.join(__dirname, "public")));
 // CONEXÃO MONGODB
 // --------------------
 mongoose.connect(process.env.MONGO_URI)
-  .then(async () => {
-    console.log("✅ Conectado ao MongoDB");
-    await migrarCamposBackup();
-  })
+  .then(() => console.log("✅ Conectado ao MongoDB"))
   .catch(err => console.error("❌ Erro ao conectar:", err));
 
 // --------------------
@@ -31,29 +28,20 @@ const UsuarioSchema = new mongoose.Schema({
   // master: vê todos os clientes + gerencia usuários
   // admin:  vê apenas os próprios + gerencia usuários
   // user:   vê apenas os próprios, não gerencia usuários
-  perfil:      { type: String, enum: ["master", "admin", "user"], default: "user" },
-  acessoBackup: { type: Boolean, default: false },  // master sempre tem acesso, outros só se true
-  acessoBoleto: { type: Boolean, default: false }   // pode ver/editar dados de boleto do cliente
+  perfil:  { type: String, enum: ["master", "admin", "user"], default: "user" }
 });
 
 const ClienteSchema = new mongoose.Schema({
-  nome:              { type: String, required: true },
-  documento:         String,
-  email:             String,
-  telefone:          String,
-  regime:            String,
-  sped:              { type: String, enum: ["Sim", "Nao"], default: "Nao" },
-  acessosRemotos:    [{ nome: String, anydesk: String }],
-  status:            { type: String, default: "Pendente" },
-  usuarioId:         { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
-  criadoEm:          { type: Date, default: Date.now },
-  // Controle de backup
-  backupHabilitado:  { type: Boolean, default: false },
-  backupClienteNome:  { type: String },  // nome/identificador usado no Backup Agent Pro
-  // Controle financeiro / boleto
-  boletoVencimento:   { type: Date },                                         // data de vencimento do boleto
-  boletoPago:         { type: Boolean, default: true },                       // false = boleto vencido não pago → bloqueia backup
-  backupBloqueado:    { type: Boolean, default: false }                       // bloqueio manual pelo sistema
+  nome:           { type: String, required: true },
+  documento:      String,
+  email:          String,
+  telefone:       String,
+  regime:         String,
+  sped:           { type: String, enum: ["Sim", "Nao"], default: "Nao" },
+  acessosRemotos: [{ nome: String, anydesk: String }],
+  status:         { type: String, default: "Pendente" },
+  usuarioId:      { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
+  criadoEm:       { type: Date, default: Date.now }
 });
 
 const SpedSchema = new mongoose.Schema({
@@ -86,41 +74,6 @@ const BackupSchema = new mongoose.Schema({
   criadoEm:  { type: Date, default: Date.now }
 });
 
-// ── Schema de Boletos (parcelas mensais por cliente) ─────────────────────────
-const BoletoSchema = new mongoose.Schema({
-  clienteId:    { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
-  usuarioId:    { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
-  mes:          { type: Number, required: true },   // 1-12
-  ano:          { type: Number, required: true },
-  parcela:      { type: Number, required: true },   // 1 de 12, 2 de 12 ...
-  totalParcelas:{ type: Number, default: 12 },
-  vencimento:   { type: Date, required: true },
-  valor:        { type: Number, default: 0 },
-  pago:         { type: Boolean, default: false },
-  dataPagamento:{ type: Date },
-  observacao:   { type: String },
-  criadoEm:     { type: Date, default: Date.now }
-});
-
-// ── Migração: garante que clientes antigos tenham backupHabilitado definido ──
-async function migrarCamposBackup() {
-  try {
-    const resultado = await Cliente.updateMany(
-      {
-        $or: [
-          { backupHabilitado: { $exists: false } },
-          { backupHabilitado: null }
-        ]
-      },
-      { $set: { backupHabilitado: false, boletoPago: true, backupBloqueado: false } }
-    );
-    if (resultado.modifiedCount > 0)
-      console.log(`[MIGRAÇÃO] ${resultado.modifiedCount} cliente(s) atualizados com campos de backup.`);
-  } catch (e) {
-    console.error("[MIGRAÇÃO] Erro:", e.message);
-  }
-}
-
 // Registra models apenas uma vez (evita erro no Vercel com hot-reload)
 const Usuario      = mongoose.models.Usuario      || mongoose.model("Usuario",      UsuarioSchema);
 const Cliente      = mongoose.models.Cliente      || mongoose.model("Cliente",      ClienteSchema);
@@ -128,7 +81,6 @@ const Sped         = mongoose.models.Sped         || mongoose.model("Sped",     
 const Config       = mongoose.models.Config       || mongoose.model("Config",       ConfigSchema);
 const AlertaConfig = mongoose.models.AlertaConfig || mongoose.model("AlertaConfig", AlertaConfigSchema);
 const Backup       = mongoose.models.Backup       || mongoose.model("Backup",       BackupSchema);
-const Boleto       = mongoose.models.Boleto       || mongoose.model("Boleto",       BoletoSchema);
 
 // --------------------
 // RESET MENSAL
@@ -157,8 +109,7 @@ async function verificarResetMensal() {
 // --------------------
 // master vê todos; admin e user veem só os próprios
 function filtroPerfil(req) {
-  const perfil = String(req.usuario?.perfil || "").toLowerCase().trim();
-  if (perfil === "master") return {};
+  if (req.usuario.perfil === "master") return {};
   return { usuarioId: req.usuario.id };
 }
 
@@ -178,28 +129,9 @@ function verificarToken(req, res, next) {
 
 // Apenas user não pode gerenciar usuários
 function verificarAdmin(req, res, next) {
-  const perfil = String(req.usuario?.perfil || "").toLowerCase().trim();
-  if (perfil === "user")
+  if (req.usuario.perfil === "user")
     return res.status(403).json({ message: "Acesso negado" });
   next();
-}
-
-// Acesso a dados de boleto: master sempre tem, outros precisam de acessoBoleto=true
-async function verificarAcessoBoleto(req, res, next) {
-  const perfil = String(req.usuario?.perfil || "").toLowerCase().trim();
-  if (perfil === "master") return next();
-  const user = await Usuario.findById(req.usuario.id).select("acessoBoleto");
-  if (user && user.acessoBoleto) return next();
-  return res.status(403).json({ message: "Sem permissão para acessar dados de boleto" });
-}
-
-// Acesso à tela de backup: master sempre tem, outros precisam de acessoBackup=true
-async function verificarAcessoBackup(req, res, next) {
-  const perfil = String(req.usuario?.perfil || "").toLowerCase().trim();
-  if (perfil === "master") return next();
-  const user = await Usuario.findById(req.usuario.id).select("acessoBackup");
-  if (user && user.acessoBackup) return next();
-  return res.status(403).json({ message: "Sem permissão para acessar backups" });
 }
 
 // --------------------
@@ -213,8 +145,7 @@ app.post("/api/login", async (req, res) => {
     const match = await bcrypt.compare(senha, user.senha);
     if (!match) return res.status(401).json({ message: "Credenciais inválidas" });
     const token = jwt.sign({ id: user._id, perfil: user.perfil }, process.env.JWT_SECRET, { expiresIn: "8h" });
-    res.json({ token, usuario: { nome: user.nome, usuario: user.usuario, perfil: user.perfil,
-      acessoBackup: user.acessoBackup, acessoBoleto: user.acessoBoleto } });
+    res.json({ token, usuario: { nome: user.nome, usuario: user.usuario, perfil: user.perfil } });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -231,29 +162,6 @@ app.get("/api/clientes", verificarToken, async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-});
-
-// Busca ObjectID por nome — DEVE vir antes de /:id para não ser capturado como id
-app.get("/api/clientes/buscar-id", verificarToken, async (req, res) => {
-  try {
-    const { nome, termo, campo } = req.query;
-    const filtro = { ...filtroPerfil(req) };
-    const termoBusca = (termo || nome || "").trim();
-    const campoPermitido = ["nome", "documento", "telefone", "todos"].includes(campo) ? campo : "todos";
-    if (termoBusca) {
-      if (campoPermitido === "todos") {
-        filtro.$or = [
-          { nome: { $regex: termoBusca, $options: "i" } },
-          { documento: { $regex: termoBusca, $options: "i" } },
-          { telefone: { $regex: termoBusca, $options: "i" } }
-        ];
-      } else {
-        filtro[campoPermitido] = { $regex: termoBusca, $options: "i" };
-      }
-    }
-    const clientes = await Cliente.find(filtro).select("_id nome documento telefone backupClienteNome").sort({ nome: 1 }).limit(20);
-    res.json(clientes);
-  } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
 app.get("/api/clientes/:id", verificarToken, async (req, res) => {
@@ -429,7 +337,7 @@ app.delete("/api/usuarios/:id", verificarToken, verificarAdmin, async (req, res)
 // --------------------
 // BACKUP
 // --------------------
-app.post("/api/backup", verificarToken, verificarAcessoBackup, async (req, res) => {
+app.post("/api/backup", verificarToken, async (req, res) => {
   try {
     const { clienteId, status, tamanho, destino, observacao, dataBackup } = req.body;
     if (!clienteId || !status) return res.status(400).json({ message: "clienteId e status são obrigatórios" });
@@ -448,9 +356,9 @@ app.post("/api/backup", verificarToken, verificarAcessoBackup, async (req, res) 
   }
 });
 
-app.get("/api/backup/resumo", verificarToken, verificarAcessoBackup, async (req, res) => {
+app.get("/api/backup/resumo", verificarToken, async (req, res) => {
   try {
-    const clientesVisiveis = await Cliente.find({ ...filtroPerfil(req), backupHabilitado: true }).select("_id nome backupBloqueado boletoPago boletoVencimento");
+    const clientesVisiveis = await Cliente.find(filtroPerfil(req)).select("_id nome");
     const idsVisiveis = clientesVisiveis.map(c => c._id);
 
     const hoje = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
@@ -474,21 +382,13 @@ app.get("/api/backup/resumo", verificarToken, verificarAcessoBackup, async (req,
       { $group: { _id: "$clienteId", ultimo: { $first: "$$ROOT" } } }
     ]);
 
-    // Clientes com backup bloqueado (boleto vencido ou manual)
-    const hoje2 = new Date(); hoje2.setHours(0,0,0,0);
-    const suspensos = clientesVisiveis.filter(c =>
-      c.backupBloqueado ||
-      (c.boletoVencimento && !c.boletoPago && new Date(c.boletoVencimento) <= hoje2)
-    );
-
-    res.json({ totalClientes, comBackup, semBackup, semBackupLista, ultimosBackups,
-      totalSuspensos: suspensos.length, suspensosLista: suspensos.map(c => ({ _id: c._id, nome: c.nome })) });
+    res.json({ totalClientes, comBackup, semBackup, semBackupLista, ultimosBackups });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-app.get("/api/backup", verificarToken, verificarAcessoBackup, async (req, res) => {
+app.get("/api/backup", verificarToken, async (req, res) => {
   try {
     const { clienteId, status, dias } = req.query;
     const clientesVisiveis = await Cliente.find(filtroPerfil(req)).select("_id");
@@ -504,7 +404,7 @@ app.get("/api/backup", verificarToken, verificarAcessoBackup, async (req, res) =
     }
 
     const backups = await Backup.find(filtro)
-      .populate("clienteId", "nome documento telefone")
+      .populate("clienteId", "nome documento")
       .populate("usuarioId", "nome")
       .sort({ dataBackup: -1 })
       .limit(500);
@@ -515,23 +415,7 @@ app.get("/api/backup", verificarToken, verificarAcessoBackup, async (req, res) =
   }
 });
 
-// Lista de clientes para a tela de configuração de backup
-app.get("/api/backup/clientes-config", verificarToken, verificarAcessoBackup, async (req, res) => {
-  try {
-    // Perfis administrativos configuram todos os clientes.
-    // Usuário comum com acesso backup vê apenas os próprios.
-    const perfil = String(req.usuario.perfil || "").toLowerCase();
-    const filtro = perfil !== "user"
-      ? {}
-      : filtroPerfil(req);
-    const clientes = await Cliente.find(filtro).sort({ nome: 1 });
-    res.json(clientes);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-app.put("/api/backup/:id", verificarToken, verificarAcessoBackup, async (req, res) => {
+app.put("/api/backup/:id", verificarToken, async (req, res) => {
   try {
     const { status, tamanho, destino, observacao } = req.body;
     const dados = {};
@@ -547,7 +431,7 @@ app.put("/api/backup/:id", verificarToken, verificarAcessoBackup, async (req, re
   }
 });
 
-app.delete("/api/backup/:id", verificarToken, verificarAcessoBackup, async (req, res) => {
+app.delete("/api/backup/:id", verificarToken, async (req, res) => {
   try {
     await Backup.findByIdAndDelete(req.params.id);
     res.json({ message: "Removido" });
@@ -555,315 +439,6 @@ app.delete("/api/backup/:id", verificarToken, verificarAcessoBackup, async (req,
     res.status(400).json({ message: err.message });
   }
 });
-
-// --------------------
-// PERMISSÃO DE BACKUP — gerenciar acesso por usuário (apenas master)
-// --------------------
-app.get("/api/backup/permissoes", verificarToken, async (req, res) => {
-  if (req.usuario.perfil !== "master")
-    return res.status(403).json({ message: "Apenas o mestre pode gerenciar permissões" });
-  try {
-    const usuarios = await Usuario.find({ perfil: { $ne: "master" } }).select("nome usuario perfil acessoBackup");
-    res.json(usuarios);
-  } catch (err) { res.status(500).json({ message: err.message }); }
-});
-
-app.patch("/api/usuarios/:id/acesso-backup", verificarToken, async (req, res) => {
-  if (req.usuario.perfil !== "master")
-    return res.status(403).json({ message: "Apenas o mestre pode alterar permissões" });
-  try {
-    const { acessoBackup } = req.body;
-    const u = await Usuario.findByIdAndUpdate(req.params.id, { acessoBackup }, { new: true }).select("-senha");
-    if (!u) return res.status(404).json({ message: "Usuário não encontrado" });
-    res.json(u);
-  } catch (err) { res.status(400).json({ message: err.message }); }
-});
-
-// --------------------
-// CLIENTES — habilitar/desabilitar backup por cliente (master ou admin)
-// --------------------
-app.patch("/api/clientes/:id/backup", verificarToken, verificarAcessoBackup, async (req, res) => {
-  try {
-    const { backupHabilitado, backupClienteNome } = req.body;
-    const filtro = { _id: req.params.id, ...filtroPerfil(req) };
-    const dados  = {};
-    if (backupHabilitado  !== undefined) dados.backupHabilitado  = backupHabilitado;
-    if (backupClienteNome !== undefined) dados.backupClienteNome = backupClienteNome;
-    const atualizado = await Cliente.findOneAndUpdate(filtro, dados, { new: true });
-    if (!atualizado) return res.status(404).json({ message: "Cliente não encontrado" });
-    res.json(atualizado);
-  } catch (err) { res.status(400).json({ message: err.message }); }
-});
-
-// Rota para checar se o usuário logado tem acesso à tela de backup
-app.get("/api/backup/meu-acesso", verificarToken, async (req, res) => {
-  try {
-    const perfil = String(req.usuario?.perfil || "").toLowerCase().trim();
-    if (perfil === "master") return res.json({ acesso: true });
-    const user = await Usuario.findById(req.usuario.id).select("acessoBackup");
-    res.json({ acesso: !!(user && user.acessoBackup) });
-  } catch (err) { res.status(500).json({ message: err.message }); }
-});
-
-// --------------------
-// BOLETO — atualizar vencimento e status de pagamento
-// --------------------
-app.patch("/api/clientes/:id/boleto", verificarToken, verificarAcessoBoleto, async (req, res) => {
-  try {
-    const { boletoVencimento, boletoPago } = req.body;
-    const filtro = { _id: req.params.id, ...filtroPerfil(req) };
-    const dados  = {};
-    if (boletoVencimento !== undefined) dados.boletoVencimento = boletoVencimento ? new Date(boletoVencimento) : null;
-    if (boletoPago       !== undefined) {
-      dados.boletoPago    = boletoPago;
-      // Quando marcado como pago, desbloqueia backup automaticamente
-      if (boletoPago) dados.backupBloqueado = false;
-    }
-    const atualizado = await Cliente.findOneAndUpdate(filtro, dados, { new: true });
-    if (!atualizado) return res.status(404).json({ message: "Cliente não encontrado" });
-    res.json(atualizado);
-  } catch (err) { res.status(400).json({ message: err.message }); }
-});
-
-// Bloquear/desbloquear backup manualmente
-app.patch("/api/clientes/:id/bloqueio-backup", verificarToken, verificarAcessoBackup, async (req, res) => {
-  try {
-    const { backupBloqueado } = req.body;
-    const filtro  = { _id: req.params.id, ...filtroPerfil(req) };
-    const atualizado = await Cliente.findOneAndUpdate(filtro, { backupBloqueado }, { new: true });
-    if (!atualizado) return res.status(404).json({ message: "Cliente não encontrado" });
-    res.json(atualizado);
-  } catch (err) { res.status(400).json({ message: err.message }); }
-});
-
-// Retorna dados de boleto do cliente para o Backup Agent verificar antes de rodar
-// Rota pública (autenticada) para o Agent checar status antes de fazer backup
-app.get("/api/clientes/:id/status-backup", verificarToken, async (req, res) => {
-  try {
-    const cliente = await Cliente.findOne({ _id: req.params.id, ...filtroPerfil(req) })
-      .select("nome boletoVencimento boletoPago backupBloqueado backupHabilitado");
-    if (!cliente) return res.status(404).json({ message: "Cliente não encontrado" });
-
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-
-    let bloqueado = false;
-    let motivo    = null;
-
-    if (cliente.backupBloqueado) {
-      bloqueado = true;
-      motivo    = "Backup bloqueado manualmente";
-    } else if (cliente.boletoVencimento && !cliente.boletoPago) {
-      const venc = new Date(cliente.boletoVencimento);
-      venc.setHours(0, 0, 0, 0);
-      if (venc <= hoje) {
-        bloqueado = true;
-        motivo    = `Boleto vencido em ${venc.toLocaleDateString("pt-BR")} — marque como pago para liberar o backup`;
-      }
-    }
-
-    res.json({
-      clienteId:        cliente._id,
-      nome:             cliente.nome,
-      backupHabilitado: cliente.backupHabilitado,
-      bloqueado,
-      motivo,
-      boletoVencimento: cliente.boletoVencimento,
-      boletoPago:       cliente.boletoPago,
-    });
-  } catch (err) { res.status(500).json({ message: err.message }); }
-});
-
-// Clientes com boleto vencido — para o resumo do dashboard de backup
-app.get("/api/backup/boletos-vencidos", verificarToken, verificarAcessoBoleto, async (req, res) => {
-  try {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const filtro = {
-      ...filtroPerfil(req),
-      backupHabilitado: true,
-      boletoPago:       false,
-      boletoVencimento: { $lte: hoje },
-    };
-    const clientes = await Cliente.find(filtro).select("nome boletoVencimento boletoPago backupBloqueado");
-    res.json(clientes);
-  } catch (err) { res.status(500).json({ message: err.message }); }
-});
-
-// Permissão de boleto por usuário (só master)
-app.patch("/api/usuarios/:id/acesso-boleto", verificarToken, async (req, res) => {
-  if (req.usuario.perfil !== "master")
-    return res.status(403).json({ message: "Apenas o mestre pode alterar permissões" });
-  try {
-    const { acessoBoleto } = req.body;
-    const u = await Usuario.findByIdAndUpdate(req.params.id, { acessoBoleto }, { new: true }).select("-senha");
-    if (!u) return res.status(404).json({ message: "Usuário não encontrado" });
-    res.json(u);
-  } catch (err) { res.status(400).json({ message: err.message }); }
-});
-
-// --------------------
-// LIMPEZA DE HISTÓRICO DE BACKUP
-// --------------------
-// Limpar automaticamente registros com mais de 5 dias
-async function limparHistoricoAntigo() {
-  try {
-    const limite = new Date();
-    limite.setDate(limite.getDate() - 5);
-    const res = await Backup.deleteMany({ dataBackup: { $lt: limite } });
-    if (res.deletedCount > 0) console.log(`[CLEANUP] ${res.deletedCount} registro(s) de backup removidos.`);
-  } catch (e) { console.error("[CLEANUP] Erro:", e.message); }
-}
-
-// Roda a cada 24h (verifica se passaram 5 dias desde o último)
-setInterval(limparHistoricoAntigo, 24 * 60 * 60 * 1000);
-// Roda uma vez na inicialização também
-limparHistoricoAntigo();
-
-// Limpar manualmente (só master/admin com acesso backup)
-app.delete("/api/backup/historico", verificarToken, verificarAcessoBackup, async (req, res) => {
-  try {
-    const dias   = parseInt(req.query.dias || "0");
-    const filtro = {};
-    if (req.usuario.perfil !== "master") {
-      // admin só limpa seus próprios clientes
-      const meus = await Cliente.find(filtroPerfil(req)).select("_id");
-      filtro.clienteId = { $in: meus.map(c => c._id) };
-    }
-    if (dias > 0) {
-      const limite = new Date();
-      limite.setDate(limite.getDate() - dias);
-      filtro.dataBackup = { $lt: limite };
-    }
-    const result = await Backup.deleteMany(filtro);
-    res.json({ ok: true, removidos: result.deletedCount });
-  } catch (err) { res.status(500).json({ message: err.message }); }
-});
-
-// --------------------
-// LIMPEZA AUTOMÁTICA DE HISTÓRICO (a cada 5 dias)
-// --------------------
-async function limparHistoricoAntigo() {
-  try {
-    const limite = new Date();
-    limite.setDate(limite.getDate() - 5);
-    const res = await Backup.deleteMany({ criadoEm: { $lt: limite } });
-    if (res.deletedCount > 0)
-      console.log(`[AUTO-LIMPEZA] ${res.deletedCount} registro(s) de backup removidos.`);
-  } catch (e) {
-    console.error("[AUTO-LIMPEZA] Erro:", e.message);
-  }
-}
-// Executa na inicialização e a cada 24 horas
-limparHistoricoAntigo();
-setInterval(limparHistoricoAntigo, 24 * 60 * 60 * 1000);
-
-// Limpeza manual (botão na tela)
-app.delete("/api/backup/historico", verificarToken, verificarAcessoBackup, async (req, res) => {
-  try {
-    const { dias } = req.query; // ?dias=5 ou limpa tudo se não passar
-    const filtro = {};
-    if (dias) {
-      const limite = new Date();
-      limite.setDate(limite.getDate() - parseInt(dias));
-      filtro.criadoEm = { $lt: limite };
-    }
-    // Filtra pelo perfil do usuário
-    if (req.usuario.perfil !== "master") {
-      const clientesIds = (await Cliente.find({ usuarioId: req.usuario.id }).select("_id")).map(c => c._id);
-      filtro.clienteId = { $in: clientesIds };
-    }
-    const result = await Backup.deleteMany(filtro);
-    res.json({ ok: true, removidos: result.deletedCount });
-  } catch (e) { res.status(500).json({ message: e.message }); }
-});
-
-// --------------------
-// BOLETOS — parcelas mensais
-// --------------------
-
-// Gerar 12 parcelas (ou quantidade definida) a partir de uma data inicial
-app.post("/api/boletos/gerar", verificarToken, verificarAcessoBoleto, async (req, res) => {
-  try {
-    const { clienteId, primeiroVencimento, valor, totalParcelas = 12 } = req.body;
-
-    if (!clienteId || !primeiroVencimento) {
-      return res.status(400).json({ message: "clienteId e primeiroVencimento são obrigatórios" });
-    }
-
-    const parcelasGeradas = [];
-    let dataBase = new Date(primeiroVencimento);
-
-    for (let i = 1; i <= totalParcelas; i++) {
-      const novaData = new Date(dataBase);
-      // Incrementa os meses conforme a parcela
-      novaData.setMonth(dataBase.getMonth() + (i - 1));
-
-      parcelasGeradas.push({
-        clienteId,
-        usuarioId: req.usuario.id,
-        mes: novaData.getMonth() + 1,
-        ano: novaData.getFullYear(),
-        parcela: i,
-        totalParcelas,
-        vencimento: novaData,
-        valor: valor || 0,
-        pago: false
-      });
-    }
-
-    const resultado = await Boleto.insertMany(parcelasGeradas);
-    
-    // Opcional: Atualiza o campo boletoVencimento no Cliente com a primeira parcela
-    await Cliente.findByIdAndUpdate(clienteId, { 
-      boletoVencimento: parcelasGeradas[0].vencimento,
-      boletoPago: false 
-    });
-
-    res.status(201).json({ message: `${totalParcelas} parcelas geradas com sucesso`, resultado });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Listar boletos de um cliente
-app.get("/api/boletos/cliente/:clienteId", verificarToken, verificarAcessoBoleto, async (req, res) => {
-  try {
-    const boletos = await Boleto.find({ clienteId: req.params.clienteId }).sort({ vencimento: 1 });
-    res.json(boletos);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Dar baixa em um boleto individual
-app.patch("/api/boletos/:id/pagar", verificarToken, verificarAcessoBoleto, async (req, res) => {
-  try {
-    const { pago } = req.body;
-    const boleto = await Boleto.findByIdAndUpdate(
-      req.params.id, 
-      { pago, dataPagamento: pago ? new Date() : null }, 
-      { new: true }
-    );
-
-    if (!boleto) return res.status(404).json({ message: "Boleto não encontrado" });
-
-    // Lógica importante: Se for o boleto do mês atual, atualiza o status no Cliente
-    const hoje = new Date();
-    if (boleto.mes === (hoje.getMonth() + 1) && boleto.ano === hoje.getFullYear()) {
-      await Cliente.findByIdAndUpdate(boleto.clienteId, { 
-        boletoPago: pago,
-        backupBloqueado: !pago // Se pagou, desbloqueia. Se desmarcou, bloqueia.
-      });
-    }
-
-    res.json(boleto);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// [buscar-id moved above /:id]
 
 // --------------------
 // INICIAR SERVIDOR
