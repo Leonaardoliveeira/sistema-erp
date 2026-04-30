@@ -393,56 +393,9 @@ function aplicarFiltros() {
 
 function filtrarTabela() {
   const termo = (document.getElementById("campoPesquisa")?.value || "").toLowerCase();
-  const campo = document.getElementById("filtroPesquisaCampo")?.value || "todos";
   document.querySelectorAll(".historico-grupo").forEach(g => {
-    const textoNome = (g.querySelector(".historico-grupo-header strong")?.innerText || "").toLowerCase();
-    const textoDocumento = (g.querySelector("td[data-doc]")?.dataset.doc || "").toLowerCase();
-    const textoTelefone = (g.querySelector("td[data-tel]")?.dataset.tel || "").toLowerCase();
-    const alvo = campo === "documento"
-      ? textoDocumento
-      : campo === "telefone"
-        ? textoTelefone
-        : campo === "nome"
-          ? textoNome
-          : `${textoNome} ${textoDocumento} ${textoTelefone}`;
-    const encontrado = alvo.includes(termo);
-    g.style.display = encontrado ? "" : "none";
-    atualizarDestaqueGrupo(g, campo, termo, {
-      nome: textoNome,
-      documento: textoDocumento,
-      telefone: textoTelefone
-    }, encontrado);
+    g.style.display = g.innerText.toLowerCase().includes(termo) ? "" : "none";
   });
-}
-
-function atualizarDestaqueGrupo(grupoEl, campo, termo, textos, encontrado) {
-  const header = grupoEl.querySelector(".historico-grupo-header");
-  if (!header) return;
-
-  let badge = header.querySelector(".historico-match-chip");
-  if (!badge) {
-    badge = document.createElement("span");
-    badge.className = "historico-match-chip";
-    const countEl = header.querySelector(".historico-grupo-count");
-    if (countEl) header.insertBefore(badge, countEl);
-    else header.appendChild(badge);
-  }
-
-  if (!termo || campo === "todos" || campo === "nome" || !encontrado) {
-    badge.style.display = "none";
-    badge.textContent = "";
-    return;
-  }
-
-  const textoBase = campo === "documento" ? textos.documento : textos.telefone;
-  if (!textoBase || !textoBase.includes(termo)) {
-    badge.style.display = "none";
-    badge.textContent = "";
-    return;
-  }
-
-  badge.style.display = "inline-flex";
-  badge.textContent = `${campo === "documento" ? "Doc" : "Tel"} encontrado`;
 }
 
 async function excluirBackup(id) {
