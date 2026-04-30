@@ -106,7 +106,12 @@ const BoletoSchema = new mongoose.Schema({
 async function migrarCamposBackup() {
   try {
     const resultado = await Cliente.updateMany(
-      { backupHabilitado: { $exists: false } },
+      {
+        $or: [
+          { backupHabilitado: { $exists: false } },
+          { backupHabilitado: null }
+        ]
+      },
       { $set: { backupHabilitado: false, boletoPago: true, backupBloqueado: false } }
     );
     if (resultado.modifiedCount > 0)

@@ -63,30 +63,39 @@ function mostrarSemPermissao() {
 // ── CLIENTES ──────────────────────────────────────────────────────────────────
 async function carregarClientes() {
   try {
-    let res = await fetch("/api/backup/clientes-config", {
-      headers: { "Authorization": "Bearer " + getToken() }
-    });
+    const headers = { "Authorization": "Bearer " + getToken() };
+    let res = await fetch("/api/backup/clientes-config", { headers });
+    let data = [];
 
-    // Fallback de compatibilidade caso a rota nova não esteja disponível no ambiente.
-    if (res.status === 404 || res.status === 405) {
-      res = await fetch("/api/clientes", {
-        headers: { "Authorization": "Bearer " + getToken() }
-      });
+    if (res.ok) data = await res.json();
+
+    // Fallback de compatibilidade: usa /api/clientes se rota nova falhar ou vier vazia
+    if (!res.ok || !Array.isArray(data) || data.length === 0) {
+      const resLegacy = await fetch("/api/clientes", { headers });
+      if (resLegacy.ok) {
+        const dataLegacy = await resLegacy.json();
+        if (Array.isArray(dataLegacy) && dataLegacy.length > 0) {
+          data = dataLegacy;
+          res = resLegacy;
+        }
+      }
     }
 
-    if (!res.ok) {
+    clientesCache = (Array.isArray(data) ? data : []).map(c => ({
+      ...c,
+      backupHabilitado: c.backupHabilitado === true
+    }));
+
+    if (!res.ok && !clientesCache.length) {
       console.error("carregarClientes HTTP", res.status);
       mostrarErroConfig("Erro ao carregar clientes (HTTP " + res.status + ")");
       return;
     }
 
-    const data = await res.json();
-    clientesCache = Array.isArray(data) ? data : [];
-
     // Select de filtro — mostra só os habilitados
     const sel = document.getElementById("filtroCliente");
     if (sel) {
-      const hab = clientesCache.filter(c => c.backupHabilitado);
+      const hab = clientesCache.filter(c => c.backupHabilitado === true);
       sel.innerHTML = '<option value="">Todos os clientes</option>' +
         hab.map(c => `<option value="${c._id}">${c.nome}</option>`).join("");
     }
