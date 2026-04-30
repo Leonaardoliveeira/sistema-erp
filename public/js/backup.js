@@ -45,7 +45,7 @@ async function verificarPermissaoBackup() {
       headers: { "Authorization": "Bearer " + getToken() }
     });
     if (res.status === 401) { window.location.href = "index.html"; return; }
-    if (!res.ok) return; // erro de servidor — mostra conteúdo mesmo assim
+    if (!res.ok) return; 
     const data = await res.json();
     if (data.acesso === false) mostrarSemPermissao();
   } catch (e) {
@@ -60,46 +60,44 @@ function mostrarSemPermissao() {
   if (sem) sem.style.display = "flex";
 }
 
-// ── CLIENTES ──────────────────────────────────────────────────────────────────
+// ── CLIENTES (AJUSTADO) ───────────────────────────────────────────────────────
 async function carregarClientes() {
   try {
     const headers = { "Authorization": "Bearer " + getToken() };
     let res = await fetch("/api/backup/clientes-config", { headers });
     let data = [];
 
-    if (res.ok) data = await res.json();
+    if (res.ok) {
+      data = await res.json();
+    }
 
-    // Fallback de compatibilidade: usa /api/clientes se rota nova falhar ou vier vazia
+    // Se a rota específica falhar ou retornar vazio, busca na rota geral de clientes
     if (!res.ok || !Array.isArray(data) || data.length === 0) {
       const resLegacy = await fetch("/api/clientes", { headers });
       if (resLegacy.ok) {
-        const dataLegacy = await resLegacy.json();
-        if (Array.isArray(dataLegacy) && dataLegacy.length > 0) {
-          data = dataLegacy;
-          res = resLegacy;
-        }
+        data = await resLegacy.json();
       }
     }
 
+    // Normaliza os dados para garantir que backupHabilitado exista como boolean
     clientesCache = (Array.isArray(data) ? data : []).map(c => ({
       ...c,
-      backupHabilitado: c.backupHabilitado === true
+      backupHabilitado: !!c.backupHabilitado // Força true/false
     }));
 
-    if (!res.ok && !clientesCache.length) {
-      console.error("carregarClientes HTTP", res.status);
-      mostrarErroConfig("Erro ao carregar clientes (HTTP " + res.status + ")");
-      return;
+    if (clientesCache.length === 0) {
+      console.warn("Nenhum cliente retornado da API.");
     }
 
-    // Select de filtro — mostra só os habilitados
+    // Select de filtro superior (apenas clientes que JÁ tem backup ativo)
     const sel = document.getElementById("filtroCliente");
     if (sel) {
-      const hab = clientesCache.filter(c => c.backupHabilitado === true);
+      const habilitados = clientesCache.filter(c => c.backupHabilitado === true);
       sel.innerHTML = '<option value="">Todos os clientes</option>' +
-        hab.map(c => `<option value="${c._id}">${c.nome}</option>`).join("");
+        habilitados.map(c => `<option value="${c._id}">${c.nome}</option>`).join("");
     }
 
+    // Renderiza a tabela de gestão (onde você ativa/desativa)
     renderizarClientesConfig();
 
   } catch (e) {
@@ -119,7 +117,7 @@ function renderizarClientesConfig() {
 
   if (!clientesCache.length) {
     tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-muted);">
-      Nenhum cliente encontrado. <a href="cadastro.html">Cadastre clientes aqui.</a>
+      Nenhum cliente encontrado no sistema. <a href="cadastro.html">Cadastre clientes aqui.</a>
     </td></tr>`;
     return;
   }
@@ -131,6 +129,7 @@ function renderizarClientesConfig() {
     const nomeCliente = c.nome || "Cliente sem nome";
     const nomeEsc = escapeHtml(c.backupClienteNome || "");
     const nomeModal = String(nomeCliente).replace(/'/g, "\\'");
+    
     return `<tr>
       <td><strong>${escapeHtml(nomeCliente)}</strong></td>
       <td>
@@ -151,7 +150,7 @@ function renderizarClientesConfig() {
       <td style="white-space:nowrap;">
         <button class="btn-salvar-agent" id="btn-agent-${c._id}"
           onclick="salvarNomeAgent('${c._id}')" style="display:none;">Salvar</button>
-        ${temBoleto ? `<button class="btn-boleto-mini" onclick="abrirModalBoletos('${c._id}','${nomeModal}')">💰</button>` : ""}
+        ${temBoleto ? `<button class="btn-boleto-mini" onclick="abrirModalBoletos('${c._id}','${nomeModal}')" title="Financeiro">💰</button>` : ""}
       </td>
     </tr>`;
   }).join("");
@@ -190,11 +189,22 @@ async function toggleBackupCliente(id, checkbox) {
       body: JSON.stringify({ backupHabilitado: habilitado })
     });
     if (!res.ok) { checkbox.checked = !habilitado; toast.erro("Erro ao atualizar"); return; }
+    
     if (label) label.textContent = habilitado ? "Habilitado" : "Desabilitado";
+    
     const idx = clientesCache.findIndex(c => c._id === id);
     if (idx >= 0) clientesCache[idx].backupHabilitado = habilitado;
-    toast.sucesso(habilitado ? "Backup habilitado." : "Backup desabilitado.");
-    await carregarResumo();
+    
+    toast.sucesso(habilitado ? "Backup habilitado para este cliente." : "Backup desabilitado.");
+    
+    // Atualiza o select de filtros e o resumo, pois a lista de quem deve ter backup mudou
+    carregarResumo();
+    const sel = document.getElementById("filtroCliente");
+    if (sel) {
+        const hab = clientesCache.filter(c => c.backupHabilitado);
+        sel.innerHTML = '<option value="">Todos os clientes</option>' +
+          hab.map(c => `<option value="${c._id}">${c.nome}</option>`).join("");
+    }
   } catch (_) { checkbox.checked = !habilitado; toast.erro("Erro ao atualizar"); }
 }
 
@@ -207,9 +217,9 @@ async function carregarResumo() {
     if (!res.ok) return;
     const data = await res.json();
     const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val ?? "—"; };
-    set("totalClientes",  data.totalClientes);
-    set("comBackup",      data.comBackup);
-    set("semBackup",      data.semBackup);
+    set("totalClientes",     data.totalClientes);
+    set("comBackup",         data.comBackup);
+    set("semBackup",         data.semBackup);
     set("totalSuspensos", data.suspensos);
     if (data.semBackup > 0) setTimeout(() => toast.aviso(`⚠️ ${data.semBackup} cliente(s) sem backup hoje!`, 6000), 800);
   } catch (e) { console.error("Erro resumo:", e); }
@@ -285,8 +295,11 @@ async function carregarBackups() {
 
     const todos = await res.json();
 
-    // Filtra para mostrar apenas clientes habilitados para backup
+    // Filtra para mostrar apenas logs de clientes que estão com backup habilitado
     const habIds = new Set(clientesCache.filter(c => c.backupHabilitado).map(c => String(c._id)));
+    
+    // Se a lista de habilitados estiver vazia (primeiro acesso), mostra tudo para evitar tela vazia
+    // Caso contrário, mostra apenas logs dos habilitados
     backupsCache = habIds.size === 0
       ? todos
       : todos.filter(b => habIds.has(String(b.clienteId?._id || b.clienteId || "")));
@@ -384,7 +397,7 @@ function filtrarPorCard(tipo, el) {
     const idsHoje = new Set(backupsCache.filter(b => new Date(b.dataBackup) >= hoje).map(b => String(b.clienteId?._id || b.clienteId)));
     renderizarHistoricoAgrupado(backupsCache.filter(b => !idsHoje.has(String(b.clienteId?._id || b.clienteId))));
   } else if (tipo === "suspenso") {
-    const ids = new Set(clientesCache.filter(c => c.backupBloqueado || (!c.boletoPago && c.boletoVencimento)).map(c => String(c._id)));
+    const ids = new Set(clientesCache.filter(c => c.backupBloqueado || (!c.pago && c.boletoVencimento)).map(c => String(c._id)));
     renderizarHistoricoAgrupado(backupsCache.filter(b => ids.has(String(b.clienteId?._id || b.clienteId))));
   }
 }
@@ -515,8 +528,8 @@ async function carregarPermissoes() {
 
 async function togglePermissaoUsuario(id, checkbox, tipo) {
   const permitido = checkbox.checked;
-  const label     = checkbox.parentElement.querySelector(".toggle-label");
-  const url       = tipo === "boleto" ? `/api/usuarios/${id}/acesso-boleto` : `/api/usuarios/${id}/acesso-backup`;
+  const label      = checkbox.parentElement.querySelector(".toggle-label");
+  const url        = tipo === "boleto" ? `/api/usuarios/${id}/acesso-boleto` : `/api/usuarios/${id}/acesso-backup`;
   const body      = tipo === "boleto" ? { acessoBoleto: permitido } : { acessoBackup: permitido };
   try {
     const res = await fetch(url, {
@@ -596,7 +609,7 @@ async function carregarBoletos(clienteId) {
 async function gerarParcelas() {
   const clienteId  = document.getElementById("boletoClienteIdAtual").value;
   const dataInicial = document.getElementById("boletoDataInicial").value;
-  const valor       = document.getElementById("boletoValor").value;
+  const valor        = document.getElementById("boletoValor").value;
   const totalP      = document.getElementById("boletoParcelas").value;
   if (!dataInicial) { toast.aviso("Informe a data do 1º vencimento"); return; }
   try {
