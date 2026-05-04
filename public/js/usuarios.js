@@ -13,27 +13,49 @@ async function listarUsuarios() {
     mostrarLoading();
     tabela.innerHTML = "";
     try {
-        const response = await fetch("/api/usuarios", {
+        const usuario = JSON.parse(localStorage.getItem("usuario"));
+        const isMaster = usuario?.perfil === "master";
+
+        // Master usa endpoint enriquecido com acessoBackup; demais usam endpoint padrão
+        const url = isMaster ? "/api/backup/permissoes" : "/api/usuarios";
+        const response = await fetch(url, {
             headers: { "Authorization": "Bearer " + getToken() }
         });
         if (!response.ok) {
-            tabela.innerHTML = "<tr><td colspan='4' style='text-align:center;padding:20px;'>Acesso negado</td></tr>";
+            tabela.innerHTML = "<tr><td colspan='5' style='text-align:center;padding:20px;'>Acesso negado</td></tr>";
             return;
         }
         const usuarios = await response.json();
         if (usuarios.length === 0) {
-            tabela.innerHTML = "<tr><td colspan='4' style='text-align:center;padding:20px;'>Nenhum usuário cadastrado</td></tr>";
+            tabela.innerHTML = "<tr><td colspan='5' style='text-align:center;padding:20px;'>Nenhum usuário cadastrado</td></tr>";
             return;
         }
         usuarios.forEach((user) => {
             const labelPerfil = LABELS_PERFIL[user.perfil] || user.perfil;
+            const ehMasterSistema = user.usuario === "admin" || user.perfil === "master";
+
+            // Coluna Acesso Backup
+            let colBackup;
+            if (ehMasterSistema) {
+                colBackup = `<span style="font-size:11px;color:var(--text-muted);">Sempre ativo</span>`;
+            } else if (isMaster) {
+                const checked = user.acessoBackup ? "checked" : "";
+                colBackup = `<label class="toggle-switch" title="Permitir/revogar acesso à tela de Backup">
+                    <input type="checkbox" ${checked} onchange="toggleAcessoBackup('${user._id}', this.checked)">
+                    <span class="toggle-slider"></span>
+                  </label>`;
+            } else {
+                colBackup = `<span style="font-size:11px;color:var(--text-muted);">—</span>`;
+            }
+
             tabela.innerHTML += `
                 <tr>
                     <td data-label="Nome">${user.nome}</td>
                     <td data-label="Usuário">${user.usuario}</td>
                     <td data-label="Perfil"><span class="status ${user.perfil}">${labelPerfil}</span></td>
+                    <td data-label="Acesso Backup">${colBackup}</td>
                     <td class="td-acoes-cell">
-                        ${user.usuario !== "admin"
+                        ${!ehMasterSistema
                             ? `<div class="td-acoes">
                                 <button class="btn-primary" style="background:#f59e0b;"
                                     onclick="prepararEdicao('${user._id}','${user.nome}','${user.usuario}','${user.perfil}')">Editar</button>
@@ -45,9 +67,24 @@ async function listarUsuarios() {
                 </tr>`;
         });
     } catch (error) {
-        tabela.innerHTML = "<tr><td colspan='4' style='text-align:center;padding:20px;'>Erro ao carregar</td></tr>";
+        tabela.innerHTML = "<tr><td colspan='5' style='text-align:center;padding:20px;'>Erro ao carregar</td></tr>";
     } finally {
         esconderLoading();
+    }
+}
+
+async function toggleAcessoBackup(usuarioId, ativo) {
+    try {
+        const res = await fetch("/api/backup/permissoes/" + usuarioId, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + getToken() },
+            body: JSON.stringify({ ativo })
+        });
+        if (!res.ok) { toast.erro("Erro ao alterar permissão"); listarUsuarios(); return; }
+        toast.sucesso(ativo ? "Acesso ao Backup concedido!" : "Acesso ao Backup revogado!");
+    } catch (e) {
+        toast.erro("Erro ao alterar permissão");
+        listarUsuarios();
     }
 }
 
