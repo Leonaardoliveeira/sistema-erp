@@ -243,19 +243,16 @@ body {
 .card-enviado  { border-left-color: var(--blue); }
 .card-gerado   { border-left-color: var(--green); }
 .card-erro     { border-left-color: var(--red); }
-.card-suspenso { border-left-color: var(--amber); }
 
 .card-pendente::after { background: var(--amber); }
 .card-enviado::after  { background: var(--blue); }
 .card-gerado::after   { background: var(--green); }
 .card-erro::after     { background: var(--red); }
-.card-suspenso::after { background: var(--amber); }
 
 .card-pendente:hover { box-shadow: 0 8px 24px rgba(245,158,11,.22); }
 .card-enviado:hover  { box-shadow: 0 8px 24px rgba(79,70,229,.22); }
 .card-gerado:hover   { box-shadow: 0 8px 24px rgba(16,185,129,.22); }
 .card-erro:hover     { box-shadow: 0 8px 24px rgba(239,68,68,.22); }
-.card-suspenso:hover { box-shadow: 0 8px 24px rgba(245,158,11,.22); }
 
 .card.ativo { transform: translateY(-4px) scale(1.015); }
 .card-pendente.ativo { box-shadow: 0 12px 28px rgba(245,158,11,.32); border-left-width: 5px; }
@@ -279,7 +276,6 @@ body {
 /* Título da tabela */
 .table-title {
   display: flex; align-items: center; gap: 8px;
-  justify-content: space-between;
   padding: 13px 18px 12px;
   border-bottom: 1px solid var(--border);
   font-size: 13px; font-weight: 600; color: var(--text);
@@ -901,6 +897,11 @@ body.dark .toggle-switch input:checked + .toggle-slider { background: var(--blue
    MÓDULO DE BACKUP
    ========================================================================== */
 
+/* Cards — 3 colunas no desktop */
+.backup-cards {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 /* Status badges na tabela */
 .backup-status {
   display: inline-block;
@@ -1003,136 +1004,15 @@ body.dark .backup-api-desc code { background: rgba(99,102,241,.2); }
 
 /* Responsivo mobile */
 @media (max-width: 992px) {
+  .backup-cards { grid-template-columns: repeat(3, 1fr); }
   .backup-filtros-grid { grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-width: 640px) {
+  .backup-cards { grid-template-columns: 1fr 1fr; }
   .backup-filtros-grid { grid-template-columns: 1fr; gap: 10px; }
   .backup-api-code { font-size: 11px; padding: 12px; }
 }
-
-/* ==========================================================================
-   MINI FINANCEIRO
-   ========================================================================== */
-.financeiro-section {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px 24px;
-  margin-bottom: 24px;
-}
-
-.financeiro-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--border);
-}
-
-.financeiro-titulo {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.tabela-boletos {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.tabela-boletos thead tr {
-  background: var(--surface);
-}
-
-.tabela-boletos th,
-.tabela-boletos td {
-  padding: 10px 14px;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
-}
-
-.tabela-boletos th {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  color: var(--text-muted);
-}
-
-.boleto-alerta-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(239,68,68,.08);
-  border: 1px solid rgba(239,68,68,.25);
-  border-radius: 6px;
-  padding: 10px 14px;
-  font-size: 13px;
-  color: var(--red);
-  margin-bottom: 14px;
-}
-
-.boleto-suspensao-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 12px;
-  padding: 10px 14px;
-  background: rgba(245,158,11,.08);
-  border: 1px solid rgba(245,158,11,.25);
-  border-radius: 6px;
-  font-size: 13px;
-  color: var(--amber);
-  flex-wrap: wrap;
-}
-
-.boleto-suspensao-row .btn-sm {
-  margin-left: auto;
-}
-
-.btn-success {
-  background: var(--green);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-sm, 6px);
-  padding: 7px 14px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity .15s;
-}
-.btn-success:hover { opacity: .85; }
-.btn-success.btn-sm { padding: 5px 10px; font-size: 11px; }
-
-.btn-sm {
-  padding: 5px 10px;
-  font-size: 11px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: 600;
-  border: none;
-  transition: opacity .15s;
-}
-.btn-sm:hover { opacity: .82; }
-
-.btn-copy {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  padding: 3px 7px;
-  border-radius: 4px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  transition: background .15s, color .15s;
-  flex-shrink: 0;
-}
-.btn-copy:hover { background: var(--accent, #6366f1); color: #fff; border-color: transparent; }
 
 /* ==========================================================================
    LOADING

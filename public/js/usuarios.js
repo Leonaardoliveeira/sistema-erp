@@ -13,56 +13,27 @@ async function listarUsuarios() {
     mostrarLoading();
     tabela.innerHTML = "";
     try {
-        const usuario  = JSON.parse(localStorage.getItem("usuario"));
-        const isMaster = usuario?.perfil === "master";
-
-        const url = isMaster ? "/api/backup/permissoes" : "/api/usuarios";
-        const response = await fetch(url, {
+        const response = await fetch("/api/usuarios", {
             headers: { "Authorization": "Bearer " + getToken() }
         });
         if (!response.ok) {
-            tabela.innerHTML = "<tr><td colspan='6' style='text-align:center;padding:20px;'>Acesso negado</td></tr>";
+            tabela.innerHTML = "<tr><td colspan='4' style='text-align:center;padding:20px;'>Acesso negado</td></tr>";
             return;
         }
         const usuarios = await response.json();
         if (usuarios.length === 0) {
-            tabela.innerHTML = "<tr><td colspan='6' style='text-align:center;padding:20px;'>Nenhum usuário cadastrado</td></tr>";
+            tabela.innerHTML = "<tr><td colspan='4' style='text-align:center;padding:20px;'>Nenhum usuário cadastrado</td></tr>";
             return;
         }
         usuarios.forEach((user) => {
-            const labelPerfil    = LABELS_PERFIL[user.perfil] || user.perfil;
-            const ehMasterSistema = user.usuario === "admin" || user.perfil === "master";
-
-            // Colunas de permissão de backup
-            let colVer, colEditar;
-            if (ehMasterSistema) {
-                colVer    = `<span style="font-size:11px;color:var(--text-muted);">Sempre</span>`;
-                colEditar = `<span style="font-size:11px;color:var(--text-muted);">Sempre</span>`;
-            } else if (isMaster) {
-                const chkVer    = (user.visualizar || user.editar) ? "checked" : "";
-                const chkEditar = user.editar ? "checked" : "";
-                colVer    = `<label class="toggle-switch" title="Permitir visualizar a tela de Backup">
-                    <input type="checkbox" ${chkVer} onchange="togglePermBackup('${user._id}', 'visualizar', this)">
-                    <span class="toggle-slider"></span>
-                  </label>`;
-                colEditar = `<label class="toggle-switch" title="Permitir editar dados de Backup">
-                    <input type="checkbox" ${chkEditar} onchange="togglePermBackup('${user._id}', 'editar', this)">
-                    <span class="toggle-slider"></span>
-                  </label>`;
-            } else {
-                colVer    = `<span style="font-size:11px;color:var(--text-muted);">—</span>`;
-                colEditar = `<span style="font-size:11px;color:var(--text-muted);">—</span>`;
-            }
-
+            const labelPerfil = LABELS_PERFIL[user.perfil] || user.perfil;
             tabela.innerHTML += `
-                <tr id="row-${user._id}">
+                <tr>
                     <td data-label="Nome">${user.nome}</td>
                     <td data-label="Usuário">${user.usuario}</td>
                     <td data-label="Perfil"><span class="status ${user.perfil}">${labelPerfil}</span></td>
-                    <td data-label="Backup: Ver">${colVer}</td>
-                    <td data-label="Backup: Editar">${colEditar}</td>
                     <td class="td-acoes-cell">
-                        ${!ehMasterSistema
+                        ${user.usuario !== "admin"
                             ? `<div class="td-acoes">
                                 <button class="btn-primary" style="background:#f59e0b;"
                                     onclick="prepararEdicao('${user._id}','${user.nome}','${user.usuario}','${user.perfil}')">Editar</button>
@@ -73,47 +44,10 @@ async function listarUsuarios() {
                     </td>
                 </tr>`;
         });
-        // Guarda estado de permissões para aplicar lógica visualizar↔editar
-        _permissoesCache = {};
-        usuarios.forEach(u => { _permissoesCache[u._id] = { visualizar: u.visualizar, editar: u.editar }; });
     } catch (error) {
-        tabela.innerHTML = "<tr><td colspan='6' style='text-align:center;padding:20px;'>Erro ao carregar</td></tr>";
+        tabela.innerHTML = "<tr><td colspan='4' style='text-align:center;padding:20px;'>Erro ao carregar</td></tr>";
     } finally {
         esconderLoading();
-    }
-}
-
-let _permissoesCache = {};
-
-async function togglePermBackup(usuarioId, campo, checkboxEl) {
-    // Busca estado atual da linha
-    const row     = document.getElementById("row-" + usuarioId);
-    const checks  = row ? row.querySelectorAll("input[type=checkbox]") : [];
-    // checks[0] = visualizar, checks[1] = editar
-    let visualizar = checks[0] ? checks[0].checked : false;
-    let editar     = checks[1] ? checks[1].checked : false;
-
-    // Regras: se ativar editar → ativa visualizar automaticamente
-    //         se desativar visualizar → desativa editar automaticamente
-    if (campo === "editar" && editar && checks[0]) checks[0].checked = true, visualizar = true;
-    if (campo === "visualizar" && !visualizar && checks[1]) checks[1].checked = false, editar = false;
-
-    try {
-        const res = await fetch("/api/backup/permissoes/" + usuarioId, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + getToken() },
-            body: JSON.stringify({ visualizar, editar })
-        });
-        if (!res.ok) { toast.erro("Erro ao alterar permissão"); listarUsuarios(); return; }
-        const labels = [];
-        if (visualizar) labels.push("Visualizar");
-        if (editar)     labels.push("Editar");
-        toast.sucesso(labels.length
-            ? `Permissão Backup concedida: ${labels.join(" + ")}!`
-            : "Permissão de Backup revogada!");
-    } catch (e) {
-        toast.erro("Erro ao alterar permissão");
-        listarUsuarios();
     }
 }
 
