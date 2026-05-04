@@ -901,11 +901,6 @@ body.dark .toggle-switch input:checked + .toggle-slider { background: var(--blue
    MÓDULO DE BACKUP
    ========================================================================== */
 
-/* Cards — 3 colunas no desktop */
-.backup-cards {
-  grid-template-columns: repeat(3, 1fr);
-}
-
 /* Status badges na tabela */
 .backup-status {
   display: inline-block;
@@ -1008,12 +1003,10 @@ body.dark .backup-api-desc code { background: rgba(99,102,241,.2); }
 
 /* Responsivo mobile */
 @media (max-width: 992px) {
-  .backup-cards { grid-template-columns: repeat(2, 1fr); }
   .backup-filtros-grid { grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-width: 640px) {
-  .backup-cards { grid-template-columns: 1fr 1fr; }
   .backup-filtros-grid { grid-template-columns: 1fr; gap: 10px; }
   .backup-api-code { font-size: 11px; padding: 12px; }
 }
@@ -1126,6 +1119,20 @@ body.dark .backup-api-desc code { background: rgba(99,102,241,.2); }
   transition: opacity .15s;
 }
 .btn-sm:hover { opacity: .82; }
+
+.btn-copy {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 3px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: background .15s, color .15s;
+  flex-shrink: 0;
+}
+.btn-copy:hover { background: var(--accent, #6366f1); color: #fff; border-color: transparent; }
 
 /* ==========================================================================
    LOADING

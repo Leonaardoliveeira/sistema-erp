@@ -23,7 +23,6 @@
           <i data-lucide="moon"></i>
         </button>
       </div>
-
       <div class="user-profile">
         <div class="avatar">
           <img src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="Avatar" id="userAvatar">
@@ -33,39 +32,24 @@
           <span class="user-role">Administrador</span>
         </div>
       </div>
-
       <nav class="sidebar-nav">
         <div class="nav-group">
           <span class="nav-title">Gestão</span>
-          <a href="dashboard.html" class="nav-item">
-            <i data-lucide="layout-dashboard"></i> Dashboard
-          </a>
-          <a href="cadastro.html" class="nav-item">
-            <i data-lucide="user-plus"></i> Cadastro de Cliente
-          </a>
+          <a href="dashboard.html" class="nav-item"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+          <a href="cadastro.html" class="nav-item"><i data-lucide="user-plus"></i> Cadastro de Cliente</a>
         </div>
         <div class="nav-group">
           <span class="nav-title">Operacional</span>
-          <a href="clientes.html" class="nav-item">
-            <i data-lucide="file-text"></i> Gerenciamento Sped
-          </a>
-          <a href="backup.html" class="nav-item active" id="menuBackup">
-            <i data-lucide="database"></i> Backup
-          </a>
-          <a href="usuarios.html" id="menuUsuarios" class="nav-item">
-            <i data-lucide="users"></i> Usuários
-          </a>
+          <a href="clientes.html" class="nav-item"><i data-lucide="file-text"></i> Gerenciamento Sped</a>
+          <a href="backup.html" class="nav-item active" id="menuBackup"><i data-lucide="database"></i> Backup</a>
+          <a href="usuarios.html" id="menuUsuarios" class="nav-item"><i data-lucide="users"></i> Usuários</a>
         </div>
         <div class="nav-group">
           <span class="nav-title">Ajuda</span>
-          <a href="suporte.html" class="nav-item">
-            <i data-lucide="help-circle"></i> Suporte
-          </a>
+          <a href="suporte.html" class="nav-item"><i data-lucide="help-circle"></i> Suporte</a>
         </div>
         <div class="nav-footer">
-          <a href="#" onclick="logout()" class="nav-item logout">
-            <i data-lucide="log-out"></i> Sair
-          </a>
+          <a href="#" onclick="logout()" class="nav-item logout"><i data-lucide="log-out"></i> Sair</a>
         </div>
       </nav>
     </div>
@@ -76,15 +60,18 @@
     <!-- TOPBAR -->
     <div class="topbar">
       <h2>Monitoramento de Backup</h2>
+      <div style="display:flex;gap:8px;" id="topbarAcoes">
+        <!-- botões aparecem conforme permissão -->
+      </div>
     </div>
 
-    <!-- CARDS RESUMO -->
-    <section class="cards backup-cards">
+    <!-- CARDS RESUMO (mesmo layout do dashboard) -->
+    <section class="cards">
       <div class="card card-gerado">
         <div class="card-content">
-          <h3>Total de Clientes</h3>
+          <h3>Total Monitorados</h3>
           <p id="totalClientes">—</p>
-          <small>monitorados</small>
+          <small>clientes no backup</small>
         </div>
       </div>
       <div class="card card-enviado">
@@ -124,8 +111,7 @@
       <div class="backup-filtros-grid">
         <div>
           <label>Pesquisar</label>
-          <input type="text" id="campoPesquisa" placeholder="🔎 Cliente, destino..."
-            oninput="filtrarTabela()">
+          <input type="text" id="campoPesquisa" placeholder="🔎 Cliente, destino..." oninput="filtrarTabela()">
         </div>
         <div>
           <label>Status</label>
@@ -161,7 +147,7 @@
           <i data-lucide="list" style="width:15px;height:15px;"></i>
           <span>Histórico de Backups</span>
         </div>
-        <button class="btn-danger btn-sm" onclick="limparHistorico()">
+        <button class="btn-danger btn-sm" id="btnLimpar" onclick="limparHistorico()" style="display:none;">
           <i data-lucide="trash-2" style="width:13px;height:13px;"></i> Limpar Histórico
         </button>
       </div>
@@ -174,7 +160,7 @@
             <th>Tamanho</th>
             <th>Destino</th>
             <th>Responsável</th>
-            <th>Ações</th>
+            <th id="thAcoes" style="display:none;">Ações</th>
           </tr>
         </thead>
         <tbody id="tabelaBackup"></tbody>
@@ -182,7 +168,7 @@
     </div>
 
     <!-- MINI FINANCEIRO -->
-    <div class="financeiro-section">
+    <div class="financeiro-section" id="secaoFinanceiro" style="display:none;">
       <div class="financeiro-header">
         <div style="display:flex;align-items:center;gap:8px;">
           <i data-lucide="dollar-sign" style="width:16px;height:16px;color:var(--green);"></i>
@@ -197,12 +183,10 @@
           </button>
         </div>
       </div>
-
       <div id="alertaAtrasados" style="display:none;" class="boleto-alerta-box">
         <i data-lucide="alert-circle" style="width:14px;height:14px;flex-shrink:0;"></i>
         <span id="alertaAtrasadosMsg"></span>
       </div>
-
       <div id="tabelaBoletosWrap" style="display:none;">
         <table class="tabela-boletos">
           <thead>
@@ -228,6 +212,27 @@
       </div>
     </div>
 
+    <!-- GERENCIAR CLIENTES MONITORADOS -->
+    <div class="table-container" id="secaoGerenciar" style="display:none;">
+      <div class="table-title">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <i data-lucide="settings" style="width:15px;height:15px;"></i>
+          <span>Gerenciar Clientes Monitorados</span>
+        </div>
+        <small style="color:var(--text-muted);font-size:11px;">Marque quais clientes aparecem nesta tela</small>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Monitorar Backup</th>
+            <th>ObjectID (Backup Agent)</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaGerenciar"></tbody>
+      </table>
+    </div>
+
     <!-- DOCUMENTAÇÃO DA API -->
     <div class="backup-api-doc">
       <div class="backup-api-titulo">
@@ -246,10 +251,6 @@ Content-Type: application/json
   "destino":   "S3",
   "dataBackup":"2024-01-15T03:00:00"
 }</pre>
-      <p class="backup-api-desc" style="margin-top:10px;">
-        Para obter seu token, faça login via <code>POST /api/login</code> e use o token retornado.<br>
-        O campo <code>status</code> aceita: <code>"ok"</code>, <code>"falha"</code> ou <code>"pendente"</code>.
-      </p>
     </div>
 
   </div><!-- fim .main -->
@@ -259,23 +260,18 @@ Content-Type: application/json
     <div class="modal-content">
       <h3>Editar Registro de Backup</h3>
       <input type="hidden" id="backupId">
-
       <label>Status</label>
       <select id="backupStatus">
         <option value="ok">OK — Backup realizado com sucesso</option>
         <option value="falha">Falha — Erro no backup</option>
         <option value="pendente">Pendente — Aguardando confirmação</option>
       </select>
-
       <label>Tamanho <span style="font-size:11px;color:var(--text-muted);">(ex: 2.3 GB)</span></label>
       <input type="text" id="backupTamanho" placeholder="ex: 2.3 GB">
-
-      <label>Destino <span style="font-size:11px;color:var(--text-muted);">(ex: S3, Google Drive)</span></label>
+      <label>Destino</label>
       <input type="text" id="backupDestino" placeholder="ex: S3 / Google Drive">
-
       <label>Observação</label>
       <input type="text" id="backupObservacao" placeholder="Opcional">
-
       <div class="modal-actions">
         <button class="btn-secondary" onclick="fecharModal()">Cancelar</button>
         <button class="btn-success" onclick="salvarBackup()">

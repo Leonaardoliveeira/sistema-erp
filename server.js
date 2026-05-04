@@ -41,6 +41,7 @@ const ClienteSchema = new mongoose.Schema({
   acessosRemotos:   [{ nome: String, anydesk: String }],
   status:           { type: String, default: "Pendente" },
   suspenderBackup:  { type: Boolean, default: false },
+  monitoradoBackup: { type: Boolean, default: false },   // exibir na tela de backup
   usuarioId:        { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
   criadoEm:         { type: Date, default: Date.now }
 });
@@ -89,8 +90,9 @@ const BoletoSchema = new mongoose.Schema({
 
 // Permissões de acesso à tela de backup por usuário (concedido pelo master)
 const PermissaoBackupSchema = new mongoose.Schema({
-  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true, unique: true },
-  ativo:     { type: Boolean, default: false }
+  usuarioId:   { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true, unique: true },
+  visualizar:  { type: Boolean, default: false },
+  editar:      { type: Boolean, default: false }   // editar implica visualizar
 });
 
 // Registra models apenas uma vez (evita erro no Vercel com hot-reload)
@@ -362,6 +364,18 @@ app.delete("/api/usuarios/:id", verificarToken, verificarAdmin, async (req, res)
   }
 });
 
+// Listar todos os clientes com flag monitoradoBackup (para gerenciar quais aparecem no backup)
+app.get("/api/clientes/backup-gerenciar", verificarToken, async (req, res) => {
+  try {
+    const clientes = await Cliente.find(filtroPerfil(req))
+      .select("_id nome monitoradoBackup suspenderBackup")
+      .sort({ nome: 1 });
+    res.json(clientes);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // --------------------
 // BACKUP
 // --------------------
@@ -384,9 +398,29 @@ app.post("/api/backup", verificarToken, async (req, res) => {
   }
 });
 
+// Marcar/desmarcar cliente como monitorado no backup
+app.put("/api/clientes/:id/monitorado-backup", verificarToken, async (req, res) => {
+  try {
+    const { monitorado } = req.body;
+    const atualizado = await Cliente.findByIdAndUpdate(
+      req.params.id,
+      { monitoradoBackup: !!monitorado },
+      { new: true }
+    );
+    if (!atualizado) return res.status(404).json({ message: "Cliente não encontrado" });
+    res.json({ ok: true, monitoradoBackup: atualizado.monitoradoBackup });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
 app.get("/api/backup/resumo", verificarToken, async (req, res) => {
   try {
-    const clientesVisiveis = await Cliente.find(filtroPerfil(req)).select("_id nome suspenderBackup");
+    // Apenas clientes marcados como monitorados no backup
+    const clientesVisiveis = await Cliente.find({
+      ...filtroPerfil(req),
+      monitoradoBackup: true
+    }).select("_id nome suspenderBackup");
     const idsVisiveis = clientesVisiveis.map(c => c._id);
 
     const hoje = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
@@ -420,7 +454,10 @@ app.get("/api/backup/resumo", verificarToken, async (req, res) => {
 app.get("/api/backup", verificarToken, async (req, res) => {
   try {
     const { clienteId, status, dias } = req.query;
-    const clientesVisiveis = await Cliente.find(filtroPerfil(req)).select("_id");
+    const clientesVisiveis = await Cliente.find({
+      ...filtroPerfil(req),
+      monitoradoBackup: true
+    }).select("_id");
     const idsVisiveis = clientesVisiveis.map(c => c._id);
 
     const filtro = { clienteId: { $in: idsVisiveis } };
@@ -495,9 +532,12 @@ app.delete("/api/backup/:id", verificarToken, async (req, res) => {
 // Retorna a permissão do usuário logado
 app.get("/api/backup/minha-permissao", verificarToken, async (req, res) => {
   try {
-    if (req.usuario.perfil === "master") return res.json({ ativo: true });
+    if (req.usuario.perfil === "master") return res.json({ visualizar: true, editar: true });
     const perm = await PermissaoBackup.findOne({ usuarioId: req.usuario.id });
-    res.json({ ativo: perm ? perm.ativo : false });
+    res.json({
+      visualizar: perm ? (perm.visualizar || perm.editar) : false,
+      editar:     perm ? perm.editar : false
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -508,14 +548,19 @@ app.get("/api/backup/permissoes", verificarToken, verificarMaster, async (req, r
   try {
     const usuarios = await Usuario.find().select("-senha");
     const perms    = await PermissaoBackup.find();
-    const mapa     = Object.fromEntries(perms.map(p => [p.usuarioId.toString(), p.ativo]));
-    const resultado = usuarios.map(u => ({
-      _id:          u._id,
-      nome:         u.nome,
-      usuario:      u.usuario,
-      perfil:       u.perfil,
-      acessoBackup: u.perfil === "master" ? true : (mapa[u._id.toString()] ?? false)
-    }));
+    const mapa     = Object.fromEntries(perms.map(p => [p.usuarioId.toString(), p]));
+    const resultado = usuarios.map(u => {
+      const p = mapa[u._id.toString()];
+      const isMaster = u.perfil === "master";
+      return {
+        _id:         u._id,
+        nome:        u.nome,
+        usuario:     u.usuario,
+        perfil:      u.perfil,
+        visualizar:  isMaster ? true : (p ? (p.visualizar || p.editar) : false),
+        editar:      isMaster ? true : (p ? p.editar : false)
+      };
+    });
     res.json(resultado);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -525,10 +570,10 @@ app.get("/api/backup/permissoes", verificarToken, verificarMaster, async (req, r
 // Concede ou revoga permissão (master)
 app.put("/api/backup/permissoes/:usuarioId", verificarToken, verificarMaster, async (req, res) => {
   try {
-    const { ativo } = req.body;
+    const { visualizar, editar } = req.body;
     await PermissaoBackup.findOneAndUpdate(
       { usuarioId: req.params.usuarioId },
-      { usuarioId: req.params.usuarioId, ativo: !!ativo },
+      { usuarioId: req.params.usuarioId, visualizar: !!visualizar, editar: !!editar },
       { upsert: true, new: true }
     );
     res.json({ ok: true });

@@ -31,13 +31,11 @@ function verificarLogin() {
     // Verifica permissão de acesso à tela de backup
     const menuBackup = document.getElementById("menuBackup");
     if (menuBackup) {
-        // Master sempre tem acesso; demais dependem da permissão concedida
         if (usuario.perfil !== "master") {
             fetch("/api/backup/minha-permissao", {
                 headers: { "Authorization": "Bearer " + token }
             }).then(r => r.json()).then(data => {
-                if (!data.ativo) {
-                    // Sem permissão — esconde menu e redireciona se estiver na página
+                if (!data.visualizar) {
                     menuBackup.style.display = "none";
                     if (window.location.pathname.endsWith("backup.html")) {
                         window.location.href = "dashboard.html";
