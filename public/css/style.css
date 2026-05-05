@@ -897,10 +897,11 @@ body.dark .toggle-switch input:checked + .toggle-slider { background: var(--blue
    MÓDULO DE BACKUP
    ========================================================================== */
 
-/* Cards — 3 colunas no desktop */
-.backup-cards {
-  grid-template-columns: repeat(3, 1fr);
-}
+/* Cards de backup usam a mesma grid do dashboard (.cards = 4 colunas) */
+/* card-suspenso — 4º card */
+.card-suspenso         { border-left-color: var(--amber); }
+.card-suspenso::after  { background: var(--amber); }
+.card-suspenso:hover   { box-shadow: 0 8px 24px rgba(245,158,11,.22); }
 
 /* Status badges na tabela */
 .backup-status {
@@ -1002,17 +1003,119 @@ body.dark .sem-backup-badge { background: rgba(245,158,11,.15); color: #fcd34d; 
 body.dark .backup-api-doc { border-color: #1f2937; }
 body.dark .backup-api-desc code { background: rgba(99,102,241,.2); }
 
-/* Responsivo mobile */
+/* Filtros responsivo */
 @media (max-width: 992px) {
-  .backup-cards { grid-template-columns: repeat(3, 1fr); }
   .backup-filtros-grid { grid-template-columns: 1fr 1fr; }
 }
-
 @media (max-width: 640px) {
-  .backup-cards { grid-template-columns: 1fr 1fr; }
   .backup-filtros-grid { grid-template-columns: 1fr; gap: 10px; }
   .backup-api-code { font-size: 11px; padding: 12px; }
 }
+
+/* table-title com botão à direita */
+.table-title {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Botão limpar histórico */
+.bkp-btn-limpar {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--red); color: #fff;
+  border: none; border-radius: 6px;
+  padding: 5px 12px; font-size: 11px; font-weight: 600;
+  cursor: pointer; transition: opacity .15s;
+}
+.bkp-btn-limpar:hover { opacity: .85; }
+
+/* Botão copiar ObjectID */
+.bkp-btn-copiar {
+  display: inline-flex; align-items: center;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text-muted); padding: 3px 8px;
+  border-radius: 4px; cursor: pointer; flex-shrink: 0;
+  transition: background .15s, color .15s;
+}
+.bkp-btn-copiar:hover { background: var(--blue); color: #fff; border-color: transparent; }
+
+/* Seção gerenciar clientes */
+.bkp-gerenciar-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+/* ─── Mini Financeiro ─────────────────────────────────────────────── */
+.bkp-financeiro-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+.bkp-financeiro-header {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+  padding-bottom: 14px; margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.bkp-select-cliente {
+  min-width: 200px; max-width: 280px;
+  font-size: 13px;
+}
+/* Tabela de boletos */
+.bkp-tabela-boletos { width: 100%; border-collapse: collapse; font-size: 13px; }
+.bkp-tabela-boletos thead tr { background: rgba(0,0,0,.03); }
+body.dark .bkp-tabela-boletos thead tr { background: rgba(255,255,255,.03); }
+.bkp-tabela-boletos th,
+.bkp-tabela-boletos td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.bkp-tabela-boletos th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); }
+/* Alerta boletos atrasados */
+.bkp-boleto-alerta {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.25);
+  border-radius: 6px; padding: 10px 14px; font-size: 13px; color: var(--red);
+  margin-bottom: 14px;
+}
+/* Linha de suspensão */
+.bkp-suspensao-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-top: 12px; padding: 10px 14px;
+  background: rgba(245,158,11,.07); border: 1px solid rgba(245,158,11,.22);
+  border-radius: 6px; font-size: 13px; color: var(--amber);
+}
+.bkp-btn-suspensao {
+  margin-left: auto; border: none; border-radius: 5px;
+  padding: 5px 12px; font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: opacity .15s;
+}
+.bkp-btn-suspensao:hover { opacity: .82; }
+.bkp-btn-reativar  { background: #10b981; color: #fff; }
+.bkp-btn-suspender { background: var(--red); color: #fff; }
+/* Botão dar baixa */
+.bkp-btn-baixa {
+  background: #10b981; color: #fff; border: none;
+  border-radius: 5px; padding: 5px 12px; font-size: 11px;
+  font-weight: 700; cursor: pointer; transition: opacity .15s;
+}
+.bkp-btn-baixa:hover { opacity: .82; }
+
+/* btn-success genérico (modals) */
+.btn-success {
+  background: #10b981; color: #fff; border: none;
+  border-radius: var(--radius); padding: 8px 18px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: opacity .15s;
+}
+.btn-success:hover { opacity: .85; }
 
 /* ==========================================================================
    LOADING
