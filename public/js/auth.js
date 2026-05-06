@@ -27,27 +27,6 @@ function verificarLogin() {
         menuUsuarios.style.display =
             (usuario.perfil === "master" || usuario.perfil === "admin") ? "" : "none";
     }
-
-    // Oculta menu Backup para quem não tem permissão
-    const menuBackup = document.getElementById("menuBackup");
-    if (menuBackup && usuario.perfil !== "master") {
-        fetch("/api/backup-permissao", { headers: { "Authorization": "Bearer " + token } })
-            .then(r => r.json())
-            .then(d => {
-                if (!d.visualizar) {
-                    menuBackup.style.display = "none";
-                    // Se estiver na página de backup, redireciona
-                    if (window.location.pathname.endsWith("backup.html"))
-                        window.location.href = "dashboard.html";
-                }
-            })
-            .catch(() => {
-                menuBackup.style.display = "none";
-                if (window.location.pathname.endsWith("backup.html"))
-                    window.location.href = "dashboard.html";
-            });
-    }
-
     agendarAlertasSped();
 }
 

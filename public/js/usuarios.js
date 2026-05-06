@@ -8,56 +8,35 @@ const LABELS_PERFIL = { master: "Mestre", admin: "Administrador", user: "Usuári
 // LISTAR USUÁRIOS
 // =======================================
 async function listarUsuarios() {
-    const tabela  = document.getElementById("tabelaUsuarios");
+    const tabela = document.getElementById("tabelaUsuarios");
     if (!tabela) return;
     mostrarLoading();
     tabela.innerHTML = "";
-
-    const usuarioLogado = JSON.parse(localStorage.getItem("usuario"));
-    const isMaster = usuarioLogado?.perfil === "master";
-
     try {
-        const url = isMaster ? "/api/backup-permissoes" : "/api/usuarios";
-        const response = await fetch(url, { headers: { "Authorization": "Bearer " + getToken() } });
+        const response = await fetch("/api/usuarios", {
+            headers: { "Authorization": "Bearer " + getToken() }
+        });
         if (!response.ok) {
-            tabela.innerHTML = "<tr><td colspan='6' style='text-align:center;padding:20px;'>Acesso negado</td></tr>";
+            tabela.innerHTML = "<tr><td colspan='4' style='text-align:center;padding:20px;'>Acesso negado</td></tr>";
             return;
         }
         const usuarios = await response.json();
-        if (!usuarios.length) {
-            tabela.innerHTML = "<tr><td colspan='6' style='text-align:center;padding:20px;'>Nenhum usuário cadastrado</td></tr>";
+        if (usuarios.length === 0) {
+            tabela.innerHTML = "<tr><td colspan='4' style='text-align:center;padding:20px;'>Nenhum usuário cadastrado</td></tr>";
             return;
         }
-
-        usuarios.forEach(user => {
+        usuarios.forEach((user) => {
             const labelPerfil = LABELS_PERFIL[user.perfil] || user.perfil;
-            const ehMaster    = user.usuario === "admin" || user.perfil === "master";
-
-            let colVer, colEditar;
-            if (ehMaster) {
-                colVer    = '<span style="font-size:11px;color:var(--text-muted);">Sempre</span>';
-                colEditar = '<span style="font-size:11px;color:var(--text-muted);">Sempre</span>';
-            } else if (isMaster) {
-                const chkV = (user.visualizar || user.editar) ? "checked" : "";
-                const chkE = user.editar ? "checked" : "";
-                colVer    = `<label class="toggle-switch"><input type="checkbox" ${chkV} onchange="alterarPermBackup('${user._id}','visualizar',this)"><span class="toggle-slider"></span></label>`;
-                colEditar = `<label class="toggle-switch"><input type="checkbox" ${chkE} onchange="alterarPermBackup('${user._id}','editar',this)"><span class="toggle-slider"></span></label>`;
-            } else {
-                colVer    = '<span style="font-size:11px;color:var(--text-muted);">—</span>';
-                colEditar = '<span style="font-size:11px;color:var(--text-muted);">—</span>';
-            }
-
             tabela.innerHTML += `
-                <tr id="urow-${user._id}">
+                <tr>
                     <td data-label="Nome">${user.nome}</td>
                     <td data-label="Usuário">${user.usuario}</td>
                     <td data-label="Perfil"><span class="status ${user.perfil}">${labelPerfil}</span></td>
-                    <td data-label="Backup: Ver">${colVer}</td>
-                    <td data-label="Backup: Editar">${colEditar}</td>
                     <td class="td-acoes-cell">
-                        ${!ehMaster
+                        ${user.usuario !== "admin"
                             ? `<div class="td-acoes">
-                                <button class="btn-primary" style="background:#f59e0b;" onclick="prepararEdicao('${user._id}','${user.nome}','${user.usuario}','${user.perfil}')">Editar</button>
+                                <button class="btn-primary" style="background:#f59e0b;"
+                                    onclick="prepararEdicao('${user._id}','${user.nome}','${user.usuario}','${user.perfil}')">Editar</button>
                                 <button class="btn-danger" onclick="excluirUsuario('${user._id}')">Excluir</button>
                                </div>`
                             : "<small>Sistema (Mestre)</small>"
@@ -66,29 +45,10 @@ async function listarUsuarios() {
                 </tr>`;
         });
     } catch (error) {
-        tabela.innerHTML = "<tr><td colspan='6' style='text-align:center;padding:20px;'>Erro ao carregar</td></tr>";
+        tabela.innerHTML = "<tr><td colspan='4' style='text-align:center;padding:20px;'>Erro ao carregar</td></tr>";
     } finally {
         esconderLoading();
     }
-}
-
-async function alterarPermBackup(uid, campo, el) {
-    const row    = document.getElementById("urow-" + uid);
-    const checks = row ? [...row.querySelectorAll("input[type=checkbox]")] : [];
-    let visualizar = checks[0]?.checked || false;
-    let editar     = checks[1]?.checked || false;
-    if (campo === "editar" && editar)          { if(checks[0]) checks[0].checked = true; visualizar = true; }
-    if (campo === "visualizar" && !visualizar) { if(checks[1]) checks[1].checked = false; editar = false; }
-    try {
-        const r = await fetch("/api/backup-permissoes/" + uid, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + getToken() },
-            body: JSON.stringify({ visualizar, editar })
-        });
-        if (!r.ok) { toast.erro("Erro ao alterar permissão"); listarUsuarios(); return; }
-        const desc = [visualizar && "Ver", editar && "Editar"].filter(Boolean).join(" + ");
-        toast.sucesso(desc ? "Permissão Backup: " + desc + "!" : "Permissão de Backup revogada!");
-    } catch(e) { toast.erro("Erro"); listarUsuarios(); }
 }
 
 // =======================================

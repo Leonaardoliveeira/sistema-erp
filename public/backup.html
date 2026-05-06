@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Franquia ERP - Monitoramento de Backup</title>
+  <title>Franquia ERP - Backup</title>
   <link rel="stylesheet" href="css/style.css">
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-
 <body onload="verificarLogin(); mostrarUsuarioLogado(); inicializarBackup();">
 
   <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
@@ -15,18 +14,11 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-content">
       <div class="sidebar-header">
-        <div class="logo">
-          <i data-lucide="layers" class="logo-icon"></i>
-          <span>Franquia ERP</span>
-        </div>
-        <button class="theme-switch" onclick="toggleDark()">
-          <i data-lucide="moon"></i>
-        </button>
+        <div class="logo"><i data-lucide="layers" class="logo-icon"></i><span>Franquia ERP</span></div>
+        <button class="theme-switch" onclick="toggleDark()"><i data-lucide="moon"></i></button>
       </div>
       <div class="user-profile">
-        <div class="avatar">
-          <img src="https://ui-avatars.com/api/?name=U&background=0D8ABC&color=fff" alt="Avatar" id="userAvatar">
-        </div>
+        <div class="avatar"><img src="https://ui-avatars.com/api/?name=U&background=0D8ABC&color=fff" alt="Avatar" id="userAvatar"></div>
         <div class="user-info">
           <span class="user-name" id="usuarioLogado">Carregando...</span>
           <span class="user-role">Carregando...</span>
@@ -63,39 +55,15 @@
       <div id="topbarBtns" style="display:flex;gap:8px;align-items:center;"></div>
     </div>
 
-    <!-- CARDS — 4 em linha no desktop, 2×2 no mobile -->
+    <!-- CARDS -->
     <section class="cards">
-      <div class="card card-gerado">
-        <div class="card-content">
-          <h3>Total Monitorados</h3>
-          <p id="totalClientes">—</p>
-          <small>clientes no backup</small>
-        </div>
-      </div>
-      <div class="card card-enviado">
-        <div class="card-content">
-          <h3>Com Backup Hoje</h3>
-          <p id="comBackup">—</p>
-          <small>realizados</small>
-        </div>
-      </div>
-      <div class="card card-erro">
-        <div class="card-content">
-          <h3>Sem Backup Hoje</h3>
-          <p id="semBackup">—</p>
-          <small>pendentes</small>
-        </div>
-      </div>
-      <div class="card card-suspenso">
-        <div class="card-content">
-          <h3>Suspensos</h3>
-          <p id="totalSuspensos">—</p>
-          <small>backup bloqueado</small>
-        </div>
-      </div>
+      <div class="card card-gerado"><div class="card-content"><h3>Total Monitorados</h3><p id="totalClientes">—</p><small>clientes no backup</small></div></div>
+      <div class="card card-enviado"><div class="card-content"><h3>Com Backup Hoje</h3><p id="comBackup">—</p><small>realizados</small></div></div>
+      <div class="card card-erro"><div class="card-content"><h3>Sem Backup Hoje</h3><p id="semBackup">—</p><small>pendentes</small></div></div>
+      <div class="card card-suspenso"><div class="card-content"><h3>Suspensos</h3><p id="totalSuspensos">—</p><small>backup bloqueado</small></div></div>
     </section>
 
-    <!-- ALERTA CLIENTES SEM BACKUP -->
+    <!-- ALERTA SEM BACKUP -->
     <div class="backup-alerta-box" id="boxSemBackup">
       <div class="backup-alerta-titulo">
         <i data-lucide="alert-triangle" style="width:15px;height:15px;color:var(--amber);"></i>
@@ -107,34 +75,18 @@
     <!-- FILTROS -->
     <div class="backup-filtros form-box">
       <div class="backup-filtros-grid">
-        <div>
-          <label>Pesquisar</label>
-          <input type="text" id="campoPesquisa" placeholder="🔎 Cliente, destino..." oninput="filtrarTabela()">
-        </div>
-        <div>
-          <label>Status</label>
+        <div><label>Pesquisar</label><input type="text" id="campoPesquisa" placeholder="🔎 Cliente, destino..." oninput="filtrarTabela()"></div>
+        <div><label>Status</label>
           <select id="filtroStatus" onchange="aplicarFiltros()">
-            <option value="">Todos</option>
-            <option value="ok">OK</option>
-            <option value="falha">Falha</option>
-            <option value="pendente">Pendente</option>
-          </select>
-        </div>
-        <div>
-          <label>Cliente</label>
-          <select id="filtroCliente" onchange="aplicarFiltros()">
-            <option value="">Todos os clientes</option>
-          </select>
-        </div>
-        <div>
-          <label>Período</label>
+            <option value="">Todos</option><option value="ok">OK</option>
+            <option value="falha">Falha</option><option value="pendente">Pendente</option>
+          </select></div>
+        <div><label>Cliente</label><select id="filtroCliente" onchange="aplicarFiltros()"><option value="">Todos os clientes</option></select></div>
+        <div><label>Período</label>
           <select id="filtroDias" onchange="aplicarFiltros()">
-            <option value="7">Últimos 7 dias</option>
-            <option value="30" selected>Últimos 30 dias</option>
-            <option value="90">Últimos 90 dias</option>
-            <option value="365">Último ano</option>
-          </select>
-        </div>
+            <option value="7">Últimos 7 dias</option><option value="30" selected>Últimos 30 dias</option>
+            <option value="90">Últimos 90 dias</option><option value="365">Último ano</option>
+          </select></div>
       </div>
     </div>
 
@@ -142,88 +94,74 @@
     <div class="table-container">
       <div class="table-title">
         <div style="display:flex;align-items:center;gap:8px;">
-          <i data-lucide="list" style="width:15px;height:15px;"></i>
-          <span>Histórico de Backups</span>
+          <i data-lucide="list" style="width:15px;height:15px;"></i><span>Histórico de Backups</span>
         </div>
         <button class="bkp-btn-limpar" id="btnLimparHistorico" onclick="limparHistorico()" style="display:none;">
           <i data-lucide="trash-2" style="width:13px;height:13px;"></i> Limpar Histórico
         </button>
       </div>
       <table>
-        <thead>
-          <tr>
-            <th>Cliente</th>
-            <th>Data / Hora</th>
-            <th>Status</th>
-            <th>Tamanho</th>
-            <th>Destino</th>
-            <th>Responsável</th>
-            <th id="thAcoes" style="display:none;">Ações</th>
-          </tr>
-        </thead>
+        <thead><tr>
+          <th>Cliente</th><th>Data / Hora</th><th>Status</th>
+          <th>Tamanho</th><th>Destino</th><th>Responsável</th>
+          <th id="thAcoes" style="display:none;">Ações</th>
+        </tr></thead>
         <tbody id="tabelaBackup"></tbody>
       </table>
     </div>
 
-    <!-- GERENCIAR CLIENTES MONITORADOS (só visível para quem pode editar) -->
+    <!-- GERENCIAR CLIENTES MONITORADOS -->
     <div class="bkp-gerenciar-section" id="secaoGerenciar" style="display:none;">
       <div class="table-title" style="border-bottom:1px solid var(--border);padding:13px 18px 12px;">
         <div style="display:flex;align-items:center;gap:8px;">
-          <i data-lucide="settings" style="width:15px;height:15px;"></i>
-          <span>Gerenciar Clientes Monitorados</span>
+          <i data-lucide="settings" style="width:15px;height:15px;"></i><span>Gerenciar Clientes Monitorados</span>
         </div>
-        <small style="color:var(--text-muted);font-size:11px;">Marque quais clientes aparecem nesta tela e copie o ObjectID para o Backup Agent</small>
+        <small style="color:var(--text-muted);font-size:11px;">Marque os clientes e copie o ObjectID para o Backup Agent</small>
       </div>
       <table>
-        <thead>
-          <tr>
-            <th>Cliente</th>
-            <th style="width:140px;">Monitorar</th>
-            <th>ObjectID (Backup Agent)</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Cliente</th><th style="width:120px;">Monitorar</th><th>ObjectID (Backup Agent)</th></tr></thead>
         <tbody id="tabelaGerenciar"></tbody>
       </table>
     </div>
 
-    <!-- MINI FINANCEIRO (só visível para quem pode editar) -->
+    <!-- MINI FINANCEIRO -->
     <div class="bkp-financeiro-section" id="secaoFinanceiro" style="display:none;">
-      <div class="bkp-financeiro-header">
+
+      <!-- Cabeçalho do financeiro -->
+      <div class="bkp-fin-header">
         <div style="display:flex;align-items:center;gap:8px;">
-          <i data-lucide="dollar-sign" style="width:16px;height:16px;color:var(--green);"></i>
-          <span style="font-size:14px;font-weight:600;">Mini Financeiro — Boletos de Backup</span>
+          <i data-lucide="dollar-sign" style="width:18px;height:18px;color:var(--green);"></i>
+          <span style="font-size:15px;font-weight:700;">Faturamento</span>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <div class="bkp-fin-controls">
           <select id="finClienteSelect" onchange="carregarBoletos()" class="bkp-select-cliente">
-            <option value="">Selecione o cliente</option>
+            <option value="">Selecionar cliente</option>
           </select>
-          <button class="btn-primary" style="font-size:12px;padding:7px 14px;" onclick="abrirModalGerar()">
+          <button class="btn-primary" style="font-size:12px;padding:7px 14px;white-space:nowrap;" onclick="abrirModalGerar()">
             <i data-lucide="plus" style="width:13px;height:13px;"></i> Gerar 12 Parcelas
+          </button>
+          <button class="bkp-btn-excluir-todas" id="btnExcluirParcelas" onclick="excluirTodasParcelas()" style="display:none;" title="Excluir todas as parcelas deste cliente">
+            <i data-lucide="trash-2" style="width:13px;height:13px;"></i> Excluir Parcelas
           </button>
         </div>
       </div>
 
-      <!-- Alerta boletos atrasados do cliente selecionado -->
+      <!-- Alerta boletos atrasados -->
       <div id="alertaBoletos" class="bkp-boleto-alerta" style="display:none;">
-        <i data-lucide="alert-circle" style="width:14px;height:14px;flex-shrink:0;"></i>
+        <i data-lucide="alert-circle" style="width:15px;height:15px;flex-shrink:0;"></i>
         <span id="alertaBoletosMsg"></span>
       </div>
 
-      <!-- Tabela boletos -->
+      <!-- Tabela de boletos -->
       <div id="wrapBoletos" style="display:none;">
         <table class="bkp-tabela-boletos">
-          <thead>
-            <tr>
-              <th>Parcela</th>
-              <th>Vencimento</th>
-              <th>Valor</th>
-              <th>Status</th>
-              <th>Pago em</th>
-              <th>Ação</th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th>Parc.</th><th>Vencimento</th><th>Valor</th>
+            <th>Status</th><th>Pago em</th><th>Ações</th>
+          </tr></thead>
           <tbody id="tabelaBoletos"></tbody>
         </table>
+
         <!-- Linha de suspensão -->
         <div id="rowSuspensao" class="bkp-suspensao-row" style="display:none;">
           <i data-lucide="shield-off" style="width:14px;height:14px;flex-shrink:0;"></i>
@@ -231,38 +169,34 @@
           <button id="btnToggleSuspensao" onclick="toggleSuspensao()" class="bkp-btn-suspensao"></button>
         </div>
       </div>
-      <div id="boletosVazio" style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">
-        Selecione um cliente para ver os boletos.
+
+      <div id="boletosVazio" style="padding:28px;text-align:center;color:var(--text-muted);font-size:13px;">
+        <i data-lucide="info" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i>
+        Selecione um cliente para ver o faturamento.
       </div>
     </div>
 
-    <!-- DOCUMENTAÇÃO DA API -->
+    <!-- API DOC -->
     <div class="backup-api-doc">
       <div class="backup-api-titulo">
         <i data-lucide="code" style="width:15px;height:15px;color:var(--blue);"></i>
         <span>Integração via Script (API)</span>
       </div>
-      <p class="backup-api-desc">Chame esta rota no seu script de backup para registrar automaticamente após o upload para a nuvem:</p>
+      <p class="backup-api-desc">Rota usada pelo Backup Agent para registrar backups automaticamente:</p>
       <pre class="backup-api-code">POST /api/backup
-Authorization: Bearer &lt;seu_token&gt;
-Content-Type: application/json
+Authorization: Bearer &lt;token&gt;
 
-{
-  "clienteId": "&lt;ObjectID do cliente&gt;",
-  "status":    "ok",
-  "tamanho":   "2.3 GB",
-  "destino":   "MEGA",
-  "dataBackup":"2024-01-15T03:00:00"
-}</pre>
-      <p class="backup-api-desc" style="margin-top:10px;">
-        O <code>clienteId</code> é o <strong>ObjectID</strong> obtido na tabela acima.<br>
-        Verifique se o backup está suspenso antes de executar: <code>GET /api/clientes/:id/status-backup</code>
+{ "clienteId": "&lt;ObjectID&gt;", "status": "ok", "tamanho": "2.3 GB",
+  "destino": "MEGA", "dataBackup": "2024-01-15T03:00:00" }</pre>
+      <p class="backup-api-desc" style="margin-top:8px;">
+        Verificar bloqueio antes de executar: <code>GET /api/clientes/:id/status-backup</code><br>
+        Retorna <code>{"bloqueado": false}</code> se liberado para backup.
       </p>
     </div>
 
   </div><!-- .main -->
 
-  <!-- MODAL EDIÇÃO DE BACKUP -->
+  <!-- MODAL EDIÇÃO BACKUP -->
   <div id="modalBackup" class="modal" style="display:none;">
     <div class="modal-content">
       <h3>Editar Registro de Backup</h3>
@@ -292,10 +226,11 @@ Content-Type: application/json
   <div id="modalGerar" class="modal" style="display:none;">
     <div class="modal-content">
       <h3>Gerar 12 Parcelas de Boleto</h3>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:-6px;margin-bottom:12px;">
+        Vencimentos que caírem em sábado ou domingo são automaticamente ajustados para a segunda-feira seguinte.
+      </p>
       <label>Cliente</label>
-      <select id="gerarClienteId">
-        <option value="">Selecione o cliente</option>
-      </select>
+      <select id="gerarClienteId"><option value="">Selecione o cliente</option></select>
       <label>Valor Mensal (R$)</label>
       <input type="number" id="gerarValor" placeholder="Ex: 150.00" step="0.01" min="0.01">
       <label>Data do 1º Vencimento</label>
