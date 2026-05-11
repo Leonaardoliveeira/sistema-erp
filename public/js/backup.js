@@ -203,27 +203,14 @@ function renderizarTabela(lista) {
         const bancoM = obs.match(/Banco:\s*([^|]+)/i);
         const banco = bancoM ? bancoM[1].trim() : (b.destino ? b.destino.split("/").pop() : "—");
 
-        // Botão de suspensão inline — visível apenas para editores
-        // Busca se o cliente está suspenso na lista local de clientes monitorados
-        const clienteId = b.clienteId?._id?.toString() || b.clienteId?.toString() || "";
-        const clienteObj = todosClientes.find(c => c._id?.toString() === clienteId);
-        const isSusp = clienteObj?.suspenderBackup ?? false;
-
         const acaoCol = perm.editar
-            ? `<td class="td-acoes-cell"><div class="td-acoes" style="gap:4px;">
-                 ${isSusp
-                ? `<button class="bkp-btn-suspensao bkp-btn-reativar"  style="font-size:11px;padding:5px 10px;" onclick="toggleSuspensaoCliente('${clienteId}', false, this)">✅ Reativar</button>`
-                : `<button class="bkp-btn-suspensao bkp-btn-suspender" style="font-size:11px;padding:5px 10px;" onclick="toggleSuspensaoCliente('${clienteId}', true,  this)">⛔ Suspender</button>`
-            }
-                 <button class="btn-primary" style="background:#f59e0b;font-size:11px;padding:5px 10px;" onclick="abrirEdicao('${b._id}','${st}','${b.tamanho || ""}','${b.destino || ""}','${(b.observacao || "").replace(/'/g, "\\'")}')">Editar</button>
-                 <button class="btn-danger"  style="font-size:11px;padding:5px 10px;" onclick="excluirBackup('${b._id}')">Excluir</button>
+            ? `<td class="td-acoes-cell"><div class="td-acoes">
+                 <button class="btn-danger" style="font-size:11px;padding:5px 10px;" onclick="excluirBackup('${b._id}')">Excluir</button>
                </div></td>`
             : "";
 
         return `<tr>
-          <td data-label="Cliente"><strong>${b.clienteId?.nome || "—"}</strong>
-            ${isSusp ? `<span class="backup-status" style="background:#fef3c7;color:#92400e;margin-left:6px;font-size:10px;">Suspenso</span>` : ""}
-          </td>
+          <td data-label="Cliente"><strong>${b.clienteId?.nome || "—"}</strong></td>
           <td data-label="Data">${dt.toLocaleDateString("pt-BR")} <span style="color:var(--text-muted);font-size:12px;">${dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span></td>
           <td data-label="Banco"><code style="font-size:12px;color:var(--text-muted);">${banco}</code></td>
           <td data-label="Status"><span class="backup-status ${st}">${{ ok: "OK", falha: "Falha", pendente: "Pendente" }[st] || st}</span></td>
