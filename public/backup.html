@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -36,12 +37,12 @@
         <div class="nav-group">
           <span class="nav-title">Gestão</span>
           <a href="dashboard.html" class="nav-item"><i data-lucide="layout-dashboard"></i> Dashboard</a>
-          <a href="cadastro.html"  class="nav-item"><i data-lucide="user-plus"></i> Cadastro de Cliente</a>
+          <a href="cadastro.html" class="nav-item"><i data-lucide="user-plus"></i> Cadastro de Cliente</a>
         </div>
         <div class="nav-group">
           <span class="nav-title">Operacional</span>
           <a href="clientes.html" class="nav-item"><i data-lucide="file-text"></i> Gerenciamento Sped</a>
-          <a href="backup.html"   class="nav-item active" id="menuBackup"><i data-lucide="database"></i> Backup</a>
+          <a href="backup.html" class="nav-item active" id="menuBackup"><i data-lucide="database"></i> Backup</a>
           <a href="usuarios.html" class="nav-item" id="menuUsuarios"><i data-lucide="users"></i> Usuários</a>
         </div>
         <div class="nav-group">
@@ -60,10 +61,10 @@
     <!-- TOPBAR -->
     <div class="topbar">
       <h2>Monitoramento de Backup</h2>
-      <div id="topbarBtns" style="display:flex;gap:8px;align-items:center;"></div>
+      <!-- topbarBtns removido: botão Gerenciar Clientes foi removido conforme solicitado -->
     </div>
 
-    <!-- CARDS — 4 em linha no desktop, 2×2 no mobile -->
+    <!-- CARDS -->
     <section class="cards">
       <div class="card card-gerado">
         <div class="card-content">
@@ -109,7 +110,7 @@
       <div class="backup-filtros-grid">
         <div>
           <label>Pesquisar</label>
-          <input type="text" id="campoPesquisa" placeholder="🔎 Cliente, destino..." oninput="filtrarTabela()">
+          <input type="text" id="campoPesquisa" placeholder="🔎 Cliente, banco, destino..." oninput="filtrarTabela()">
         </div>
         <div>
           <label>Status</label>
@@ -154,10 +155,10 @@
           <tr>
             <th>Cliente</th>
             <th>Data / Hora</th>
+            <th>Banco</th>
             <th>Status</th>
             <th>Tamanho</th>
             <th>Destino</th>
-            <th>Responsável</th>
             <th id="thAcoes" style="display:none;">Ações</th>
           </tr>
         </thead>
@@ -172,68 +173,20 @@
           <i data-lucide="settings" style="width:15px;height:15px;"></i>
           <span>Gerenciar Clientes Monitorados</span>
         </div>
-        <small style="color:var(--text-muted);font-size:11px;">Marque quais clientes aparecem nesta tela e copie o ObjectID para o Backup Agent</small>
+        <small style="color:var(--text-muted);font-size:11px;">Marque quais clientes aparecem nesta tela e copie o
+          ObjectID para o Backup Agent</small>
       </div>
       <table>
         <thead>
           <tr>
             <th>Cliente</th>
             <th style="width:140px;">Monitorar</th>
+            <th style="width:180px;">Suspensão</th>
             <th>ObjectID (Backup Agent)</th>
           </tr>
         </thead>
         <tbody id="tabelaGerenciar"></tbody>
       </table>
-    </div>
-
-    <!-- MINI FINANCEIRO (só visível para quem pode editar) -->
-    <div class="bkp-financeiro-section" id="secaoFinanceiro" style="display:none;">
-      <div class="bkp-financeiro-header">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <i data-lucide="dollar-sign" style="width:16px;height:16px;color:var(--green);"></i>
-          <span style="font-size:14px;font-weight:600;">Mini Financeiro — Boletos de Backup</span>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <select id="finClienteSelect" onchange="carregarBoletos()" class="bkp-select-cliente">
-            <option value="">Selecione o cliente</option>
-          </select>
-          <button class="btn-primary" style="font-size:12px;padding:7px 14px;" onclick="abrirModalGerar()">
-            <i data-lucide="plus" style="width:13px;height:13px;"></i> Gerar 12 Parcelas
-          </button>
-        </div>
-      </div>
-
-      <!-- Alerta boletos atrasados do cliente selecionado -->
-      <div id="alertaBoletos" class="bkp-boleto-alerta" style="display:none;">
-        <i data-lucide="alert-circle" style="width:14px;height:14px;flex-shrink:0;"></i>
-        <span id="alertaBoletosMsg"></span>
-      </div>
-
-      <!-- Tabela boletos -->
-      <div id="wrapBoletos" style="display:none;">
-        <table class="bkp-tabela-boletos">
-          <thead>
-            <tr>
-              <th>Parcela</th>
-              <th>Vencimento</th>
-              <th>Valor</th>
-              <th>Status</th>
-              <th>Pago em</th>
-              <th>Ação</th>
-            </tr>
-          </thead>
-          <tbody id="tabelaBoletos"></tbody>
-        </table>
-        <!-- Linha de suspensão -->
-        <div id="rowSuspensao" class="bkp-suspensao-row" style="display:none;">
-          <i data-lucide="shield-off" style="width:14px;height:14px;flex-shrink:0;"></i>
-          <span id="msgSuspensao"></span>
-          <button id="btnToggleSuspensao" onclick="toggleSuspensao()" class="bkp-btn-suspensao"></button>
-        </div>
-      </div>
-      <div id="boletosVazio" style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">
-        Selecione um cliente para ver os boletos.
-      </div>
     </div>
 
     <!-- DOCUMENTAÇÃO DA API -->
@@ -242,17 +195,19 @@
         <i data-lucide="code" style="width:15px;height:15px;color:var(--blue);"></i>
         <span>Integração via Script (API)</span>
       </div>
-      <p class="backup-api-desc">Chame esta rota no seu script de backup para registrar automaticamente após o upload para a nuvem:</p>
+      <p class="backup-api-desc">Chame esta rota no seu script de backup para registrar automaticamente após o upload
+        para a nuvem:</p>
       <pre class="backup-api-code">POST /api/backup
 Authorization: Bearer &lt;seu_token&gt;
 Content-Type: application/json
 
 {
-  "clienteId": "&lt;ObjectID do cliente&gt;",
-  "status":    "ok",
-  "tamanho":   "2.3 GB",
-  "destino":   "MEGA",
-  "dataBackup":"2024-01-15T03:00:00"
+  "clienteId":  "&lt;ObjectID do cliente&gt;",
+  "status":     "ok",
+  "tamanho":    "2.3 GB",
+  "destino":    "MEGA/Backups/gestores",
+  "observacao": "Banco: gestores | Servidor: localhost",
+  "dataBackup": "2024-01-15T03:00:00"
 }</pre>
       <p class="backup-api-desc" style="margin-top:10px;">
         O <code>clienteId</code> é o <strong>ObjectID</strong> obtido na tabela acima.<br>
@@ -288,28 +243,9 @@ Content-Type: application/json
     </div>
   </div>
 
-  <!-- MODAL GERAR BOLETOS -->
-  <div id="modalGerar" class="modal" style="display:none;">
-    <div class="modal-content">
-      <h3>Gerar 12 Parcelas de Boleto</h3>
-      <label>Cliente</label>
-      <select id="gerarClienteId">
-        <option value="">Selecione o cliente</option>
-      </select>
-      <label>Valor Mensal (R$)</label>
-      <input type="number" id="gerarValor" placeholder="Ex: 150.00" step="0.01" min="0.01">
-      <label>Data do 1º Vencimento</label>
-      <input type="date" id="gerarDataInicio">
-      <div class="modal-actions">
-        <button class="btn-secondary" onclick="fecharModalGerar()">Cancelar</button>
-        <button class="btn-success" onclick="confirmarGerarBoletos()">
-          <i data-lucide="check" style="width:14px;height:14px;"></i> Gerar
-        </button>
-      </div>
-    </div>
+  <div id="loading">
+    <div class="spinner"></div>
   </div>
-
-  <div id="loading"><div class="spinner"></div></div>
 
   <script>
     lucide.createIcons();
@@ -322,4 +258,5 @@ Content-Type: application/json
   <script src="js/auth.js"></script>
   <script src="js/backup.js"></script>
 </body>
+
 </html>
