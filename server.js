@@ -580,9 +580,6 @@ app.put("/api/backup-permissoes/:uid", verificarToken, verificarMaster, async (r
   } catch (err) { res.status(400).json({ message: err.message }); }
 });
 
-// --------------------
-// BOLETOS (mini-financeiro)
-// --------------------
 
 // Gerar 12 parcelas
 app.post("/api/boletos/gerar", verificarToken, verificarPermBackup, async (req, res) => {
