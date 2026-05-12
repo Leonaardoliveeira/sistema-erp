@@ -1,5 +1,5 @@
 /* ==========================================================================
-   FRANQUIA ERP — style.css  (versão 3)
+   FRANQUIA ERP — style.css  (versão 4)
    ========================================================================== */
 
 /* ==========================================================================
@@ -17,7 +17,6 @@
   --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
   --sidebar-w: 250px;
 
-  /* Paleta principal — preservada */
   --bg: #f0f2f5;
   --surface: #ffffff;
   --border: #e5e7eb;
@@ -306,7 +305,6 @@ body {
   margin: auto;
 }
 
-/* Título de seção reutilizável */
 .section-header {
   margin-bottom: 14px;
 }
@@ -372,7 +370,6 @@ body {
   overflow: hidden;
 }
 
-/* Ícone decorativo de fundo */
 .card::after {
   content: '';
   position: absolute;
@@ -404,7 +401,6 @@ body {
   color: var(--text);
 }
 
-/* Legenda de "Clique para filtrar" */
 .card small {
   display: block;
   font-size: 10px;
@@ -497,10 +493,11 @@ body {
   width: 100%;
 }
 
-/* Título da tabela */
 .table-title {
-  display: flex;
-  align-items: center;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 13px 18px 12px;
   border-bottom: 1px solid var(--border);
@@ -774,7 +771,7 @@ button:active {
 }
 
 /* ==========================================================================
-   9. STATUS PILLS — substitui select no mobile e desktop
+   9. STATUS PILLS
    ========================================================================== */
 .status-pills {
   display: flex;
@@ -829,7 +826,6 @@ button:active {
   border-color: var(--red);
 }
 
-/* Botões antigos de status (mantidos para compatibilidade) */
 .status-botoes {
   display: flex;
   gap: 4px;
@@ -881,7 +877,6 @@ button:active {
   display: none;
 }
 
-/* Badges de status (tabela dashboard) */
 .status {
   display: inline-block;
   padding: 3px 10px;
@@ -1261,7 +1256,6 @@ body.dark .modal-actions {
     padding-top: 66px;
   }
 
-  /* Cards — 2 colunas compactas, mais legíveis */
   .cards {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
@@ -1285,7 +1279,6 @@ body.dark .modal-actions {
     display: none;
   }
 
-  /* Pills de status: empilham em coluna no card mobile */
   .status-pills {
     flex-direction: column;
     gap: 4px;
@@ -1299,7 +1292,6 @@ body.dark .modal-actions {
     border-radius: var(--radius-sm);
   }
 
-  /* Tabela stacked — cada linha vira card */
   .table-container {
     background: transparent;
     border: none;
@@ -1382,7 +1374,6 @@ body.dark .modal-actions {
     flex: 1;
   }
 
-  /* Status pills dentro da tabela stacked */
   tbody td .status-pills {
     flex-direction: row;
     flex-wrap: wrap;
@@ -1439,7 +1430,6 @@ body.dark .modal-actions {
   }
 }
 
-/* Dark mode stacked */
 @media (max-width: 640px) {
   body.dark tbody tr {
     background: var(--surface);
@@ -1466,11 +1456,9 @@ body.dark .modal-actions {
   }
 }
 
-
 /* ==========================================================================
    SEÇÃO DE ALERTAS SPED
    ========================================================================== */
-
 .alerta-section {
   margin-top: 28px;
 }
@@ -1486,7 +1474,6 @@ body.dark .modal-actions {
   gap: 16px;
 }
 
-/* Cabeçalho do card: título + toggle */
 .alerta-card-header {
   display: flex;
   align-items: center;
@@ -1504,7 +1491,6 @@ body.dark .modal-actions {
   color: var(--text);
 }
 
-/* Toggle switch nativo estilizado */
 .toggle-switch {
   position: relative;
   display: inline-flex;
@@ -1553,7 +1539,6 @@ body.dark .modal-actions {
   transform: translateX(18px);
 }
 
-/* Descrição */
 .alerta-card-desc {
   font-size: 12.5px;
   color: var(--text-muted);
@@ -1561,7 +1546,6 @@ body.dark .modal-actions {
   margin: -4px 0 0;
 }
 
-/* Label dos horários */
 .alerta-horarios-label {
   font-size: 12px;
   font-weight: 600;
@@ -1571,7 +1555,6 @@ body.dark .modal-actions {
   margin-bottom: 10px;
 }
 
-/* Lista de horários */
 .horarios-lista {
   display: flex;
   flex-wrap: wrap;
@@ -1627,7 +1610,7 @@ body.dark .modal-actions {
 }
 
 .btn-remover-horario:disabled {
-  opacity: 0.35;
+  opacity: .35;
   cursor: not-allowed;
 }
 
@@ -1652,7 +1635,6 @@ body.dark .modal-actions {
   background: rgba(79, 70, 229, .04);
 }
 
-/* Rodapé do card */
 .alerta-card-footer {
   display: flex;
   justify-content: flex-end;
@@ -1660,7 +1642,6 @@ body.dark .modal-actions {
   border-top: 1px solid var(--border);
 }
 
-/* Dark mode */
 body.dark .alerta-card {
   border-color: #1f2937;
 }
@@ -1707,7 +1688,6 @@ body.dark .toggle-switch input:checked+.toggle-slider {
   background: var(--blue);
 }
 
-/* Mobile */
 @media (max-width: 640px) {
   .alerta-card {
     padding: 16px;
@@ -1748,12 +1728,10 @@ body.dark .toggle-switch input:checked+.toggle-slider {
   }
 }
 
-
 /* ==========================================================================
    MÓDULO DE BACKUP
    ========================================================================== */
 
-/* Cards de backup usam a mesma grid do dashboard (.cards = 4 colunas) */
 /* card-suspenso — 4º card */
 .card-suspenso {
   border-left-color: var(--amber);
@@ -1767,7 +1745,7 @@ body.dark .toggle-switch input:checked+.toggle-slider {
   box-shadow: 0 8px 24px rgba(245, 158, 11, .22);
 }
 
-/* Status badges na tabela */
+/* Status badges */
 .backup-status {
   display: inline-block;
   padding: 3px 10px;
@@ -1794,6 +1772,11 @@ body.dark .toggle-switch input:checked+.toggle-slider {
   color: #92400e;
 }
 
+.backup-status.suspenso {
+  background: #fef3c7;
+  color: #92400e;
+}
+
 body.dark .backup-status.ok {
   background: rgba(16, 185, 129, .15);
   color: #6ee7b7;
@@ -1805,6 +1788,11 @@ body.dark .backup-status.falha {
 }
 
 body.dark .backup-status.pendente {
+  background: rgba(245, 158, 11, .15);
+  color: #fcd34d;
+}
+
+body.dark .backup-status.suspenso {
   background: rgba(245, 158, 11, .15);
   color: #fcd34d;
 }
@@ -1889,7 +1877,7 @@ body.dark .sem-backup-badge {
   margin-bottom: 0;
 }
 
-/* Documentação da API */
+/* Documentação API */
 .backup-api-doc {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1921,7 +1909,7 @@ body.dark .sem-backup-badge {
   color: var(--blue);
   padding: 1px 5px;
   border-radius: 4px;
-  font-family: var(--font-mono, monospace);
+  font-family: monospace;
   font-size: 12px;
 }
 
@@ -1943,34 +1931,6 @@ body.dark .backup-api-doc {
 
 body.dark .backup-api-desc code {
   background: rgba(99, 102, 241, .2);
-}
-
-/* Filtros responsivo */
-@media (max-width: 992px) {
-  .backup-filtros-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .backup-filtros-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .backup-api-code {
-    font-size: 11px;
-    padding: 12px;
-  }
-}
-
-/* table-title com botão à direita */
-.table-title {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 
 /* Botão limpar histórico */
@@ -2013,176 +1973,7 @@ body.dark .backup-api-desc code {
   border-color: transparent;
 }
 
-/* Seção gerenciar clientes */
-.bkp-gerenciar-section {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-  margin-bottom: 24px;
-}
-
-/* ─── Mini Financeiro ─────────────────────────────────────────────── */
-.bkp-financeiro-section {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  padding: 20px 24px;
-  margin-bottom: 24px;
-}
-
-.bkp-financeiro-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding-bottom: 14px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid var(--border);
-}
-
-.bkp-select-cliente {
-  min-width: 200px;
-  max-width: 280px;
-  font-size: 13px;
-}
-
-/* Tabela de boletos */
-.bkp-tabela-boletos {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.bkp-tabela-boletos thead tr {
-  background: rgba(0, 0, 0, .03);
-}
-
-body.dark .bkp-tabela-boletos thead tr {
-  background: rgba(255, 255, 255, .03);
-}
-
-.bkp-tabela-boletos th,
-.bkp-tabela-boletos td {
-  padding: 10px 14px;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
-}
-
-.bkp-tabela-boletos th {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  color: var(--text-muted);
-}
-
-/* Alerta boletos atrasados */
-.bkp-boleto-alerta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(239, 68, 68, .08);
-  border: 1px solid rgba(239, 68, 68, .25);
-  border-radius: 6px;
-  padding: 10px 14px;
-  font-size: 13px;
-  color: var(--red);
-  margin-bottom: 14px;
-}
-
-/* Linha de suspensão */
-.bkp-suspensao-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-  padding: 10px 14px;
-  background: rgba(245, 158, 11, .07);
-  border: 1px solid rgba(245, 158, 11, .22);
-  border-radius: 6px;
-  font-size: 13px;
-  color: var(--amber);
-}
-
-.bkp-btn-suspensao {
-  margin-left: auto;
-  border: none;
-  border-radius: 5px;
-  padding: 5px 12px;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity .15s;
-}
-
-.bkp-btn-suspensao:hover {
-  opacity: .82;
-}
-
-.bkp-btn-reativar {
-  background: #10b981;
-  color: #fff;
-}
-
-.bkp-btn-suspender {
-  background: var(--red);
-  color: #fff;
-}
-
-/* Botão dar baixa */
-.bkp-btn-baixa {
-  background: #10b981;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  padding: 5px 12px;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity .15s;
-}
-
-.bkp-btn-baixa:hover {
-  opacity: .82;
-}
-
-/* btn-success genérico (modals) */
-.btn-success {
-  background: #10b981;
-  color: #fff;
-  border: none;
-  border-radius: var(--radius);
-  padding: 8px 18px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: opacity .15s;
-}
-
-.btn-success:hover {
-  opacity: .85;
-}
-
-/* Badge "Suspenso" inline na coluna Cliente da tabela de histórico */
-.backup-status.suspenso {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-body.dark .backup-status.suspenso {
-  background: rgba(245, 158, 11, .15);
-  color: #fcd34d;
-}
-
-/* Botões de suspensão na tabela de gerenciar e no histórico */
+/* Botões de suspensão */
 .bkp-btn-suspensao {
   border: none;
   border-radius: 6px;
@@ -2204,14 +1995,285 @@ body.dark .backup-status.suspenso {
 }
 
 .bkp-btn-suspender {
-  background: var(--red, #ef4444);
+  background: var(--red);
   color: #fff;
 }
 
-/* Coluna Banco na tabela de histórico */
+/* Coluna banco */
 #tabelaBackup td code {
   background: transparent;
   padding: 0;
+}
+
+/* ── Seção gerenciar — separada com margem do histórico ────────────────────── */
+.bkp-gerenciar-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  /* Espaço claro entre o histórico e esta seção */
+  margin-top: 32px;
+  margin-bottom: 24px;
+}
+
+/* ── Accordion — histórico agrupado por cliente ────────────────────────────── */
+
+/* Wrapper geral dos acordeões — fica dentro do .table-container */
+.bkp-historico-wrap {
+  /* sem borda extra, o container já tem */
+}
+
+/* Mensagem de "vazio" */
+.bkp-vazio-msg {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13.5px;
+}
+
+/* Cada bloco de cliente */
+.bkp-accordion {
+  border-bottom: 1px solid var(--border);
+}
+
+.bkp-accordion:last-child {
+  border-bottom: none;
+}
+
+/* Cabeçalho clicável */
+.bkp-accordion-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background .15s;
+  text-align: left;
+  border-radius: 0;
+}
+
+.bkp-accordion-header:hover {
+  background: #f8fafc;
+}
+
+body.dark .bkp-accordion-header:hover {
+  background: #1c2433;
+}
+
+/* Lado esquerdo: chevron + nome */
+.bkp-acc-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.bkp-acc-chevron {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform .22s cubic-bezier(.4, 0, .2, 1);
+}
+
+/* Gira o chevron quando aberto */
+.bkp-accordion.aberto .bkp-acc-chevron {
+  transform: rotate(-180deg);
+}
+
+.bkp-acc-nome {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Lado direito: badges + meta */
+.bkp-acc-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.bkp-acc-total {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.bkp-acc-ultimo {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Corpo do accordion — oculto por padrão, abre com animação */
+.bkp-accordion-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows .26s cubic-bezier(.4, 0, .2, 1);
+  overflow: hidden;
+}
+
+.bkp-accordion.aberto .bkp-accordion-body {
+  grid-template-rows: 1fr;
+}
+
+/* Filho direto precisa de overflow:hidden para o grid funcionar */
+.bkp-accordion-body>table {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Thead dentro do accordion — fundo levemente diferente para não confundir */
+.bkp-accordion-body thead th {
+  background: #1e2a3a;
+  font-size: 11px;
+  padding: 10px 16px;
+}
+
+body.dark .bkp-accordion-body thead th {
+  background: #0c1526;
+}
+
+/* Zebra suave nas linhas do accordion */
+.bkp-accordion-body tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+
+body.dark .bkp-accordion-body tbody tr:nth-child(even) {
+  background: #131c2b;
+}
+
+/* Dark mode accordion */
+body.dark .bkp-accordion {
+  border-color: #1f2937;
+}
+
+body.dark .bkp-accordion-header {
+  background: #111827;
+}
+
+/* Responsivo — accordion no mobile */
+@media (max-width: 640px) {
+  .bkp-accordion-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .bkp-acc-right {
+    justify-content: flex-start;
+    gap: 6px;
+  }
+
+  .bkp-acc-ultimo {
+    display: none;
+  }
+
+  /* economiza espaço no mobile */
+
+  /* No mobile o body do accordion usa o stacking normal de tabela */
+  .bkp-accordion-body table,
+  .bkp-accordion-body thead,
+  .bkp-accordion-body tbody,
+  .bkp-accordion-body tr,
+  .bkp-accordion-body th,
+  .bkp-accordion-body td {
+    display: block;
+    width: 100%;
+  }
+
+  .bkp-accordion-body thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+    visibility: hidden;
+  }
+
+  .bkp-accordion-body tbody tr {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 8px 10px;
+    box-shadow: var(--shadow-xs);
+    overflow: hidden;
+  }
+
+  .bkp-accordion-body tbody td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 13px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    min-height: 40px;
+  }
+
+  .bkp-accordion-body tbody tr td:first-child {
+    border-top: none;
+  }
+
+  .bkp-accordion-body tbody td::before {
+    content: attr(data-label);
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 64px;
+  }
+
+  .bkp-accordion-body tbody td.td-acoes-cell {
+    justify-content: center;
+    border-top: 1px dashed var(--border);
+    flex-wrap: wrap;
+  }
+
+  .bkp-accordion-body tbody td.td-acoes-cell::before {
+    display: none;
+  }
+
+  body.dark .bkp-accordion-body tbody tr {
+    background: var(--surface);
+    border-color: var(--border);
+  }
+
+  body.dark .bkp-accordion-body tbody td {
+    border-color: var(--border);
+  }
+
+  /* Filtros em coluna no mobile */
+  .backup-filtros-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .backup-api-code {
+    font-size: 11px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 992px) {
+  .backup-filtros-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 /* ==========================================================================
