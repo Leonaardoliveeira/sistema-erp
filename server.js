@@ -1,10 +1,10 @@
 require("dotenv").config();
-const express   = require("express");
-const path      = require("path");
-const cors      = require("cors");
-const mongoose  = require("mongoose");
-const bcrypt    = require("bcryptjs");
-const jwt       = require("jsonwebtoken");
+const express = require("express");
+const path = require("path");
+const cors = require("cors");
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 app.use(cors());
@@ -22,88 +22,88 @@ mongoose.connect(process.env.MONGO_URI)
 // SCHEMAS
 // --------------------
 const UsuarioSchema = new mongoose.Schema({
-  nome:    { type: String, required: true },
+  nome: { type: String, required: true },
   usuario: { type: String, required: true, unique: true },
-  senha:   { type: String, required: true },
+  senha: { type: String, required: true },
   // master: vê todos os clientes + gerencia usuários
   // admin:  vê apenas os próprios + gerencia usuários
   // user:   vê apenas os próprios, não gerencia usuários
-  perfil:  { type: String, enum: ["master", "admin", "user"], default: "user" }
+  perfil: { type: String, enum: ["master", "admin", "user"], default: "user" }
 });
 
 const ClienteSchema = new mongoose.Schema({
-  nome:             { type: String, required: true },
-  documento:        String,
-  email:            String,
-  telefone:         String,
-  regime:           String,
-  sped:             { type: String, enum: ["Sim", "Nao"], default: "Nao" },
-  acessosRemotos:   [{ nome: String, anydesk: String }],
-  status:           { type: String, default: "Pendente" },
-  suspenderBackup:  { type: Boolean, default: false },   // suspenso manualmente ou por boleto
+  nome: { type: String, required: true },
+  documento: String,
+  email: String,
+  telefone: String,
+  regime: String,
+  sped: { type: String, enum: ["Sim", "Nao"], default: "Nao" },
+  acessosRemotos: [{ nome: String, anydesk: String }],
+  status: { type: String, default: "Pendente" },
+  suspenderBackup: { type: Boolean, default: false },   // suspenso manualmente ou por boleto
   monitoradoBackup: { type: Boolean, default: false },   // aparece na tela de backup
-  usuarioId:        { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
-  criadoEm:         { type: Date, default: Date.now }
+  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
+  criadoEm: { type: Date, default: Date.now }
 });
 
 const SpedSchema = new mongoose.Schema({
   clienteId: { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
-  mes:       { type: String, required: true },
-  status:    { type: String, enum: ["nao", "gerado", "ok"], default: "nao" },
+  mes: { type: String, required: true },
+  status: { type: String, enum: ["nao", "gerado", "ok"], default: "nao" },
   usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario" }
 });
 
 const ConfigSchema = new mongoose.Schema({
   chave: { type: String, unique: true },
-  mes:   Number,
-  ano:   Number
+  mes: Number,
+  ano: Number
 });
 
 const AlertaConfigSchema = new mongoose.Schema({
   usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true, unique: true },
-  ativo:     { type: Boolean, default: true },
-  horarios:  { type: [String], default: ["08:00"] }
+  ativo: { type: Boolean, default: true },
+  horarios: { type: [String], default: ["08:00"] }
 });
 
 const BackupSchema = new mongoose.Schema({
-  clienteId:  { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
-  usuarioId:  { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
-  status:     { type: String, enum: ["ok", "falha", "pendente"], default: "pendente" },
-  tamanho:    { type: String },
-  destino:    { type: String },
+  clienteId: { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
+  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
+  status: { type: String, enum: ["ok", "falha", "pendente"], default: "pendente" },
+  tamanho: { type: String },
+  destino: { type: String },
   observacao: { type: String },
   dataBackup: { type: Date, required: true },
-  criadoEm:  { type: Date, default: Date.now }
+  criadoEm: { type: Date, default: Date.now }
 });
 
 // Permissões de acesso à tela de backup por usuário (gerenciado pelo master)
 const PermissaoBackupSchema = new mongoose.Schema({
-  usuarioId:  { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true, unique: true },
+  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true, unique: true },
   visualizar: { type: Boolean, default: false },
-  editar:     { type: Boolean, default: false }
+  editar: { type: Boolean, default: false }
 });
 
 // Boletos do mini-financeiro de backup
 const BoletoSchema = new mongoose.Schema({
-  clienteId:     { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
-  parcela:       { type: Number, required: true },
+  clienteId: { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
+  parcela: { type: Number, required: true },
   totalParcelas: { type: Number, default: 12 },
-  valor:         { type: Number, required: true },
-  vencimento:    { type: Date, required: true },
-  status:        { type: String, enum: ["aberto", "pago", "atrasado"], default: "aberto" },
-  pago_em:       { type: Date },
-  criadoEm:     { type: Date, default: Date.now }
+  valor: { type: Number, required: true },
+  vencimento: { type: Date, required: true },
+  status: { type: String, enum: ["aberto", "pago", "atrasado"], default: "aberto" },
+  pago_em: { type: Date },
+  criadoEm: { type: Date, default: Date.now }
 });
 
 // Registra models apenas uma vez (evita erro no Vercel com hot-reload)
-const Usuario         = mongoose.models.Usuario         || mongoose.model("Usuario",         UsuarioSchema);
-const Cliente         = mongoose.models.Cliente         || mongoose.model("Cliente",         ClienteSchema);
-const Sped            = mongoose.models.Sped            || mongoose.model("Sped",            SpedSchema);
-const Config          = mongoose.models.Config          || mongoose.model("Config",          ConfigSchema);
-const AlertaConfig    = mongoose.models.AlertaConfig    || mongoose.model("AlertaConfig",    AlertaConfigSchema);
-const Backup          = mongoose.models.Backup          || mongoose.model("Backup",          BackupSchema);
+const Usuario = mongoose.models.Usuario || mongoose.model("Usuario", UsuarioSchema);
+const Cliente = mongoose.models.Cliente || mongoose.model("Cliente", ClienteSchema);
+const Sped = mongoose.models.Sped || mongoose.model("Sped", SpedSchema);
+const Config = mongoose.models.Config || mongoose.model("Config", ConfigSchema);
+const AlertaConfig = mongoose.models.AlertaConfig || mongoose.model("AlertaConfig", AlertaConfigSchema);
+const Backup = mongoose.models.Backup || mongoose.model("Backup", BackupSchema);
 const PermissaoBackup = mongoose.models.PermissaoBackup || mongoose.model("PermissaoBackup", PermissaoBackupSchema);
-const Boleto          = mongoose.models.Boleto          || mongoose.model("Boleto",          BoletoSchema);
+const Boleto = mongoose.models.Boleto || mongoose.model("Boleto", BoletoSchema);
 
 // --------------------
 // RESET MENSAL
@@ -179,11 +179,33 @@ app.post("/api/login", async (req, res) => {
   try {
     const { usuario, senha } = req.body;
     const user = await Usuario.findOne({ usuario });
+
     if (!user) return res.status(401).json({ message: "Credenciais inválidas" });
+
     const match = await bcrypt.compare(senha, user.senha);
     if (!match) return res.status(401).json({ message: "Credenciais inválidas" });
-    const token = jwt.sign({ id: user._id, perfil: user.perfil }, process.env.JWT_SECRET, { expiresIn: "8h" });
-    res.json({ token, usuario: { nome: user.nome, usuario: user.usuario, perfil: user.perfil } });
+
+    const payload = { id: user._id, perfil: user.perfil };
+    const secret = process.env.JWT_SECRET;
+
+    // Lógica de expiração condicional
+    let token;
+    if (user.perfil === "master") {
+      // Para o mestre, o token é gerado sem a propriedade expiresIn (Fica permanente)
+      token = jwt.sign(payload, secret);
+    } else {
+      // Para os demais, mantém as 8 horas originais
+      token = jwt.sign(payload, secret, { expiresIn: "8h" });
+    }
+
+    res.json({
+      token,
+      usuario: {
+        nome: user.nome,
+        usuario: user.usuario,
+        perfil: user.perfil
+      }
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -230,14 +252,14 @@ app.put("/api/clientes/:id", verificarToken, async (req, res) => {
     const filtro = { _id: req.params.id, ...filtroPerfil(req) };
     const { nome, documento, email, telefone, regime, sped, acessosRemotos, status } = req.body;
     const dados = {};
-    if (nome          !== undefined) dados.nome          = nome;
-    if (documento     !== undefined) dados.documento     = documento;
-    if (email         !== undefined) dados.email         = email;
-    if (telefone      !== undefined) dados.telefone      = telefone;
-    if (regime        !== undefined) dados.regime        = regime;
-    if (sped          !== undefined) dados.sped          = sped;
-    if (acessosRemotos!== undefined) dados.acessosRemotos= acessosRemotos;
-    if (status        !== undefined) dados.status        = status;
+    if (nome !== undefined) dados.nome = nome;
+    if (documento !== undefined) dados.documento = documento;
+    if (email !== undefined) dados.email = email;
+    if (telefone !== undefined) dados.telefone = telefone;
+    if (regime !== undefined) dados.regime = regime;
+    if (sped !== undefined) dados.sped = sped;
+    if (acessosRemotos !== undefined) dados.acessosRemotos = acessosRemotos;
+    if (status !== undefined) dados.status = status;
     const atualizado = await Cliente.findOneAndUpdate(filtro, dados, { new: true });
     if (!atualizado) return res.status(404).json({ message: "Cliente não encontrado" });
     res.json(atualizado);
@@ -378,7 +400,7 @@ app.delete("/api/usuarios/:id", verificarToken, verificarAdmin, async (req, res)
 
 // Helper: atualiza boletos atrasados
 async function atualizarBoletosAtrasados() {
-  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
   await Boleto.updateMany({ status: "aberto", vencimento: { $lt: hoje } }, { $set: { status: "atrasado" } });
 }
 
@@ -406,13 +428,13 @@ app.get("/api/backup/resumo", verificarToken, verificarPermBackup, async (req, r
     const hoje = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
     hoje.setHours(0, 0, 0, 0);
 
-    const backupsHoje   = await Backup.find({ clienteId: { $in: idsVisiveis }, status: "ok", dataBackup: { $gte: hoje } }).select("clienteId");
-    const idsComBackup  = new Set(backupsHoje.map(b => b.clienteId.toString()));
+    const backupsHoje = await Backup.find({ clienteId: { $in: idsVisiveis }, status: "ok", dataBackup: { $gte: hoje } }).select("clienteId");
+    const idsComBackup = new Set(backupsHoje.map(b => b.clienteId.toString()));
     const totalClientes = clientesVisiveis.length;
-    const comBackup     = idsComBackup.size;
-    const semBackup     = totalClientes - comBackup;
-    const totalSuspensos= clientesVisiveis.filter(c => c.suspenderBackup).length;
-    const semBackupLista= clientesVisiveis.filter(c => !idsComBackup.has(c._id.toString()));
+    const comBackup = idsComBackup.size;
+    const semBackup = totalClientes - comBackup;
+    const totalSuspensos = clientesVisiveis.filter(c => c.suspenderBackup).length;
+    const semBackupLista = clientesVisiveis.filter(c => !idsComBackup.has(c._id.toString()));
 
     res.json({ totalClientes, comBackup, semBackup, totalSuspensos, semBackupLista });
   } catch (err) { res.status(500).json({ message: err.message }); }
@@ -425,9 +447,9 @@ app.get("/api/backup", verificarToken, verificarPermBackup, async (req, res) => 
     const idsVisiveis = clientesVisiveis.map(c => c._id);
     const filtro = { clienteId: { $in: idsVisiveis } };
     if (clienteId) filtro.clienteId = clienteId;
-    if (status)    filtro.status    = status;
+    if (status) filtro.status = status;
     if (dias) { const l = new Date(); l.setDate(l.getDate() - parseInt(dias)); filtro.dataBackup = { $gte: l }; }
-    const backups = await Backup.find(filtro).populate("clienteId","nome documento").populate("usuarioId","nome").sort({ dataBackup: -1 }).limit(500);
+    const backups = await Backup.find(filtro).populate("clienteId", "nome documento").populate("usuarioId", "nome").sort({ dataBackup: -1 }).limit(500);
     res.json(backups);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -436,9 +458,9 @@ app.put("/api/backup/:id", verificarToken, verificarPermBackup, async (req, res)
   try {
     const { status, tamanho, destino, observacao } = req.body;
     const dados = {};
-    if (status     !== undefined) dados.status     = status;
-    if (tamanho    !== undefined) dados.tamanho    = tamanho;
-    if (destino    !== undefined) dados.destino    = destino;
+    if (status !== undefined) dados.status = status;
+    if (tamanho !== undefined) dados.tamanho = tamanho;
+    if (destino !== undefined) dados.destino = destino;
     if (observacao !== undefined) dados.observacao = observacao;
     const atualizado = await Backup.findByIdAndUpdate(req.params.id, dados, { new: true });
     if (!atualizado) return res.status(404).json({ message: "Registro não encontrado" });
@@ -502,7 +524,7 @@ app.put("/api/clientes/:id/suspender-backup", verificarToken, verificarPermBacku
 // Status de backup para o Backup Agent
 app.get("/api/clientes/:id/status-backup", verificarToken, async (req, res) => {
   try {
-    const cliente   = await Cliente.findById(req.params.id).select("suspenderBackup nome");
+    const cliente = await Cliente.findById(req.params.id).select("suspenderBackup nome");
     if (!cliente) return res.status(404).json({ message: "Cliente não encontrado" });
     await atualizarBoletosAtrasados();
     const atrasados = await Boleto.countDocuments({ clienteId: req.params.id, status: "atrasado" });
@@ -522,7 +544,7 @@ app.get("/api/backup-permissao", verificarToken, async (req, res) => {
     const perm = await PermissaoBackup.findOne({ usuarioId: req.usuario.id });
     res.json({
       visualizar: perm ? (perm.visualizar || perm.editar) : false,
-      editar:     perm ? perm.editar : false
+      editar: perm ? perm.editar : false
     });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -531,14 +553,16 @@ app.get("/api/backup-permissao", verificarToken, async (req, res) => {
 app.get("/api/backup-permissoes", verificarToken, verificarMaster, async (req, res) => {
   try {
     const usuarios = await Usuario.find().select("-senha");
-    const perms    = await PermissaoBackup.find();
-    const mapa     = Object.fromEntries(perms.map(p => [p.usuarioId.toString(), p]));
+    const perms = await PermissaoBackup.find();
+    const mapa = Object.fromEntries(perms.map(p => [p.usuarioId.toString(), p]));
     res.json(usuarios.map(u => {
       const p = mapa[u._id.toString()];
       const m = u.perfil === "master";
-      return { _id: u._id, nome: u.nome, usuario: u.usuario, perfil: u.perfil,
-               visualizar: m ? true : (p ? (p.visualizar || p.editar) : false),
-               editar:     m ? true : (p ? p.editar : false) };
+      return {
+        _id: u._id, nome: u.nome, usuario: u.usuario, perfil: u.perfil,
+        visualizar: m ? true : (p ? (p.visualizar || p.editar) : false),
+        editar: m ? true : (p ? p.editar : false)
+      };
     }));
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -565,11 +589,11 @@ app.post("/api/boletos/gerar", verificarToken, verificarPermBackup, async (req, 
   try {
     const { clienteId, valorMensal, dataInicio } = req.body;
     if (!clienteId || !valorMensal) return res.status(400).json({ message: "clienteId e valorMensal obrigatórios" });
-    await Boleto.deleteMany({ clienteId, status: { $in: ["aberto","atrasado"] } });
+    await Boleto.deleteMany({ clienteId, status: { $in: ["aberto", "atrasado"] } });
     const inicio = dataInicio ? new Date(dataInicio) : new Date();
     const boletos = Array.from({ length: 12 }, (_, i) => {
       const venc = new Date(inicio); venc.setMonth(venc.getMonth() + i);
-      return { clienteId, parcela: i+1, totalParcelas: 12, valor: parseFloat(valorMensal), vencimento: venc };
+      return { clienteId, parcela: i + 1, totalParcelas: 12, valor: parseFloat(valorMensal), vencimento: venc };
     });
     await Boleto.insertMany(boletos);
     res.status(201).json({ ok: true, gerados: 12 });
@@ -601,7 +625,7 @@ app.get("/api/boletos-atrasados", verificarToken, verificarPermBackup, async (re
   try {
     await atualizarBoletosAtrasados();
     // Suspende automaticamente clientes com boletos em atraso
-    const atrasados = await Boleto.find({ status: "atrasado" }).populate("clienteId","nome");
+    const atrasados = await Boleto.find({ status: "atrasado" }).populate("clienteId", "nome");
     const porCliente = {};
     atrasados.forEach(b => {
       const id = b.clienteId?._id?.toString();
