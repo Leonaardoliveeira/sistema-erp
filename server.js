@@ -529,7 +529,7 @@ app.get("/api/clientes/:id/status-backup", verificarToken, async (req, res) => {
     await atualizarBoletosAtrasados();
     const atrasados = await Boleto.countDocuments({ clienteId: req.params.id, status: "atrasado" });
     const bloqueado = cliente.suspenderBackup || atrasados > 0;
-    res.json({ bloqueado, motivo: bloqueado ? (atrasados > 0 ? `${atrasados} boleto(s) em atraso` : "Backup suspenso manualmente") : null });
+    res.json({ bloqueado, motivo: bloqueado ? (atrasados > 0 ? `${atrasados} boleto(s) em atraso` : "Backup suspenso - Boleto em aberto") : null });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
