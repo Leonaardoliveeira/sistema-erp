@@ -220,7 +220,7 @@ function renderizarTabelaAcordeon(lista) {
         const statusClass = st;
 
         // Linha de cabeçalho do grupo (clicável)
-        html += `<tr class="bkp-grupo-header" onclick="toggleGrupo('grp-${clienteId}')" style="cursor:pointer;background:var(--bg-card,#f8fafc);">
+        html += `<tr class="bkp-grupo-header" onclick="toggleGrupo('grp-${clienteId}')">
           <td colspan="${perm.editar ? 7 : 6}" style="padding:10px 14px;">
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
               <i data-lucide="chevron-right" style="width:14px;height:14px;transition:transform .2s;flex-shrink:0;" id="icon-grp-${clienteId}"></i>
@@ -232,11 +232,11 @@ function renderizarTabelaAcordeon(lista) {
         </tr>`;
 
         // Linhas filhas (ocultas por padrão)
-        html += `<tr id="grp-${clienteId}" class="bkp-gerenciar-section" style="display:none;">
-          <td colspan="${perm.editar ? 7 : 6}" style="padding:0;">
+        html += `<tr id="grp-${clienteId}" class="bkp-grupo-body" style="display:none;">
+          <td colspan="${perm.editar ? 7 : 6}" class="bkp-grupo-content">
             <table style="width:100%;border-collapse:collapse;">
               <thead>
-                <tr>
+                <tr class="bkp-subheader">
                   <th style="padding:7px 14px 7px 36px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:600;">Data / Hora</th>
                   <th style="padding:7px 14px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:600;">Banco</th>
                   <th style="padding:7px 14px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:600;">Status</th>
@@ -270,7 +270,7 @@ function renderizarLinhaBackup(b) {
            </div></td>`
         : "";
 
-    return `<tr style="border-bottom:1px solid var(--border);">
+    return `<tr class="bkp-linha-backup">
       <td style="padding:8px 14px 8px 36px;font-size:12px;">
         ${dt.toLocaleDateString("pt-BR")}
         <span style="color:var(--text-muted);font-size:11px;">${dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
