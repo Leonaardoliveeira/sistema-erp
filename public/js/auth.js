@@ -9,17 +9,45 @@ async function login() {
         });
         const data = await response.json();
         if (!response.ok) { toast.erro(data.message || "Erro ao fazer login"); return; }
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("usuario", JSON.stringify(data.usuario));
+        try {
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("usuario", JSON.stringify(data.usuario));
+        } catch(e) {
+            // Fallback para sessionStorage se localStorage bloqueado
+            sessionStorage.setItem("token", data.token);
+            sessionStorage.setItem("usuario", JSON.stringify(data.usuario));
+        }
         window.location.href = "dashboard.html";
     } catch (error) {
         toast.erro("Erro ao conectar ao servidor");
     }
 }
 
+function getStorage(key) {
+    try { return localStorage.getItem(key); } catch(e) {}
+    try { return sessionStorage.getItem(key); } catch(e) {}
+    return null;
+}
+
+function setStorage(key, value) {
+    try { localStorage.setItem(key, value); return; } catch(e) {}
+    try { sessionStorage.setItem(key, value); } catch(e) {}
+}
+
+function removeStorage(key) {
+    try { localStorage.removeItem(key); } catch(e) {}
+    try { sessionStorage.removeItem(key); } catch(e) {}
+}
+
 function verificarLogin() {
-    const token   = localStorage.getItem("token");
-    const usuario = JSON.parse(localStorage.getItem("usuario"));
+    let token, usuario;
+    try {
+        token   = getStorage("token");
+        usuario = JSON.parse(getStorage("usuario") || "null");
+    } catch(e) {
+        token   = null;
+        usuario = null;
+    }
     if (!token || !usuario) { window.location.href = "index.html"; return; }
 
     const menuUsuarios = document.getElementById("menuUsuarios");
@@ -30,22 +58,34 @@ function verificarLogin() {
 
     // Oculta menu Backup para quem não tem permissão
     const menuBackup = document.getElementById("menuBackup");
-    if (menuBackup && usuario.perfil !== "master") {
-        fetch("/api/backup-permissao", { headers: { "Authorization": "Bearer " + token } })
-            .then(r => r.json())
-            .then(d => {
-                if (!d.visualizar) {
+    if (menuBackup) {
+        // Esconde preventivamente até confirmar permissão
+        menuBackup.style.visibility = "hidden";
+        menuBackup.style.pointerEvents = "none";
+
+        if (usuario.perfil === "master") {
+            // Master sempre pode ver
+            menuBackup.style.visibility = "";
+            menuBackup.style.pointerEvents = "";
+        } else {
+            fetch("/api/backup-permissao", { headers: { "Authorization": "Bearer " + token } })
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(d => {
+                    if (d.visualizar) {
+                        menuBackup.style.visibility = "";
+                        menuBackup.style.pointerEvents = "";
+                    } else {
+                        menuBackup.style.display = "none";
+                        if (window.location.pathname.endsWith("backup.html"))
+                            window.location.href = "dashboard.html";
+                    }
+                })
+                .catch(() => {
                     menuBackup.style.display = "none";
-                    // Se estiver na página de backup, redireciona
                     if (window.location.pathname.endsWith("backup.html"))
                         window.location.href = "dashboard.html";
-                }
-            })
-            .catch(() => {
-                menuBackup.style.display = "none";
-                if (window.location.pathname.endsWith("backup.html"))
-                    window.location.href = "dashboard.html";
-            });
+                });
+        }
     }
 
     agendarAlertasSped();
@@ -56,7 +96,7 @@ function verificarLogin() {
 // =======================================
 async function agendarAlertasSped() {
     try {
-        const token = localStorage.getItem("token");
+        const token = getStorage("token");
 
         // Busca configuração do usuário
         const cfgRes = await fetch("/api/alertas/config", {
@@ -69,7 +109,7 @@ async function agendarAlertasSped() {
 
         // Verifica quais horários ainda não foram exibidos hoje
         const hoje        = new Date().toDateString();
-        const exibidosRaw = localStorage.getItem("alertasSpedExibidos");
+        const exibidosRaw = getStorage("alertasSpedExibidos");
         let exibidos      = {};
         try { exibidos = JSON.parse(exibidosRaw) || {}; } catch(e) {}
         // Limpa registros de outros dias
@@ -111,12 +151,13 @@ async function exibirAlertaSped(token, horario, exibidos, hoje) {
             }, 800);
         }
         exibidos[horario] = true;
-        localStorage.setItem("alertasSpedExibidos", JSON.stringify(exibidos));
+        setStorage("alertasSpedExibidos", JSON.stringify(exibidos));
     } catch(e) {}
 }
 
 function mostrarUsuarioLogado() {
-    const usuario = JSON.parse(localStorage.getItem("usuario"));
+    let usuario;
+    try { usuario = JSON.parse(getStorage("usuario")); } catch(e) { return; }
     if (!usuario) return;
     const nomeEl = document.getElementById("usuarioLogado");
     if (nomeEl) nomeEl.innerText = usuario.nome;
@@ -136,7 +177,7 @@ function mostrarUsuarioLogado() {
 }
 
 function logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("usuario");
+    removeStorage("token");
+    removeStorage("usuario");
     window.location.href = "index.html";
 }

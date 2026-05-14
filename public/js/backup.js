@@ -1,5 +1,5 @@
 // ─── utils ────────────────────────────────────────────────────────────────────
-const T = () => localStorage.getItem("token");
+const T = () => { try { return localStorage.getItem("token") || sessionStorage.getItem("token"); } catch(e) { return ""; } };
 const hdr = () => ({ "Authorization": "Bearer " + T(), "Content-Type": "application/json" });
 function mostrarLoading() { const e = document.getElementById("loading"); if (e) e.style.display = "flex"; }
 function esconderLoading() { const e = document.getElementById("loading"); if (e) e.style.display = "none"; }
@@ -11,6 +11,7 @@ let monitorados = [];
 let filtroStatus = "";
 let filtroCliente = "";
 let filtroDias = "30";
+let _listaBackupsAtual = []; // cache para o accordion
 
 // ─── inicializar ──────────────────────────────────────────────────────────────
 async function inicializarBackup() {
@@ -28,15 +29,12 @@ async function carregarPermissao() {
 }
 
 function aplicarPermissaoUI() {
-    // Limpar histórico — visível apenas para quem pode editar
     const bl = document.getElementById("btnLimparHistorico");
     if (bl) bl.style.display = perm.editar ? "" : "none";
 
-    // Coluna ações na tabela de histórico
     const th = document.getElementById("thAcoes");
     if (th) th.style.display = perm.editar ? "" : "none";
 
-    // Seção gerenciar (aberta via scroll/âncora se necessário)
     const sg = document.getElementById("secaoGerenciar");
     if (sg) sg.style.display = perm.editar ? "" : "none";
 }
@@ -79,7 +77,6 @@ async function carregarTodosClientes() {
         todosClientes = await r.json();
         monitorados = todosClientes.filter(c => c.monitoradoBackup);
 
-        // Popula select de filtro
         const opsFiltro = '<option value="">Todos os clientes</option>'
             + monitorados.map(c => `<option value="${c._id}">${c.nome}</option>`).join("");
         const elFiltro = document.getElementById("filtroCliente");
@@ -90,8 +87,6 @@ async function carregarTodosClientes() {
 }
 
 // ─── gerenciar clientes monitorados ──────────────────────────────────────────
-// A seção fica visível para editores — o botão "Gerenciar Clientes" do topbar
-// foi removido conforme solicitado. A seção aparece naturalmente na página.
 function renderizarGerenciar(lista) {
     const tbody = document.getElementById("tabelaGerenciar");
     if (!tbody) return;
@@ -137,10 +132,7 @@ async function toggleMonitorado(id, monitorado, el) {
     } catch (e) { toast.erro("Erro"); el.checked = !monitorado; }
 }
 
-// ─── suspender / reativar backup de um cliente ────────────────────────────────
-// Usado tanto na tabela de Gerenciar quanto no botão inline da tabela de histórico
 async function toggleSuspensaoCliente(id, suspender, btnEl) {
-    const acao = suspender ? "SUSPENDER" : "REATIVAR";
     const msg = suspender
         ? "Confirmar SUSPENSÃO do backup para este cliente?"
         : "Confirmar REATIVAÇÃO do backup?";
@@ -153,7 +145,6 @@ async function toggleSuspensaoCliente(id, suspender, btnEl) {
         });
         if (!r.ok) { toast.erro("Erro ao alterar suspensão"); return; }
         toast.sucesso(suspender ? "⛔ Backup suspenso!" : "✅ Backup reativado!");
-        // Recarrega tudo para refletir o novo estado em cards, tabela e gerenciar
         await Promise.all([carregarResumo(), carregarTodosClientes(), carregarBackups()]);
     } catch (e) { toast.erro("Erro"); } finally { esconderLoading(); }
 }
@@ -182,57 +173,134 @@ async function carregarBackups() {
         if (filtroDias) p.append("dias", filtroDias);
         const r = await fetch("/api/backup?" + p.toString(), { headers: hdr() });
         if (!r.ok) return;
-        renderizarTabela(await r.json());
+        _listaBackupsAtual = await r.json();
+        renderizarTabelaAcordeon(_listaBackupsAtual);
     } catch (e) { } finally { esconderLoading(); }
 }
 
-function renderizarTabela(lista) {
+// ─── ACCORDION: histórico agrupado por cliente ────────────────────────────────
+function renderizarTabelaAcordeon(lista) {
     const tb = document.getElementById("tabelaBackup");
     if (!tb) return;
+
     if (!lista.length) {
         tb.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--text-muted);">Nenhum registro encontrado.</td></tr>`;
         return;
     }
-    tb.innerHTML = lista.map(b => {
-        const dt = new Date(b.dataBackup);
-        const st = b.status;
 
-        // Extrai o nome do banco da observação enviada pelo Backup Agent
-        // Formato esperado: "Banco: gestores | Servidor: localhost"
-        const obs = b.observacao || "";
-        const bancoM = obs.match(/Banco:\s*([^|]+)/i);
-        const banco = bancoM ? bancoM[1].trim() : (b.destino ? b.destino.split("/").pop() : "—");
+    // Agrupa por cliente
+    const grupos = {};
+    lista.forEach(b => {
+        const clienteId = b.clienteId?._id || b.clienteId || "sem-cliente";
+        const clienteNome = b.clienteId?.nome || "Cliente desconhecido";
+        if (!grupos[clienteId]) grupos[clienteId] = { nome: clienteNome, registros: [] };
+        grupos[clienteId].registros.push(b);
+    });
 
-        const acaoCol = perm.editar
-            ? `<td class="td-acoes-cell"><div class="td-acoes">
-                 <button class="btn-danger" style="font-size:11px;padding:5px 10px;" onclick="excluirBackup('${b._id}')">Excluir</button>
-               </div></td>`
-            : "";
+    // Ordena grupos por nome
+    const gruposOrdenados = Object.entries(grupos).sort((a, b) =>
+        a[1].nome.localeCompare(b[1].nome, "pt-BR")
+    );
 
-        return `<tr>
-          <td data-label="Cliente"><strong>${b.clienteId?.nome || "—"}</strong></td>
-          <td data-label="Data">${dt.toLocaleDateString("pt-BR")} <span style="color:var(--text-muted);font-size:12px;">${dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span></td>
-          <td data-label="Banco"><code style="font-size:12px;color:var(--text-muted);">${banco}</code></td>
-          <td data-label="Status"><span class="backup-status ${st}">${{ ok: "OK", falha: "Falha", pendente: "Pendente" }[st] || st}</span></td>
-          <td data-label="Tamanho">${b.tamanho || "—"}</td>
-          <td data-label="Destino">${b.destino || "—"}</td>
-          ${acaoCol}
+    let html = "";
+    gruposOrdenados.forEach(([clienteId, grupo]) => {
+        const total = grupo.registros.length;
+        const ultimoBackup = grupo.registros[0];
+        const st = ultimoBackup?.status || "";
+        const statusBadge = { ok: "OK", falha: "Falha", pendente: "Pendente" }[st] || st;
+        const statusClass = st;
+
+        // Linha de cabeçalho do grupo (clicável)
+        html += `<tr class="bkp-grupo-header" onclick="toggleGrupo('grp-${clienteId}')" style="cursor:pointer;background:var(--bg-card,#f8fafc);">
+          <td colspan="${perm.editar ? 7 : 6}" style="padding:10px 14px;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <i data-lucide="chevron-right" style="width:14px;height:14px;transition:transform .2s;flex-shrink:0;" id="icon-grp-${clienteId}"></i>
+              <strong style="font-size:13px;">${grupo.nome}</strong>
+              <span style="font-size:11px;color:var(--text-muted);">${total} registro${total !== 1 ? "s" : ""}</span>
+              <span class="backup-status ${statusClass}" style="font-size:11px;">Último: ${statusBadge}</span>
+            </div>
+          </td>
         </tr>`;
-    }).join("");
+
+        // Linhas filhas (ocultas por padrão)
+        html += `<tr id="grp-${clienteId}" class="bkp-grupo-body" style="display:none;">
+          <td colspan="${perm.editar ? 7 : 6}" style="padding:0;">
+            <table style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr style="background:var(--bg-input,#f1f5f9);">
+                  <th style="padding:7px 14px 7px 36px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:600;">Data / Hora</th>
+                  <th style="padding:7px 14px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:600;">Banco</th>
+                  <th style="padding:7px 14px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:600;">Status</th>
+                  <th style="padding:7px 14px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:600;">Tamanho</th>
+                  <th style="padding:7px 14px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:600;">Destino</th>
+                  ${perm.editar ? '<th style="padding:7px 14px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:600;">Ações</th>' : ""}
+                </tr>
+              </thead>
+              <tbody>
+                ${grupo.registros.map(b => renderizarLinhaBackup(b)).join("")}
+              </tbody>
+            </table>
+          </td>
+        </tr>`;
+    });
+
+    tb.innerHTML = html;
+    lucide.createIcons();
+}
+
+function renderizarLinhaBackup(b) {
+    const dt = new Date(b.dataBackup);
+    const st = b.status;
+    const obs = b.observacao || "";
+    const bancoM = obs.match(/Banco:\s*([^|]+)/i);
+    const banco = bancoM ? bancoM[1].trim() : (b.destino ? b.destino.split("/").pop() : "—");
+
+    const acaoCol = perm.editar
+        ? `<td style="padding:7px 14px;"><div style="display:flex;gap:6px;">
+             <button class="btn-danger" style="font-size:11px;padding:4px 9px;" onclick="excluirBackup('${b._id}')">Excluir</button>
+           </div></td>`
+        : "";
+
+    return `<tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:8px 14px 8px 36px;font-size:12px;">
+        ${dt.toLocaleDateString("pt-BR")}
+        <span style="color:var(--text-muted);font-size:11px;">${dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+      </td>
+      <td style="padding:8px 14px;"><code style="font-size:11px;color:var(--text-muted);">${banco}</code></td>
+      <td style="padding:8px 14px;"><span class="backup-status ${st}">${{ ok: "OK", falha: "Falha", pendente: "Pendente" }[st] || st}</span></td>
+      <td style="padding:8px 14px;font-size:12px;">${b.tamanho || "—"}</td>
+      <td style="padding:8px 14px;font-size:12px;">${b.destino || "—"}</td>
+      ${acaoCol}
+    </tr>`;
+}
+
+function toggleGrupo(id) {
+    const corpo = document.getElementById(id);
+    const icon  = document.getElementById("icon-" + id);
+    if (!corpo) return;
+    const aberto = corpo.style.display !== "none";
+    corpo.style.display = aberto ? "none" : "";
+    if (icon) icon.style.transform = aberto ? "" : "rotate(90deg)";
 }
 
 function aplicarFiltros() {
-    filtroStatus = document.getElementById("filtroStatus")?.value || "";
+    filtroStatus  = document.getElementById("filtroStatus")?.value  || "";
     filtroCliente = document.getElementById("filtroCliente")?.value || "";
-    filtroDias = document.getElementById("filtroDias")?.value || "30";
+    filtroDias    = document.getElementById("filtroDias")?.value    || "30";
     carregarBackups();
 }
 
 function filtrarTabela() {
     const t = document.getElementById("campoPesquisa")?.value.toLowerCase() || "";
-    document.querySelectorAll("#tabelaBackup tr").forEach(l =>
-        l.style.display = l.innerText.toLowerCase().includes(t) ? "" : "none"
-    );
+    // Filtra nos grupos: mostra/oculta grupos inteiros
+    document.querySelectorAll("#tabelaBackup .bkp-grupo-header").forEach(header => {
+        const texto = header.innerText.toLowerCase();
+        const grpId = header.nextElementSibling?.id;
+        const corpo = grpId ? document.getElementById(grpId) : null;
+        const visivel = texto.includes(t);
+        header.style.display = visivel ? "" : "none";
+        if (corpo) corpo.style.display = visivel ? corpo.style.display : "none";
+    });
 }
 
 async function limparHistorico() {
@@ -295,8 +363,10 @@ async function excluirBackup(id) {
 // ─── dark mode ────────────────────────────────────────────────────────────────
 function toggleDark() {
     document.body.classList.toggle("dark");
-    localStorage.setItem("tema", document.body.classList.contains("dark") ? "dark" : "light");
+    try { localStorage.setItem("tema", document.body.classList.contains("dark") ? "dark" : "light"); } catch(e) {}
 }
 window.addEventListener("load", () => {
-    if (localStorage.getItem("tema") === "dark") document.body.classList.add("dark");
+    let tema;
+    try { tema = localStorage.getItem("tema"); } catch(e) {}
+    if (tema === "dark") document.body.classList.add("dark");
 });
