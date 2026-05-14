@@ -1,5 +1,5 @@
 // ─── utils ────────────────────────────────────────────────────────────────────
-const T = () => { try { return localStorage.getItem("token") || sessionStorage.getItem("token"); } catch(e) { return ""; } };
+const T = () => { try { return localStorage.getItem("token") || sessionStorage.getItem("token"); } catch (e) { return ""; } };
 const hdr = () => ({ "Authorization": "Bearer " + T(), "Content-Type": "application/json" });
 function mostrarLoading() { const e = document.getElementById("loading"); if (e) e.style.display = "flex"; }
 function esconderLoading() { const e = document.getElementById("loading"); if (e) e.style.display = "none"; }
@@ -23,7 +23,16 @@ async function inicializarBackup() {
 
 async function carregarPermissao() {
     try {
-        const r = await fetch("/api/backup-permissao", { headers: hdr() });
+        const r = await fetch("/api/backup-permissao", {
+            method: "GET",
+            cache: "no-store",
+            headers: {
+                ...hdr(),
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        });
         if (r.ok) perm = await r.json();
     } catch (e) { }
 }
@@ -276,7 +285,7 @@ function renderizarLinhaBackup(b) {
 
 function toggleGrupo(id) {
     const corpo = document.getElementById(id);
-    const icon  = document.getElementById("icon-" + id);
+    const icon = document.getElementById("icon-" + id);
     if (!corpo) return;
     const aberto = corpo.style.display !== "none";
     corpo.style.display = aberto ? "none" : "";
@@ -284,9 +293,9 @@ function toggleGrupo(id) {
 }
 
 function aplicarFiltros() {
-    filtroStatus  = document.getElementById("filtroStatus")?.value  || "";
+    filtroStatus = document.getElementById("filtroStatus")?.value || "";
     filtroCliente = document.getElementById("filtroCliente")?.value || "";
-    filtroDias    = document.getElementById("filtroDias")?.value    || "30";
+    filtroDias = document.getElementById("filtroDias")?.value || "30";
     carregarBackups();
 }
 
@@ -363,10 +372,10 @@ async function excluirBackup(id) {
 // ─── dark mode ────────────────────────────────────────────────────────────────
 function toggleDark() {
     document.body.classList.toggle("dark");
-    try { localStorage.setItem("tema", document.body.classList.contains("dark") ? "dark" : "light"); } catch(e) {}
+    try { localStorage.setItem("tema", document.body.classList.contains("dark") ? "dark" : "light"); } catch (e) { }
 }
 window.addEventListener("load", () => {
     let tema;
-    try { tema = localStorage.getItem("tema"); } catch(e) {}
+    try { tema = localStorage.getItem("tema"); } catch (e) { }
     if (tema === "dark") document.body.classList.add("dark");
 });
