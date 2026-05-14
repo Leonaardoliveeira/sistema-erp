@@ -90,7 +90,6 @@ function verificarLogin() {
     }
     agendarAlertasSped();
 }
-
 // =======================================
 // ALERTA SPED — dispara nos horários configurados
 // =======================================
