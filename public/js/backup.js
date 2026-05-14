@@ -232,11 +232,11 @@ function renderizarTabelaAcordeon(lista) {
         </tr>`;
 
         // Linhas filhas (ocultas por padrão)
-        html += `<tr id="grp-${clienteId}" class="bkp-grupo-body" style="display:none;">
+        html += `<tr id="grp-${clienteId}" class="bkp-gerenciar-section" style="display:none;">
           <td colspan="${perm.editar ? 7 : 6}" style="padding:0;">
             <table style="width:100%;border-collapse:collapse;">
               <thead>
-                <tr style="background:var(--bg-input,#f1f5f9);">
+                <tr>
                   <th style="padding:7px 14px 7px 36px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:600;">Data / Hora</th>
                   <th style="padding:7px 14px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:600;">Banco</th>
                   <th style="padding:7px 14px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:600;">Status</th>
