@@ -167,18 +167,9 @@ function verificarMaster(req, res, next) {
 // Verifica se usuário tem permissão de visualizar backup (ou é master)
 async function verificarPermBackup(req, res, next) {
   if (req.usuario.perfil === "master") return next();
-
-  // CORREÇÃO: Busca a permissão e garante que se não existir, o padrão é false
   const perm = await PermissaoBackup.findOne({ usuarioId: req.usuario.id });
-
-  // Se for uma rota de edição e ele só tiver 'visualizar', bloqueia
-  if (req.method !== "GET" && (!perm || !perm.editar)) {
-    return res.status(403).json({ message: "Sem permissão de edição" });
-  }
-
   if (perm && (perm.visualizar || perm.editar)) return next();
-
-  return res.status(403).json({ message: "Sem permissão de acesso" });
+  return res.status(403).json({ message: "Sem permissão para acessar a tela de backup" });
 }
 
 // --------------------
