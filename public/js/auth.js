@@ -1,19 +1,19 @@
 async function login() {
     const usuarioInput = document.getElementById("usuario").value;
-    const senhaInput   = document.getElementById("senha").value;
+    const senhaInput = document.getElementById("senha").value;
     try {
-        const response = await fetch("/api/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ usuario: usuarioInput, senha: senhaInput })
-        });
+        const response = await fetch("/api/login", { /* ... */ });
         const data = await response.json();
         if (!response.ok) { toast.erro(data.message || "Erro ao fazer login"); return; }
+
+        // CORREÇÃO: Limpa resíduos antes de salvar o novo login
+        localStorage.clear();
+        sessionStorage.clear();
+
         try {
             localStorage.setItem("token", data.token);
             localStorage.setItem("usuario", JSON.stringify(data.usuario));
-        } catch(e) {
-            // Fallback para sessionStorage se localStorage bloqueado
+        } catch (e) {
             sessionStorage.setItem("token", data.token);
             sessionStorage.setItem("usuario", JSON.stringify(data.usuario));
         }
@@ -24,70 +24,70 @@ async function login() {
 }
 
 function getStorage(key) {
-    try { return localStorage.getItem(key); } catch(e) {}
-    try { return sessionStorage.getItem(key); } catch(e) {}
+    try { return localStorage.getItem(key); } catch (e) { }
+    try { return sessionStorage.getItem(key); } catch (e) { }
     return null;
 }
 
 function setStorage(key, value) {
-    try { localStorage.setItem(key, value); return; } catch(e) {}
-    try { sessionStorage.setItem(key, value); } catch(e) {}
+    try { localStorage.setItem(key, value); return; } catch (e) { }
+    try { sessionStorage.setItem(key, value); } catch (e) { }
 }
 
 function removeStorage(key) {
-    try { localStorage.removeItem(key); } catch(e) {}
-    try { sessionStorage.removeItem(key); } catch(e) {}
+    try { localStorage.removeItem(key); } catch (e) { }
+    try { sessionStorage.removeItem(key); } catch (e) { }
 }
 
 function verificarLogin() {
-    let token, usuario;
+    let token = getStorage("token");
+    let usuarioRaw = getStorage("usuario");
+    let usuario;
+
     try {
-        token   = getStorage("token");
-        usuario = JSON.parse(getStorage("usuario") || "null");
-    } catch(e) {
-        token   = null;
+        usuario = JSON.parse(usuarioRaw || "null");
+    } catch (e) {
         usuario = null;
     }
-    if (!token || !usuario) { window.location.href = "index.html"; return; }
 
-    const menuUsuarios = document.getElementById("menuUsuarios");
-    if (menuUsuarios) {
-        menuUsuarios.style.display =
-            (usuario.perfil === "master" || usuario.perfil === "admin") ? "" : "none";
+    if (!token || !usuario) {
+        window.location.href = "index.html";
+        return;
     }
 
-    // Oculta menu Backup para quem não tem permissão
+    // Gerenciamento de Menus
+    const menuUsuarios = document.getElementById("menuUsuarios");
+    if (menuUsuarios) {
+        menuUsuarios.style.display = (usuario.perfil === "master" || usuario.perfil === "admin") ? "" : "none";
+    }
+
     const menuBackup = document.getElementById("menuBackup");
     if (menuBackup) {
-        // Esconde preventivamente até confirmar permissão
-        menuBackup.style.visibility = "hidden";
-        menuBackup.style.pointerEvents = "none";
+        // CORREÇÃO: Em vez de hidden, usamos display none inicial para evitar "pulo" de tela
+        menuBackup.style.display = "none";
 
         if (usuario.perfil === "master") {
-            // Master sempre pode ver
-            menuBackup.style.visibility = "";
-            menuBackup.style.pointerEvents = "";
+            menuBackup.style.display = "";
         } else {
-            fetch("/api/backup-permissao", { headers: { "Authorization": "Bearer " + token } })
+            // Valida no servidor se o usuário REALMENTE tem acesso atualizado
+            fetch("/api/backup-permissao", {
+                headers: { "Authorization": "Bearer " + token }
+            })
                 .then(r => r.ok ? r.json() : Promise.reject())
                 .then(d => {
                     if (d.visualizar) {
-                        menuBackup.style.visibility = "";
-                        menuBackup.style.pointerEvents = "";
-                    } else {
-                        menuBackup.style.display = "none";
-                        if (window.location.pathname.endsWith("backup.html"))
-                            window.location.href = "dashboard.html";
+                        menuBackup.style.display = "";
+                    } else if (window.location.pathname.endsWith("backup.html")) {
+                        window.location.href = "dashboard.html";
                     }
                 })
                 .catch(() => {
-                    menuBackup.style.display = "none";
-                    if (window.location.pathname.endsWith("backup.html"))
+                    if (window.location.pathname.endsWith("backup.html")) {
                         window.location.href = "dashboard.html";
+                    }
                 });
         }
     }
-
     agendarAlertasSped();
 }
 
@@ -108,15 +108,15 @@ async function agendarAlertasSped() {
         const horarios = cfg.horarios || ["08:00"];
 
         // Verifica quais horários ainda não foram exibidos hoje
-        const hoje        = new Date().toDateString();
+        const hoje = new Date().toDateString();
         const exibidosRaw = getStorage("alertasSpedExibidos");
-        let exibidos      = {};
-        try { exibidos = JSON.parse(exibidosRaw) || {}; } catch(e) {}
+        let exibidos = {};
+        try { exibidos = JSON.parse(exibidosRaw) || {}; } catch (e) { }
         // Limpa registros de outros dias
         if (exibidos._dia !== hoje) exibidos = { _dia: hoje };
 
-        const agora     = new Date();
-        const minAgora  = agora.getHours() * 60 + agora.getMinutes();
+        const agora = new Date();
+        const minAgora = agora.getHours() * 60 + agora.getMinutes();
 
         // Para cada horário configurado, verifica se já passou e ainda não foi exibido
         for (const h of horarios) {
@@ -130,7 +130,7 @@ async function agendarAlertasSped() {
         // Agenda verificação a cada 60 segundos para pegar novos horários
         setTimeout(agendarAlertasSped, 60000);
 
-    } catch(e) { /* silencioso */ }
+    } catch (e) { /* silencioso */ }
 }
 
 async function exibirAlertaSped(token, horario, exibidos, hoje) {
@@ -152,12 +152,12 @@ async function exibirAlertaSped(token, horario, exibidos, hoje) {
         }
         exibidos[horario] = true;
         setStorage("alertasSpedExibidos", JSON.stringify(exibidos));
-    } catch(e) {}
+    } catch (e) { }
 }
 
 function mostrarUsuarioLogado() {
     let usuario;
-    try { usuario = JSON.parse(getStorage("usuario")); } catch(e) { return; }
+    try { usuario = JSON.parse(getStorage("usuario")); } catch (e) { return; }
     if (!usuario) return;
     const nomeEl = document.getElementById("usuarioLogado");
     if (nomeEl) nomeEl.innerText = usuario.nome;
