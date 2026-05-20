@@ -266,7 +266,7 @@ function renderizarLinhaBackup(b) {
 
     const acaoCol = perm.editar
         ? `<td style="padding:7px 14px;"><div style="display:flex;gap:6px;">
-             <button class="btn-danger" style="font-size:11px;padding:4px 9px;" onclick="excluirBackup('${b._id}')">Excluir</button>
+             <button class="btn-danger" style="font-size:11px;padding:4px 9px;" onclick="excluirBackup('${b._id}')">Confirmar</button>
            </div></td>`
         : "";
 
