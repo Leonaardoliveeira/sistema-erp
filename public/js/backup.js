@@ -145,7 +145,10 @@ async function toggleSuspensaoCliente(id, suspender, btnEl) {
     const msg = suspender
         ? "Confirmar SUSPENSÃO do backup para este cliente?"
         : "Confirmar REATIVAÇÃO do backup?";
-    if (!await toastConfirm(msg)) return;
+    
+    const textoBotao = suspender ? "Suspender" : "Reativar";
+
+    if (!await toastConfirm(msg, textoBotao)) return;
 
     mostrarLoading();
     try {
@@ -266,7 +269,7 @@ function renderizarLinhaBackup(b) {
 
     const acaoCol = perm.editar
         ? `<td style="padding:7px 14px;"><div style="display:flex;gap:6px;">
-             <button class="btn-danger" style="font-size:11px;padding:4px 9px;" onclick="excluirBackup('${b._id}')">Confirmar</button>
+             <button class="btn-danger" style="font-size:11px;padding:4px 9px;" onclick="excluirBackup('${b._id}')">Excluir</button>
            </div></td>`
         : "";
 
