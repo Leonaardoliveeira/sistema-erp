@@ -149,7 +149,6 @@ async function toggleSuspensaoCliente(id, suspender, btnEl) {
     const textoBotao = suspender ? "Suspender" : "Reativar";
 
     if (!await toastConfirm(msg, textoBotao)) return;
-
     mostrarLoading();
     try {
         const r = await fetch(`/api/clientes/${id}/suspender-backup`, {
