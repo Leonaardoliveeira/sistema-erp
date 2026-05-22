@@ -218,7 +218,7 @@ function renderizarTabelaAcordeon(lista) {
         const total = grupo.registros.length;
         const ultimoBackup = grupo.registros[0];
         const st = ultimoBackup?.status || "";
-        const statusBadge = { ok: "OK", falha: "Falha", pendente: "Pendente" }[st] || st;
+        const statusBadge = { ok: "✅ OK", falha: "❌ Falha", pendente: "⏳ Pendente" }[st] || st;
         const statusClass = st;
 
         // Linha de cabeçalho do grupo (clicável)
@@ -278,7 +278,7 @@ function renderizarLinhaBackup(b) {
         <span style="color:var(--text-muted);font-size:11px;">${dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
       </td>
       <td style="padding:8px 14px;"><code style="font-size:11px;color:var(--text-muted);">${banco}</code></td>
-      <td style="padding:8px 14px;"><span class="backup-status ${st}">${{ ok: "OK", falha: "Falha", pendente: "Pendente" }[st] || st}</span></td>
+      <td style="padding:8px 14px;"><span class="backup-status ${st}">${{ ok: "✅ OK", falha: "❌ Falha", pendente: "⏳ Pendente" }[st] || st}</span></td>
       <td style="padding:8px 14px;font-size:12px;">${b.tamanho || "—"}</td>
       <td style="padding:8px 14px;font-size:12px;">${b.destino || "—"}</td>
       ${acaoCol}
