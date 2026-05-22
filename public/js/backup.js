@@ -216,9 +216,17 @@ function renderizarTabelaAcordeon(lista) {
     let html = "";
     gruposOrdenados.forEach(([clienteId, grupo]) => {
         const total = grupo.registros.length;
-        const qtdOk       = grupo.registros.filter(b => b.status === "ok").length;
-        const qtdFalha    = grupo.registros.filter(b => b.status === "falha").length;
-        const qtdPendente = grupo.registros.filter(b => b.status === "pendente").length;
+
+        // Contagem apenas do dia mais recente com registros
+        const ultimaData = grupo.registros[0]?.dataBackup
+            ? new Date(grupo.registros[0].dataBackup).toLocaleDateString("pt-BR")
+            : null;
+        const registrosDoDia = ultimaData
+            ? grupo.registros.filter(b => new Date(b.dataBackup).toLocaleDateString("pt-BR") === ultimaData)
+            : [];
+        const qtdOk       = registrosDoDia.filter(b => b.status === "ok").length;
+        const qtdFalha    = registrosDoDia.filter(b => b.status === "falha").length;
+        const qtdPendente = registrosDoDia.filter(b => b.status === "pendente").length;
 
         const badges = [];
         if (qtdOk > 0)       badges.push(`<span class="backup-status ok"       style="font-size:11px;">✅ ${qtdOk} OK</span>`);
