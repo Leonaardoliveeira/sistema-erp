@@ -216,10 +216,14 @@ function renderizarTabelaAcordeon(lista) {
     let html = "";
     gruposOrdenados.forEach(([clienteId, grupo]) => {
         const total = grupo.registros.length;
-        const ultimoBackup = grupo.registros[0];
-        const st = ultimoBackup?.status || "";
-        const statusBadge = { ok: "✅ OK", falha: "❌ Falha", pendente: "⏳ Pendente" }[st] || st;
-        const statusClass = st;
+        const qtdOk       = grupo.registros.filter(b => b.status === "ok").length;
+        const qtdFalha    = grupo.registros.filter(b => b.status === "falha").length;
+        const qtdPendente = grupo.registros.filter(b => b.status === "pendente").length;
+
+        const badges = [];
+        if (qtdOk > 0)       badges.push(`<span class="backup-status ok"       style="font-size:11px;">✅ ${qtdOk} OK</span>`);
+        if (qtdFalha > 0)    badges.push(`<span class="backup-status falha"    style="font-size:11px;">❌ ${qtdFalha} Falha${qtdFalha !== 1 ? "s" : ""}</span>`);
+        if (qtdPendente > 0) badges.push(`<span class="backup-status pendente" style="font-size:11px;">⏳ ${qtdPendente} Pendente${qtdPendente !== 1 ? "s" : ""}</span>`);
 
         // Linha de cabeçalho do grupo (clicável)
         html += `<tr class="bkp-grupo-header" onclick="toggleGrupo('grp-${clienteId}')">
@@ -228,7 +232,7 @@ function renderizarTabelaAcordeon(lista) {
               <i data-lucide="chevron-right" style="width:14px;height:14px;transition:transform .2s;flex-shrink:0;" id="icon-grp-${clienteId}"></i>
               <strong style="font-size:13px;">${grupo.nome}</strong>
               <span style="font-size:11px;color:var(--text-muted);">${total} registro${total !== 1 ? "s" : ""}</span>
-              <span class="backup-status ${statusClass}" style="font-size:11px;">Último: ${statusBadge}</span>
+              ${badges.join("")}
             </div>
           </td>
         </tr>`;
