@@ -217,13 +217,11 @@ function renderizarTabelaAcordeon(lista) {
     gruposOrdenados.forEach(([clienteId, grupo]) => {
         const total = grupo.registros.length;
 
-        // Contagem apenas do dia mais recente com registros
-        const ultimaData = grupo.registros[0]?.dataBackup
-            ? new Date(grupo.registros[0].dataBackup).toLocaleDateString("pt-BR")
-            : null;
-        const registrosDoDia = ultimaData
-            ? grupo.registros.filter(b => new Date(b.dataBackup).toLocaleDateString("pt-BR") === ultimaData)
-            : [];
+        // Contagem apenas do dia de HOJE — fica em branco se ainda não houve backup hoje
+        const hoje = new Date().toLocaleDateString("pt-BR");
+        const registrosDoDia = grupo.registros.filter(
+            b => new Date(b.dataBackup).toLocaleDateString("pt-BR") === hoje
+        );
         const qtdOk       = registrosDoDia.filter(b => b.status === "ok").length;
         const qtdFalha    = registrosDoDia.filter(b => b.status === "falha").length;
         const qtdPendente = registrosDoDia.filter(b => b.status === "pendente").length;
