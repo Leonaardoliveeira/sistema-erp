@@ -10,8 +10,7 @@ let todosClientes = [];
 let monitorados = [];
 let filtroStatus = "";
 let filtroCliente = "";
-let filtroDataInicio = "";
-let filtroDataFim = "";
+let filtroDias = "30";
 let _listaBackupsAtual = []; // cache para o accordion
 
 // ─── inicializar ──────────────────────────────────────────────────────────────
@@ -182,20 +181,12 @@ async function carregarBackups() {
         const p = new URLSearchParams();
         if (filtroStatus) p.append("status", filtroStatus);
         if (filtroCliente) p.append("clienteId", filtroCliente);
-
-        // Envia as datas se elas estiverem preenchidas
-        if (filtroDataInicio) p.append("dataInicio", filtroDataInicio);
-        if (filtroDataFim) p.append("dataFim", filtroDataFim);
-
+        if (filtroDias) p.append("dias", filtroDias);
         const r = await fetch("/api/backup?" + p.toString(), { headers: hdr() });
         if (!r.ok) return;
         _listaBackupsAtual = await r.json();
         renderizarTabelaAcordeon(_listaBackupsAtual);
-    } catch (e) {
-        console.error(e);
-    } finally {
-        esconderLoading();
-    }
+    } catch (e) { } finally { esconderLoading(); }
 }
 
 // ─── ACCORDION: histórico agrupado por cliente ────────────────────────────────
@@ -316,14 +307,9 @@ function toggleGrupo(id) {
 function aplicarFiltros() {
     filtroStatus = document.getElementById("filtroStatus")?.value || "";
     filtroCliente = document.getElementById("filtroCliente")?.value || "";
-
-    // Lê as novas datas formatadas (YYYY-MM-DD)
-    filtroDataInicio = document.getElementById("filtroDataInicio")?.value || "";
-    filtroDataFim = document.getElementById("filtroDataFim")?.value || "";
-
+    filtroDias = document.getElementById("filtroDias")?.value || "30";
     carregarBackups();
 }
-
 
 function filtrarTabela() {
     const t = document.getElementById("campoPesquisaHistorico")?.value.toLowerCase() || "";
@@ -346,21 +332,13 @@ async function limparHistorico() {
     try {
         const p = new URLSearchParams();
         if (filtroCliente) p.append("clienteId", filtroCliente);
-
-        // Alinhado com o novo filtro por data
-        if (filtroDataInicio) p.append("dataInicio", filtroDataInicio);
-        if (filtroDataFim) p.append("dataFim", filtroDataFim);
-
+        if (filtroDias) p.append("dias", filtroDias);
         const r = await fetch("/api/backup?" + p.toString(), { method: "DELETE", headers: hdr() });
         if (!r.ok) { toast.erro("Erro ao limpar"); return; }
         const d = await r.json();
         toast.sucesso(`${d.removidos} registros removidos!`);
         await Promise.all([carregarResumo(), carregarBackups()]);
-    } catch (e) {
-        toast.erro("Erro ao limpar");
-    } finally {
-        esconderLoading();
-    }
+    } catch (e) { toast.erro("Erro ao limpar"); } finally { esconderLoading(); }
 }
 
 // ─── modal edição ─────────────────────────────────────────────────────────────
