@@ -145,7 +145,7 @@ async function toggleSuspensaoCliente(id, suspender, btnEl) {
     const msg = suspender
         ? "Confirmar SUSPENSÃO do backup para este cliente?"
         : "Confirmar REATIVAÇÃO do backup?";
-    
+
     const textoBotao = suspender ? "Suspender" : "Reativar";
 
     if (!await toastConfirm(msg, textoBotao)) return;
@@ -222,13 +222,13 @@ function renderizarTabelaAcordeon(lista) {
         const registrosDoDia = grupo.registros.filter(
             b => new Date(b.dataBackup).toLocaleDateString("pt-BR") === hoje
         );
-        const qtdOk       = registrosDoDia.filter(b => b.status === "ok").length;
-        const qtdFalha    = registrosDoDia.filter(b => b.status === "falha").length;
+        const qtdOk = registrosDoDia.filter(b => b.status === "ok").length;
+        const qtdFalha = registrosDoDia.filter(b => b.status === "falha").length;
         const qtdPendente = registrosDoDia.filter(b => b.status === "pendente").length;
 
         const badges = [];
-        if (qtdOk > 0)       badges.push(`<span class="backup-status ok"       style="font-size:11px;">✅ ${qtdOk} OK</span>`);
-        if (qtdFalha > 0)    badges.push(`<span class="backup-status falha"    style="font-size:11px;">❌ ${qtdFalha} Falha${qtdFalha !== 1 ? "s" : ""}</span>`);
+        if (qtdOk > 0) badges.push(`<span class="backup-status ok"       style="font-size:11px;">✅ ${qtdOk} OK</span>`);
+        if (qtdFalha > 0) badges.push(`<span class="backup-status falha"    style="font-size:11px;">❌ ${qtdFalha} Falha${qtdFalha !== 1 ? "s" : ""}</span>`);
         if (qtdPendente > 0) badges.push(`<span class="backup-status pendente" style="font-size:11px;">⏳ ${qtdPendente} Pendente${qtdPendente !== 1 ? "s" : ""}</span>`);
 
         // Linha de cabeçalho do grupo (clicável)
@@ -379,6 +379,26 @@ async function excluirBackup(id) {
         toast.sucesso("Removido!");
         await Promise.all([carregarResumo(), carregarBackups()]);
     } catch (e) { toast.erro("Erro"); } finally { esconderLoading(); }
+}
+
+// =======================================
+// 🔍 FILTRO DE PESQUISA (SEM API)
+// =======================================
+function filtrarClientes() {
+    const termo = document.getElementById("campoPesquisa").value.toLowerCase();
+
+    let lista = clientesCache;
+
+    if (filtroAtivo) {
+        lista = lista.filter(c => c.status === filtroAtivo);
+    }
+
+    const filtrados = lista.filter(c =>
+        (c.nome && c.nome.toLowerCase().includes(termo)) ||
+        (c.documento && c.documento.toLowerCase().includes(termo))
+    );
+
+    renderizarTabelaDashboard(filtrados);
 }
 
 // ─── dark mode ────────────────────────────────────────────────────────────────
