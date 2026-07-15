@@ -312,7 +312,7 @@ function aplicarFiltros() {
 }
 
 function filtrarTabela() {
-    const t = document.getElementById("campoPesquisa")?.value.toLowerCase() || "";
+    const t = document.getElementById("campoPesquisaHistorico")?.value.toLowerCase() || "";
     // Filtra nos grupos: mostra/oculta grupos inteiros
     document.querySelectorAll("#tabelaBackup .bkp-grupo-header").forEach(header => {
         const texto = header.innerText.toLowerCase();
@@ -385,20 +385,17 @@ async function excluirBackup(id) {
 // 🔍 FILTRO DE PESQUISA (SEM API)
 // =======================================
 function filtrarClientes() {
-    const termo = document.getElementById("campoPesquisa").value.toLowerCase();
+    // Pega o valor do input de pesquisa de clientes
+    const termo = document.getElementById("campoPesquisaClientes")?.value.toLowerCase() || "";
 
-    let lista = clientesCache;
-
-    if (filtroAtivo) {
-        lista = lista.filter(c => c.status === filtroAtivo);
-    }
-
-    const filtrados = lista.filter(c =>
+    // Filtra em cima da variável 'todosClientes' que já foi carregada pela API
+    const filtrados = todosClientes.filter(c =>
         (c.nome && c.nome.toLowerCase().includes(termo)) ||
-        (c.documento && c.documento.toLowerCase().includes(termo))
+        (c._id && c._id.toString().toLowerCase().includes(termo))
     );
 
-    renderizarTabelaDashboard(filtrados);
+    // Renderiza novamente a tabela com os clientes filtrados
+    renderizarGerenciar(filtrados);
 }
 
 // ─── dark mode ────────────────────────────────────────────────────────────────
