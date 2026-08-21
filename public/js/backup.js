@@ -145,10 +145,8 @@ async function toggleSuspensaoCliente(id, suspender, btnEl) {
     const msg = suspender
         ? "Confirmar SUSPENSÃO do backup para este cliente?"
         : "Confirmar REATIVAÇÃO do backup?";
+    if (!await toastConfirm(msg)) return;
 
-    const textoBotao = suspender ? "Suspender" : "Reativar";
-
-    if (!await toastConfirm(msg, textoBotao)) return;
     mostrarLoading();
     try {
         const r = await fetch(`/api/clientes/${id}/suspender-backup`, {
@@ -216,20 +214,10 @@ function renderizarTabelaAcordeon(lista) {
     let html = "";
     gruposOrdenados.forEach(([clienteId, grupo]) => {
         const total = grupo.registros.length;
-
-        // Contagem apenas do dia de HOJE — fica em branco se ainda não houve backup hoje
-        const hoje = new Date().toLocaleDateString("pt-BR");
-        const registrosDoDia = grupo.registros.filter(
-            b => new Date(b.dataBackup).toLocaleDateString("pt-BR") === hoje
-        );
-        const qtdOk = registrosDoDia.filter(b => b.status === "ok").length;
-        const qtdFalha = registrosDoDia.filter(b => b.status === "falha").length;
-        const qtdPendente = registrosDoDia.filter(b => b.status === "pendente").length;
-
-        const badges = [];
-        if (qtdOk > 0) badges.push(`<span class="backup-status ok"       style="font-size:11px;">✅ ${qtdOk} OK</span>`);
-        if (qtdFalha > 0) badges.push(`<span class="backup-status falha"    style="font-size:11px;">❌ ${qtdFalha} Falha${qtdFalha !== 1 ? "s" : ""}</span>`);
-        if (qtdPendente > 0) badges.push(`<span class="backup-status pendente" style="font-size:11px;">⏳ ${qtdPendente} Pendente${qtdPendente !== 1 ? "s" : ""}</span>`);
+        const ultimoBackup = grupo.registros[0];
+        const st = ultimoBackup?.status || "";
+        const statusBadge = { ok: "OK", falha: "Falha", pendente: "Pendente" }[st] || st;
+        const statusClass = st;
 
         // Linha de cabeçalho do grupo (clicável)
         html += `<tr class="bkp-grupo-header" onclick="toggleGrupo('grp-${clienteId}')">
@@ -238,7 +226,7 @@ function renderizarTabelaAcordeon(lista) {
               <i data-lucide="chevron-right" style="width:14px;height:14px;transition:transform .2s;flex-shrink:0;" id="icon-grp-${clienteId}"></i>
               <strong style="font-size:13px;">${grupo.nome}</strong>
               <span style="font-size:11px;color:var(--text-muted);">${total} registro${total !== 1 ? "s" : ""}</span>
-              ${badges.join("")}
+              <span class="backup-status ${statusClass}" style="font-size:11px;">Último: ${statusBadge}</span>
             </div>
           </td>
         </tr>`;
@@ -288,7 +276,7 @@ function renderizarLinhaBackup(b) {
         <span style="color:var(--text-muted);font-size:11px;">${dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
       </td>
       <td style="padding:8px 14px;"><code style="font-size:11px;color:var(--text-muted);">${banco}</code></td>
-      <td style="padding:8px 14px;"><span class="backup-status ${st}">${{ ok: "✅ OK", falha: "❌ Falha", pendente: "⏳ Pendente" }[st] || st}</span></td>
+      <td style="padding:8px 14px;"><span class="backup-status ${st}">${{ ok: "OK", falha: "Falha", pendente: "Pendente" }[st] || st}</span></td>
       <td style="padding:8px 14px;font-size:12px;">${b.tamanho || "—"}</td>
       <td style="padding:8px 14px;font-size:12px;">${b.destino || "—"}</td>
       ${acaoCol}
@@ -312,7 +300,7 @@ function aplicarFiltros() {
 }
 
 function filtrarTabela() {
-    const t = document.getElementById("campoPesquisaHistorico")?.value.toLowerCase() || "";
+    const t = document.getElementById("campoPesquisa")?.value.toLowerCase() || "";
     // Filtra nos grupos: mostra/oculta grupos inteiros
     document.querySelectorAll("#tabelaBackup .bkp-grupo-header").forEach(header => {
         const texto = header.innerText.toLowerCase();
@@ -379,23 +367,6 @@ async function excluirBackup(id) {
         toast.sucesso("Removido!");
         await Promise.all([carregarResumo(), carregarBackups()]);
     } catch (e) { toast.erro("Erro"); } finally { esconderLoading(); }
-}
-
-// =======================================
-// 🔍 FILTRO DE PESQUISA (SEM API)
-// =======================================
-function filtrarClientes() {
-    // Pega o valor do input de pesquisa de clientes
-    const termo = document.getElementById("campoPesquisaClientes")?.value.toLowerCase() || "";
-
-    // Filtra em cima da variável 'todosClientes' que já foi carregada pela API
-    const filtrados = todosClientes.filter(c =>
-        (c.nome && c.nome.toLowerCase().includes(termo)) ||
-        (c._id && c._id.toString().toLowerCase().includes(termo))
-    );
-
-    // Renderiza novamente a tabela com os clientes filtrados
-    renderizarGerenciar(filtrados);
 }
 
 // ─── dark mode ────────────────────────────────────────────────────────────────

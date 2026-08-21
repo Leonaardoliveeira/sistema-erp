@@ -112,7 +112,7 @@
       <div class="backup-filtros-grid">
         <div>
           <label>Pesquisar</label>
-          <input type="text" id="campoPesquisaHistorico" placeholder="🔎 Cliente..." oninput="filtrarTabela()">
+          <input type="text" id="campoPesquisa" placeholder="🔎 Cliente, banco, destino..." oninput="filtrarTabela()">
         </div>
         <div>
           <label>Status</label>
@@ -162,14 +162,6 @@
       </table>
     </div>
 
-    <div class="form-box search-section">
-      <h3>Pesquisar Clientes</h3>
-      <div class="input-wrapper">
-        <input type="text" id="campoPesquisaClientes" placeholder="🔎 Nome..."
-          onkeyup="filtrarClientes()">
-      </div>
-    </div>
-
     <!-- GERENCIAR CLIENTES MONITORADOS (só visível para quem pode editar) -->
     <div class="bkp-gerenciar-section" id="secaoGerenciar" style="display:none;">
       <div class="table-title" style="border-bottom:1px solid var(--border);padding:13px 18px 12px;">
@@ -217,6 +209,7 @@ Content-Type: application/json
         Verifique se o backup está suspenso antes de executar: <code>GET /api/clientes/:id/status-backup</code>
       </p>
     </div>
+
   </div><!-- .main -->
 
   <!-- MODAL EDIÇÃO DE BACKUP -->
