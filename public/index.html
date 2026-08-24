@@ -4,21 +4,91 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Franquia ERP - Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="login-page">  
+<body class="login-page">
 
-  <div class="login-container">
-    <h2>Franquia ERP Soluções</h2>
-    <p style="color: #64748b; margin-bottom: 20px; font-size: 14px;">Acesse sua conta</p>
-    
-    <input type="text" id="usuario" placeholder="Usuário">
-    <input type="password" id="senha" placeholder="Senha">
-    
-    <button class="btn-primary" onclick="login()" style="width: 100%; margin-top: 10px;">Entrar</button>
+  <div class="login-shell">
+    <!-- Painel de marca (some em telas pequenas) -->
+    <div class="login-brand">
+      <div class="login-brand-pattern"></div>
+      <div class="login-brand-content">
+        <div class="brand-mark">
+          <i data-lucide="layers"></i>
+          <span>Franquia ERP</span>
+        </div>
+        <h1>Tudo o que sua franquia precisa, em um só painel.</h1>
+        <p>Centralize o controle de clientes, SPED, backups e acessos remotos em um único lugar.</p>
+        <ul class="brand-highlights">
+          <li><i data-lucide="check"></i> Acompanhamento de SPED por cliente</li>
+          <li><i data-lucide="check"></i> Monitoramento de backups em tempo real</li>
+          <li><i data-lucide="check"></i> Gestão de usuários e permissões</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Painel do formulário -->
+    <div class="login-form-panel">
+      <div class="login-container">
+        <div class="login-mobile-brand">
+          <i data-lucide="layers"></i>
+          <span>Franquia ERP</span>
+        </div>
+
+        <h2>Bem-vindo de volta</h2>
+        <p class="login-subtitle">Acesse sua conta para continuar</p>
+
+        <div class="input-field">
+          <label for="usuario">Usuário</label>
+          <div class="input-with-icon">
+            <i data-lucide="user"></i>
+            <input type="text" id="usuario" placeholder="Seu usuário" autocomplete="username">
+          </div>
+        </div>
+
+        <div class="input-field">
+          <label for="senha">Senha</label>
+          <div class="input-with-icon">
+            <i data-lucide="lock"></i>
+            <input type="password" id="senha" placeholder="Sua senha" autocomplete="current-password">
+            <button type="button" class="toggle-senha" onclick="alternarSenha()" aria-label="Mostrar senha">
+              <i data-lucide="eye" id="iconeSenha"></i>
+            </button>
+          </div>
+        </div>
+
+        <button class="btn-primary btn-login" onclick="login()">
+          Entrar
+          <i data-lucide="arrow-right"></i>
+        </button>
+      </div>
+    </div>
   </div>
 
   <script src="js/toast.js"></script>
   <script src="js/auth.js"></script>
+  <script>
+    lucide.createIcons();
+
+    function alternarSenha() {
+      const input = document.getElementById("senha");
+      const icone = document.getElementById("iconeSenha");
+      const mostrar = input.type === "password";
+      input.type = mostrar ? "text" : "password";
+      icone.setAttribute("data-lucide", mostrar ? "eye-off" : "eye");
+      lucide.createIcons();
+    }
+
+    // Permite pressionar Enter em qualquer campo para entrar
+    ["usuario", "senha"].forEach(id => {
+      document.getElementById(id).addEventListener("keyup", e => {
+        if (e.key === "Enter") login();
+      });
+    });
+  </script>
 </body>
 </html>
