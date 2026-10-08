@@ -123,7 +123,6 @@ function filtrarClientes() {
         (c.nome && c.nome.toLowerCase().includes(termo)) ||
         (c.documento && c.documento.toLowerCase().includes(termo))
     );
-
     renderizarTabelaDashboard(filtrados);
 }
 
