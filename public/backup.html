@@ -144,6 +144,43 @@
       </div>
     </div>
 
+    <!-- LIMPEZA / RETENÇÃO DE BACKUPS ANTIGOS (apenas para quem pode editar) -->
+    <div class="backup-filtros form-box bkp-retencao-box" id="boxRetencao" style="display:none;">
+      <div class="bkp-retencao-titulo">
+        <i data-lucide="calendar-clock" style="width:15px;height:15px;color:var(--amber);"></i>
+        <span>Excluir backups antigos (retenção)</span>
+      </div>
+      <div class="backup-filtros-grid bkp-retencao-grid">
+        <div>
+          <label>Excluir registros anteriores a</label>
+          <select id="retencaoPeriodo" onchange="onMudaRetencaoPeriodo()">
+            <option value="">Escolher por período…</option>
+            <option value="1d">1 dia (diário)</option>
+            <option value="7d">1 semana (7 dias)</option>
+            <option value="15d">15 dias</option>
+            <option value="1m">1 mês (30 dias)</option>
+            <option value="custom">Data específica…</option>
+          </select>
+        </div>
+        <div>
+          <label>Ou escolha uma data</label>
+          <input type="date" id="retencaoData" onchange="onMudaRetencaoData()">
+        </div>
+        <div>
+          <label>Cliente (opcional)</label>
+          <select id="retencaoCliente">
+            <option value="">Todos os clientes</option>
+          </select>
+        </div>
+        <div class="bkp-retencao-acao">
+          <label>&nbsp;</label>
+          <button class="bkp-btn-limpar" onclick="executarLimpezaRetencao()">
+            <i data-lucide="trash-2" style="width:13px;height:13px;"></i> Excluir registros antigos
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- TABELA HISTÓRICO -->
     <div class="bkp-gerenciar-section">
       <div class="table-title">
@@ -181,6 +218,8 @@
             <th>Cliente</th>
             <th style="width:140px;">Monitorar</th>
             <th style="width:180px;">Suspensão</th>
+            <th style="width:160px;">Status do Serviço</th>
+            <th style="width:160px;">Backup Remoto</th>
             <th>ObjectID (Backup Agent)</th>
           </tr>
         </thead>
@@ -209,7 +248,11 @@ Content-Type: application/json
 }</pre>
       <p class="backup-api-desc" style="margin-top:10px;">
         O <code>clienteId</code> é o <strong>ObjectID</strong> obtido na tabela acima.<br>
-        Verifique se o backup está suspenso antes de executar: <code>GET /api/clientes/:id/status-backup</code>
+        Verifique se o backup está suspenso ou foi solicitado remotamente:
+        <code>GET /api/clientes/:id/status-backup</code> (retorna <code>bloqueado</code> e <code>executarAgora</code>).<br>
+        Confirme o recebimento do disparo remoto: <code>POST /api/clientes/:id/ack-executar-backup</code><br>
+        Reporte o status do serviço periodicamente: <code>POST /api/clientes/:id/status-servico</code>
+        <span style="opacity:.8;">{ "status": "rodando", "mensagem": "opcional" }</span>
       </p>
     </div>
 

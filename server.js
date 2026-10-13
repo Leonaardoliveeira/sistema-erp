@@ -68,9 +68,31 @@ const ClienteSchema = new mongoose.Schema({
   status: { type: String, default: "Pendente" },
   suspenderBackup: { type: Boolean, default: false },   // suspenso manualmente
   monitoradoBackup: { type: Boolean, default: false },   // aparece na tela de backup
+
+  // Disparo remoto de backup (acionado pela tela de monitoramento, consumido pelo Backup Agent)
+  executarBackupAgora: { type: Boolean, default: false },
+  executarBackupSolicitadoEm: { type: Date },
+  executarBackupSolicitadoPor: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario" },
+
+  // Heartbeat do serviço do Backup Agent (reportado periodicamente pelo agente)
+  servicoStatus: { type: String, enum: ["rodando", "parado", "pausado", "erro", "desconhecido"], default: "desconhecido" },
+  servicoAtualizadoEm: { type: Date },
+  servicoMensagem: { type: String },
+
   usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
   criadoEm: { type: Date, default: Date.now }
 });
+
+// Janela de tolerância do heartbeat: sem contato do agente nesse intervalo, considera offline
+const HEARTBEAT_OFFLINE_MS = 20 * 60 * 1000; // 20 minutos
+
+// Calcula o status "real" do serviço levando em conta a idade do último heartbeat
+function statusServicoComputado(cliente) {
+  if (!cliente.servicoAtualizadoEm) return { status: "desconhecido", online: false, atualizadoEm: null };
+  const idadeMs = Date.now() - new Date(cliente.servicoAtualizadoEm).getTime();
+  if (idadeMs > HEARTBEAT_OFFLINE_MS) return { status: "offline", online: false, atualizadoEm: cliente.servicoAtualizadoEm };
+  return { status: cliente.servicoStatus || "desconhecido", online: true, atualizadoEm: cliente.servicoAtualizadoEm };
+}
 
 const SpedSchema = new mongoose.Schema({
   clienteId: { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
@@ -502,7 +524,7 @@ app.delete("/api/backup/:id", verificarToken, verificarPermBackup, async (req, r
   } catch (err) { res.status(400).json({ message: err.message }); }
 });
 
-// Limpar histórico em lote
+// Limpar histórico em lote (remove os registros ATUALMENTE exibidos/filtrados)
 app.delete("/api/backup", verificarToken, verificarPermBackup, async (req, res) => {
   try {
     const { clienteId, dias } = req.query;
@@ -516,6 +538,36 @@ app.delete("/api/backup", verificarToken, verificarPermBackup, async (req, res) 
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
+// Retenção: remove registros MAIS ANTIGOS que a data/período informado
+// (distinto do "Limpar Histórico" acima, que apaga o que está sendo exibido no filtro)
+app.delete("/api/backup/retencao", verificarToken, verificarPermBackup, async (req, res) => {
+  try {
+    const { clienteId, antes, periodo } = req.query;
+
+    let dataCorte = null;
+    if (antes) {
+      dataCorte = new Date(antes);
+    } else if (periodo) {
+      const agora = new Date();
+      const mapa = { "1d": 1, "7d": 7, "15d": 15, "1m": 30 };
+      const dias = mapa[periodo];
+      if (!dias) return res.status(400).json({ message: "Período inválido. Use 1d, 7d, 15d ou 1m." });
+      dataCorte = new Date(agora.getTime() - dias * 24 * 60 * 60 * 1000);
+    } else {
+      return res.status(400).json({ message: "Informe 'antes' (data) ou 'periodo' (1d, 7d, 15d, 1m)." });
+    }
+    if (isNaN(dataCorte.getTime())) return res.status(400).json({ message: "Data inválida." });
+
+    const clientesVisiveis = await Cliente.find({ ...filtroPerfil(req), monitoradoBackup: true }).select("_id");
+    const idsVisiveis = clientesVisiveis.map(c => c._id);
+    const filtro = { clienteId: { $in: idsVisiveis }, dataBackup: { $lt: dataCorte } };
+    if (clienteId) filtro.clienteId = clienteId;
+
+    const result = await Backup.deleteMany(filtro);
+    res.json({ ok: true, removidos: result.deletedCount, dataCorte });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
 // --------------------
 // CLIENTES — extras para backup
 // --------------------
@@ -523,8 +575,17 @@ app.delete("/api/backup", verificarToken, verificarPermBackup, async (req, res) 
 // Listar todos os clientes com flag monitoradoBackup (para gerenciar na tela de backup)
 app.get("/api/clientes-backup", verificarToken, verificarPermBackup, async (req, res) => {
   try {
-    const clientes = await Cliente.find(filtroPerfil(req)).select("_id nome monitoradoBackup suspenderBackup").sort({ nome: 1 });
-    res.json(clientes);
+    const clientes = await Cliente.find(filtroPerfil(req))
+      .select("_id nome monitoradoBackup suspenderBackup executarBackupAgora executarBackupSolicitadoEm servicoStatus servicoAtualizadoEm servicoMensagem")
+      .sort({ nome: 1 });
+    const comStatus = clientes.map(c => {
+      const obj = c.toObject();
+      const sc = statusServicoComputado(c);
+      obj.servicoStatusComputado = sc.status;
+      obj.servicoOnline = sc.online;
+      return obj;
+    });
+    res.json(comStatus);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
@@ -548,13 +609,73 @@ app.put("/api/clientes/:id/suspender-backup", verificarToken, verificarPermBacku
   } catch (err) { res.status(400).json({ message: err.message }); }
 });
 
-// Status de backup para o Backup Agent
+// Status de backup para o Backup Agent (também carrega o sinal de "executar agora")
 app.get("/api/clientes/:id/status-backup", verificarToken, async (req, res) => {
   try {
-    const cliente = await Cliente.findById(req.params.id).select("suspenderBackup nome");
+    const cliente = await Cliente.findById(req.params.id).select("suspenderBackup nome executarBackupAgora");
     if (!cliente) return res.status(404).json({ message: "Cliente não encontrado" });
     const bloqueado = cliente.suspenderBackup;
-    res.json({ bloqueado, motivo: bloqueado ? "Backup suspenso" : null });
+    res.json({
+      bloqueado,
+      motivo: bloqueado ? "Backup suspenso" : null,
+      executarAgora: !!cliente.executarBackupAgora
+    });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+// --------------------
+// EXECUÇÃO REMOTA DO BACKUP (disparada pela tela de monitoramento)
+// --------------------
+
+// Solicita que o Backup Agent execute o backup agora (consumido no próximo poll do agente)
+app.put("/api/clientes/:id/executar-backup", verificarToken, verificarPermBackup, async (req, res) => {
+  try {
+    const att = await Cliente.findByIdAndUpdate(req.params.id, {
+      executarBackupAgora: true,
+      executarBackupSolicitadoEm: new Date(),
+      executarBackupSolicitadoPor: req.usuario.id
+    }, { new: true });
+    if (!att) return res.status(404).json({ message: "Cliente não encontrado" });
+    res.json({ ok: true, executarBackupAgora: true });
+  } catch (err) { res.status(400).json({ message: err.message }); }
+});
+
+// Confirmação do Backup Agent de que recebeu e iniciou a solicitação (limpa a flag)
+app.post("/api/clientes/:id/ack-executar-backup", verificarToken, async (req, res) => {
+  try {
+    const att = await Cliente.findByIdAndUpdate(req.params.id, {
+      executarBackupAgora: false
+    }, { new: true });
+    if (!att) return res.status(404).json({ message: "Cliente não encontrado" });
+    res.json({ ok: true });
+  } catch (err) { res.status(400).json({ message: err.message }); }
+});
+
+// --------------------
+// HEARTBEAT / STATUS DO SERVIÇO (reportado periodicamente pelo Backup Agent)
+// --------------------
+app.post("/api/clientes/:id/status-servico", verificarToken, async (req, res) => {
+  try {
+    const { status, mensagem } = req.body;
+    const statusValidos = ["rodando", "parado", "pausado", "erro", "desconhecido"];
+    const att = await Cliente.findByIdAndUpdate(req.params.id, {
+      servicoStatus: statusValidos.includes(status) ? status : "desconhecido",
+      servicoAtualizadoEm: new Date(),
+      servicoMensagem: mensagem || null
+    }, { new: true });
+    if (!att) return res.status(404).json({ message: "Cliente não encontrado" });
+    res.json({ ok: true });
+  } catch (err) { res.status(400).json({ message: err.message }); }
+});
+
+// Consulta o status do serviço de um cliente (para a tela de monitoramento)
+app.get("/api/clientes/:id/status-servico", verificarToken, verificarPermBackup, async (req, res) => {
+  try {
+    const cliente = await Cliente.findOne({ _id: req.params.id, ...filtroPerfil(req) })
+      .select("servicoStatus servicoAtualizadoEm servicoMensagem nome");
+    if (!cliente) return res.status(404).json({ message: "Cliente não encontrado" });
+    const sc = statusServicoComputado(cliente);
+    res.json({ status: sc.status, online: sc.online, atualizadoEm: sc.atualizadoEm, mensagem: cliente.servicoMensagem || null });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 

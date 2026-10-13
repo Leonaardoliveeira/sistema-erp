@@ -19,6 +19,7 @@ async function inicializarBackup() {
     if (!perm.visualizar) { window.location.href = "dashboard.html"; return; }
     aplicarPermissaoUI();
     await Promise.all([carregarResumo(), carregarTodosClientes(), carregarBackups()]);
+    iniciarPollStatusServico();
 }
 
 async function carregarPermissao() {
@@ -41,11 +42,11 @@ function aplicarPermissaoUI() {
     const bl = document.getElementById("btnLimparHistorico");
     if (bl) bl.style.display = perm.editar ? "" : "none";
 
-    const th = document.getElementById("thAcoes");
-    if (th) th.style.display = perm.editar ? "" : "none";
-
     const sg = document.getElementById("secaoGerenciar");
     if (sg) sg.style.display = perm.editar ? "" : "none";
+
+    const br = document.getElementById("boxRetencao");
+    if (br) br.style.display = perm.editar ? "" : "none";
 }
 
 // ─── cards resumo ─────────────────────────────────────────────────────────────
@@ -91,16 +92,45 @@ async function carregarTodosClientes() {
         const elFiltro = document.getElementById("filtroCliente");
         if (elFiltro) elFiltro.innerHTML = opsFiltro;
 
+        const elRetCliente = document.getElementById("retencaoCliente");
+        if (elRetCliente) elRetCliente.innerHTML = opsFiltro;
+
         if (perm.editar) renderizarGerenciar(todosClientes);
     } catch (e) { console.error(e); }
 }
 
+// Atualiza em segundo plano apenas o status do serviço / backup remoto, sem
+// re-renderizar a tabela de histórico (evita "piscar" a tela a cada poll).
+let _pollStatusTimer = null;
+function iniciarPollStatusServico() {
+    if (_pollStatusTimer) clearInterval(_pollStatusTimer);
+    _pollStatusTimer = setInterval(async () => {
+        if (!perm.editar) return;
+        try {
+            const r = await fetch("/api/clientes-backup", { headers: hdr() });
+            if (!r.ok) return;
+            todosClientes = await r.json();
+            monitorados = todosClientes.filter(c => c.monitoradoBackup);
+            renderizarGerenciar(todosClientes);
+        } catch (e) { }
+    }, 30000); // 30s
+}
+
 // ─── gerenciar clientes monitorados ──────────────────────────────────────────
+const SERVICO_INFO = {
+    rodando: { label: "🟢 Rodando", classe: "servico-ok" },
+    parado: { label: "🔴 Parado", classe: "servico-erro" },
+    pausado: { label: "🟡 Pausado", classe: "servico-alerta" },
+    erro: { label: "🔴 Erro", classe: "servico-erro" },
+    offline: { label: "⚫ Offline", classe: "servico-erro" },
+    desconhecido: { label: "⚪ Sem dados", classe: "servico-desconhecido" }
+};
+
 function renderizarGerenciar(lista) {
     const tbody = document.getElementById("tabelaGerenciar");
     if (!tbody) return;
     if (!lista.length) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-muted);">Nenhum cliente cadastrado.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted);">Nenhum cliente cadastrado.</td></tr>`;
         return;
     }
     tbody.innerHTML = lista.map(c => {
@@ -110,6 +140,18 @@ function renderizarGerenciar(lista) {
         const btnSusp = susp
             ? `<button class="bkp-btn-suspensao bkp-btn-reativar"  onclick="toggleSuspensaoCliente('${id}', false, this)">✅ Reativar</button>`
             : `<button class="bkp-btn-suspensao bkp-btn-suspender" onclick="toggleSuspensaoCliente('${id}', true,  this)">⛔ Suspender</button>`;
+
+        const infoServico = SERVICO_INFO[c.servicoStatusComputado] || SERVICO_INFO.desconhecido;
+        const tituloServico = c.servicoAtualizadoEm
+            ? `Última atualização: ${new Date(c.servicoAtualizadoEm).toLocaleString("pt-BR")}${c.servicoMensagem ? " — " + c.servicoMensagem : ""}`
+            : "Agente ainda não reportou status";
+        const badgeServico = `<span class="backup-servico-badge ${infoServico.classe}" title="${tituloServico}">${infoServico.label}</span>`;
+
+        const pendente = c.executarBackupAgora;
+        const btnExecutar = pendente
+            ? `<button class="bkp-btn-executar bkp-btn-executar-pendente" disabled title="Aguardando o agente executar...">⏳ Solicitado</button>`
+            : `<button class="bkp-btn-executar" onclick="executarBackupAgora('${id}', this)">▶️ Executar Agora</button>`;
+
         return `<tr>
           <td data-label="Cliente"><strong>${c.nome}</strong></td>
           <td data-label="Monitorar">
@@ -119,6 +161,8 @@ function renderizarGerenciar(lista) {
             </label>
           </td>
           <td data-label="Suspensão">${btnSusp}</td>
+          <td data-label="Status do Serviço">${badgeServico}</td>
+          <td data-label="Backup Remoto">${btnExecutar}</td>
           <td data-label="ObjectID" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <code style="font-size:11px;color:var(--text-muted);word-break:break-all;">${id}</code>
             <button class="bkp-btn-copiar" onclick="copiarId('${id}',this)" title="Copiar ObjectID">
@@ -128,6 +172,20 @@ function renderizarGerenciar(lista) {
         </tr>`;
     }).join("");
     lucide.createIcons();
+}
+
+// ─── executar backup remotamente ──────────────────────────────────────────────
+async function executarBackupAgora(id, btnEl) {
+    if (!perm.editar) return;
+    const ok = await toastConfirm("Solicitar execução do backup agora para este cliente? O agente instalado na máquina dele vai iniciar assim que detectar o pedido.", "Executar");
+    if (!ok) return;
+    if (btnEl) { btnEl.disabled = true; btnEl.textContent = "Enviando..."; }
+    try {
+        const r = await fetch(`/api/clientes/${id}/executar-backup`, { method: "PUT", headers: hdr() });
+        if (!r.ok) { toast.erro("Erro ao solicitar backup"); if (btnEl) { btnEl.disabled = false; btnEl.textContent = "▶️ Executar Agora"; } return; }
+        toast.sucesso("✅ Solicitação enviada! O agente vai executar no próximo ciclo de verificação.");
+        await carregarTodosClientes();
+    } catch (e) { toast.erro("Erro ao solicitar backup"); if (btnEl) { btnEl.disabled = false; btnEl.textContent = "▶️ Executar Agora"; } }
 }
 
 async function toggleMonitorado(id, monitorado, el) {
@@ -312,7 +370,7 @@ function aplicarFiltros() {
 }
 
 function filtrarTabela() {
-    const t = document.getElementById("campoPesquisaHistorico")?.value.toLowerCase() || "";
+    const t = document.getElementById("campoPesquisa")?.value.toLowerCase() || "";
     // Filtra nos grupos: mostra/oculta grupos inteiros
     document.querySelectorAll("#tabelaBackup .bkp-grupo-header").forEach(header => {
         const texto = header.innerText.toLowerCase();
@@ -339,6 +397,62 @@ async function limparHistorico() {
         toast.sucesso(`${d.removidos} registros removidos!`);
         await Promise.all([carregarResumo(), carregarBackups()]);
     } catch (e) { toast.erro("Erro ao limpar"); } finally { esconderLoading(); }
+}
+
+// ─── retenção: excluir backups antigos por período ou data ───────────────────
+function onMudaRetencaoPeriodo() {
+    const periodo = document.getElementById("retencaoPeriodo")?.value || "";
+    const campoData = document.getElementById("retencaoData");
+    if (!campoData) return;
+    if (periodo === "custom") {
+        campoData.focus();
+    } else if (periodo) {
+        campoData.value = "";
+    }
+}
+
+function onMudaRetencaoData() {
+    const data = document.getElementById("retencaoData")?.value;
+    const sel = document.getElementById("retencaoPeriodo");
+    if (data && sel) sel.value = "custom";
+}
+
+async function executarLimpezaRetencao() {
+    if (!perm.editar) return;
+    const periodo = document.getElementById("retencaoPeriodo")?.value || "";
+    const data = document.getElementById("retencaoData")?.value || "";
+    const clienteId = document.getElementById("retencaoCliente")?.value || "";
+
+    const p = new URLSearchParams();
+    if (clienteId) p.append("clienteId", clienteId);
+
+    let descricaoPeriodo = "";
+    if (periodo === "custom" && data) {
+        p.append("antes", new Date(data + "T00:00:00").toISOString());
+        descricaoPeriodo = `anteriores a ${new Date(data + "T00:00:00").toLocaleDateString("pt-BR")}`;
+    } else if (periodo && periodo !== "custom") {
+        p.append("periodo", periodo);
+        const nomes = { "1d": "1 dia (diário)", "7d": "1 semana", "15d": "15 dias", "1m": "1 mês" };
+        descricaoPeriodo = `com mais de ${nomes[periodo] || periodo}`;
+    } else {
+        toast.aviso("Escolha um período ou uma data específica.");
+        return;
+    }
+
+    const ok = await toastConfirm(
+        `Excluir PERMANENTEMENTE os registros de backup ${descricaoPeriodo}? Esta ação não pode ser desfeita.`,
+        "Excluir"
+    );
+    if (!ok) return;
+
+    mostrarLoading();
+    try {
+        const r = await fetch("/api/backup/retencao?" + p.toString(), { method: "DELETE", headers: hdr() });
+        const d = await r.json();
+        if (!r.ok) { toast.erro(d.message || "Erro ao excluir"); return; }
+        toast.sucesso(`${d.removidos} registro(s) antigo(s) removido(s)!`);
+        await Promise.all([carregarResumo(), carregarBackups()]);
+    } catch (e) { toast.erro("Erro ao excluir registros antigos"); } finally { esconderLoading(); }
 }
 
 // ─── modal edição ─────────────────────────────────────────────────────────────

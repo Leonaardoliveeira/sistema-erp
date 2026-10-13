@@ -2230,12 +2230,7 @@ body.dark .backup-api-desc code {
   margin-bottom: 24px;
 }
 
-/* ── Accordion — histórico agrupado por cliente ────────────────────────────── */
-
-/* Wrapper geral dos acordeões — fica dentro do .table-container */
-.bkp-historico-wrap {
-  /* sem borda extra, o container já tem */
-}
+/* ── Histórico agrupado por cliente (linhas <tr> com toggle, ver backup.js) ──── */
 
 /* Mensagem de "vazio" */
 .bkp-vazio-msg {
@@ -2245,232 +2240,170 @@ body.dark .backup-api-desc code {
   font-size: 13.5px;
 }
 
-/* Cada bloco de cliente */
-.bkp-accordion {
-  border-bottom: 1px solid var(--border);
-}
-
-.bkp-accordion:last-child {
-  border-bottom: none;
-}
-
-/* Cabeçalho clicável */
-.bkp-accordion-header {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 18px;
-  background: var(--surface);
-  border: none;
+.bkp-grupo-header {
   cursor: pointer;
-  font-family: var(--font);
   transition: background .15s;
-  text-align: left;
-  border-radius: 0;
 }
 
-.bkp-accordion-header:hover {
+.bkp-grupo-header:hover {
   background: #f8fafc;
 }
 
-body.dark .bkp-accordion-header:hover {
+body.dark .bkp-grupo-header:hover {
   background: #1c2433;
 }
 
-/* Lado esquerdo: chevron + nome */
-.bkp-acc-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
+.bkp-grupo-header td {
+  border-bottom: 1px solid var(--border);
 }
 
-.bkp-acc-chevron {
-  display: flex;
-  align-items: center;
-  color: var(--text-muted);
-  flex-shrink: 0;
-  transition: transform .22s cubic-bezier(.4, 0, .2, 1);
+.bkp-grupo-content {
+  background: #fafbfc;
+  padding: 0 !important;
 }
 
-/* Gira o chevron quando aberto */
-.bkp-accordion.aberto .bkp-acc-chevron {
-  transform: rotate(-180deg);
+body.dark .bkp-grupo-content {
+  background: #0f1724;
 }
 
-.bkp-acc-nome {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Lado direito: badges + meta */
-.bkp-acc-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.bkp-acc-total {
-  font-size: 11.5px;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
-.bkp-acc-ultimo {
-  font-size: 11.5px;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
-/* Corpo do accordion — oculto por padrão, abre com animação */
-.bkp-accordion-body {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows .26s cubic-bezier(.4, 0, .2, 1);
-  overflow: hidden;
-}
-
-.bkp-accordion.aberto .bkp-accordion-body {
-  grid-template-rows: 1fr;
-}
-
-/* Filho direto precisa de overflow:hidden para o grid funcionar */
-.bkp-accordion-body>table {
-  overflow: hidden;
-  min-height: 0;
-}
-
-/* Thead dentro do accordion — fundo levemente diferente para não confundir */
-.bkp-accordion-body thead th {
+.bkp-subheader th {
   background: #1e2a3a;
-  font-size: 11px;
-  padding: 10px 16px;
 }
 
-body.dark .bkp-accordion-body thead th {
+body.dark .bkp-subheader th {
   background: #0c1526;
 }
 
-/* Zebra suave nas linhas do accordion */
-.bkp-accordion-body tbody tr:nth-child(even) {
-  background: #fafafa;
+.bkp-linha-backup:nth-child(even) {
+  background: rgba(0, 0, 0, .015);
 }
 
-body.dark .bkp-accordion-body tbody tr:nth-child(even) {
-  background: #131c2b;
+body.dark .bkp-linha-backup:nth-child(even) {
+  background: rgba(255, 255, 255, .02);
 }
 
-/* Dark mode accordion */
-body.dark .bkp-accordion {
-  border-color: #1f2937;
+.bkp-linha-backup:hover {
+  background: var(--blue-soft);
 }
 
-body.dark .bkp-accordion-header {
-  background: #111827;
+/* ── Status do serviço do Backup Agent (badges) ─────────────────────────────── */
+.backup-servico-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  cursor: help;
 }
 
-/* Responsivo — accordion no mobile */
+.backup-servico-badge.servico-ok {
+  background: rgba(34, 197, 94, .12);
+  color: #16a34a;
+}
+
+.backup-servico-badge.servico-alerta {
+  background: rgba(245, 158, 11, .14);
+  color: #b45309;
+}
+
+.backup-servico-badge.servico-erro {
+  background: rgba(239, 68, 68, .12);
+  color: #dc2626;
+}
+
+.backup-servico-badge.servico-desconhecido {
+  background: rgba(148, 163, 184, .16);
+  color: var(--text-muted);
+}
+
+body.dark .backup-servico-badge.servico-ok {
+  background: rgba(34, 197, 94, .18);
+  color: #4ade80;
+}
+
+body.dark .backup-servico-badge.servico-alerta {
+  background: rgba(245, 158, 11, .2);
+  color: #fbbf24;
+}
+
+body.dark .backup-servico-badge.servico-erro {
+  background: rgba(239, 68, 68, .2);
+  color: #f87171;
+}
+
+body.dark .backup-servico-badge.servico-desconhecido {
+  background: rgba(148, 163, 184, .16);
+  color: var(--text-muted);
+}
+
+/* ── Botão "Executar Agora" (disparo remoto do backup) ──────────────────────── */
+.bkp-btn-executar {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--blue);
+  background: var(--blue-soft);
+  color: var(--blue-dark);
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+  white-space: nowrap;
+}
+
+.bkp-btn-executar:hover {
+  background: var(--blue);
+  color: #fff;
+}
+
+.bkp-btn-executar:active {
+  transform: scale(.97);
+}
+
+.bkp-btn-executar-pendente,
+.bkp-btn-executar:disabled {
+  border-color: var(--border);
+  background: var(--bg);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+/* ── Caixa de retenção / limpeza de backups antigos ─────────────────────────── */
+.bkp-retencao-box {
+  border-left: 3px solid var(--amber);
+}
+
+.bkp-retencao-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.bkp-retencao-grid {
+  align-items: end;
+}
+
+.bkp-retencao-acao {
+  display: flex;
+  flex-direction: column;
+}
+
+.bkp-retencao-acao .bkp-btn-limpar {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Responsivo */
 @media (max-width: 640px) {
-  .bkp-accordion-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 12px 14px;
-  }
-
-  .bkp-acc-right {
-    justify-content: flex-start;
-    gap: 6px;
-  }
-
-  .bkp-acc-ultimo {
-    display: none;
-  }
-
-  /* economiza espaço no mobile */
-
-  /* No mobile o body do accordion usa o stacking normal de tabela */
-  .bkp-accordion-body table,
-  .bkp-accordion-body thead,
-  .bkp-accordion-body tbody,
-  .bkp-accordion-body tr,
-  .bkp-accordion-body th,
-  .bkp-accordion-body td {
-    display: block;
-    width: 100%;
-  }
-
-  .bkp-accordion-body thead tr {
-    position: absolute;
-    top: -9999px;
-    left: -9999px;
-    visibility: hidden;
-  }
-
-  .bkp-accordion-body tbody tr {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    margin: 8px 10px;
-    box-shadow: var(--shadow-xs);
-    overflow: hidden;
-  }
-
-  .bkp-accordion-body tbody td {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 9px 13px;
-    border-top: 1px solid var(--border);
-    font-size: 13px;
-    min-height: 40px;
-  }
-
-  .bkp-accordion-body tbody tr td:first-child {
-    border-top: none;
-  }
-
-  .bkp-accordion-body tbody td::before {
-    content: attr(data-label);
-    font-size: 10.5px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .05em;
-    color: var(--text-muted);
-    white-space: nowrap;
-    flex-shrink: 0;
-    min-width: 64px;
-  }
-
-  .bkp-accordion-body tbody td.td-acoes-cell {
-    justify-content: center;
-    border-top: 1px dashed var(--border);
-    flex-wrap: wrap;
-  }
-
-  .bkp-accordion-body tbody td.td-acoes-cell::before {
-    display: none;
-  }
-
-  body.dark .bkp-accordion-body tbody tr {
-    background: var(--surface);
-    border-color: var(--border);
-  }
-
-  body.dark .bkp-accordion-body tbody td {
-    border-color: var(--border);
-  }
-
   /* Filtros em coluna no mobile */
   .backup-filtros-grid {
     grid-template-columns: 1fr;
