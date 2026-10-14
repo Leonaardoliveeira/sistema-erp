@@ -2373,35 +2373,6 @@ body.dark .backup-servico-badge.servico-desconhecido {
   cursor: not-allowed;
 }
 
-/* ── Caixa de retenção / limpeza de backups antigos ─────────────────────────── */
-.bkp-retencao-box {
-  border-left: 3px solid var(--amber);
-}
-
-.bkp-retencao-titulo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 12px;
-}
-
-.bkp-retencao-grid {
-  align-items: end;
-}
-
-.bkp-retencao-acao {
-  display: flex;
-  flex-direction: column;
-}
-
-.bkp-retencao-acao .bkp-btn-limpar {
-  width: 100%;
-  justify-content: center;
-}
-
 /* Responsivo */
 @media (max-width: 640px) {
   /* Filtros em coluna no mobile */

@@ -44,9 +44,6 @@ function aplicarPermissaoUI() {
 
     const sg = document.getElementById("secaoGerenciar");
     if (sg) sg.style.display = perm.editar ? "" : "none";
-
-    const br = document.getElementById("boxRetencao");
-    if (br) br.style.display = perm.editar ? "" : "none";
 }
 
 // ─── cards resumo ─────────────────────────────────────────────────────────────
@@ -91,9 +88,6 @@ async function carregarTodosClientes() {
             + monitorados.map(c => `<option value="${c._id}">${c.nome}</option>`).join("");
         const elFiltro = document.getElementById("filtroCliente");
         if (elFiltro) elFiltro.innerHTML = opsFiltro;
-
-        const elRetCliente = document.getElementById("retencaoCliente");
-        if (elRetCliente) elRetCliente.innerHTML = opsFiltro;
 
         if (perm.editar) renderizarGerenciar(todosClientes);
     } catch (e) { console.error(e); }
@@ -141,11 +135,16 @@ function renderizarGerenciar(lista) {
             ? `<button class="bkp-btn-suspensao bkp-btn-reativar"  onclick="toggleSuspensaoCliente('${id}', false, this)">✅ Reativar</button>`
             : `<button class="bkp-btn-suspensao bkp-btn-suspender" onclick="toggleSuspensaoCliente('${id}', true,  this)">⛔ Suspender</button>`;
 
-        const infoServico = SERVICO_INFO[c.servicoStatusComputado] || SERVICO_INFO.desconhecido;
-        const tituloServico = c.servicoAtualizadoEm
-            ? `Última atualização: ${new Date(c.servicoAtualizadoEm).toLocaleString("pt-BR")}${c.servicoMensagem ? " — " + c.servicoMensagem : ""}`
-            : "Agente ainda não reportou status";
-        const badgeServico = `<span class="backup-servico-badge ${infoServico.classe}" title="${tituloServico}">${infoServico.label}</span>`;
+        let badgeServico;
+        if (!c.monitoradoBackup) {
+            badgeServico = `<span class="backup-servico-badge servico-desconhecido" title="Ative o monitoramento deste cliente para acompanhar o status do serviço.">— Não monitorado</span>`;
+        } else {
+            const infoServico = SERVICO_INFO[c.servicoStatusComputado] || SERVICO_INFO.desconhecido;
+            const tituloServico = c.servicoAtualizadoEm
+                ? `Última atualização: ${new Date(c.servicoAtualizadoEm).toLocaleString("pt-BR")}${c.servicoMensagem ? " — " + c.servicoMensagem : ""}`
+                : "Agente ainda não reportou status";
+            badgeServico = `<span class="backup-servico-badge ${infoServico.classe}" title="${tituloServico}">${infoServico.label}</span>`;
+        }
 
         const pendente = c.executarBackupAgora;
         const btnExecutar = pendente
@@ -397,62 +396,6 @@ async function limparHistorico() {
         toast.sucesso(`${d.removidos} registros removidos!`);
         await Promise.all([carregarResumo(), carregarBackups()]);
     } catch (e) { toast.erro("Erro ao limpar"); } finally { esconderLoading(); }
-}
-
-// ─── retenção: excluir backups antigos por período ou data ───────────────────
-function onMudaRetencaoPeriodo() {
-    const periodo = document.getElementById("retencaoPeriodo")?.value || "";
-    const campoData = document.getElementById("retencaoData");
-    if (!campoData) return;
-    if (periodo === "custom") {
-        campoData.focus();
-    } else if (periodo) {
-        campoData.value = "";
-    }
-}
-
-function onMudaRetencaoData() {
-    const data = document.getElementById("retencaoData")?.value;
-    const sel = document.getElementById("retencaoPeriodo");
-    if (data && sel) sel.value = "custom";
-}
-
-async function executarLimpezaRetencao() {
-    if (!perm.editar) return;
-    const periodo = document.getElementById("retencaoPeriodo")?.value || "";
-    const data = document.getElementById("retencaoData")?.value || "";
-    const clienteId = document.getElementById("retencaoCliente")?.value || "";
-
-    const p = new URLSearchParams();
-    if (clienteId) p.append("clienteId", clienteId);
-
-    let descricaoPeriodo = "";
-    if (periodo === "custom" && data) {
-        p.append("antes", new Date(data + "T00:00:00").toISOString());
-        descricaoPeriodo = `anteriores a ${new Date(data + "T00:00:00").toLocaleDateString("pt-BR")}`;
-    } else if (periodo && periodo !== "custom") {
-        p.append("periodo", periodo);
-        const nomes = { "1d": "1 dia (diário)", "7d": "1 semana", "15d": "15 dias", "1m": "1 mês" };
-        descricaoPeriodo = `com mais de ${nomes[periodo] || periodo}`;
-    } else {
-        toast.aviso("Escolha um período ou uma data específica.");
-        return;
-    }
-
-    const ok = await toastConfirm(
-        `Excluir PERMANENTEMENTE os registros de backup ${descricaoPeriodo}? Esta ação não pode ser desfeita.`,
-        "Excluir"
-    );
-    if (!ok) return;
-
-    mostrarLoading();
-    try {
-        const r = await fetch("/api/backup/retencao?" + p.toString(), { method: "DELETE", headers: hdr() });
-        const d = await r.json();
-        if (!r.ok) { toast.erro(d.message || "Erro ao excluir"); return; }
-        toast.sucesso(`${d.removidos} registro(s) antigo(s) removido(s)!`);
-        await Promise.all([carregarResumo(), carregarBackups()]);
-    } catch (e) { toast.erro("Erro ao excluir registros antigos"); } finally { esconderLoading(); }
 }
 
 // ─── modal edição ─────────────────────────────────────────────────────────────

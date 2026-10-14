@@ -538,36 +538,6 @@ app.delete("/api/backup", verificarToken, verificarPermBackup, async (req, res) 
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-// Retenção: remove registros MAIS ANTIGOS que a data/período informado
-// (distinto do "Limpar Histórico" acima, que apaga o que está sendo exibido no filtro)
-app.delete("/api/backup/retencao", verificarToken, verificarPermBackup, async (req, res) => {
-  try {
-    const { clienteId, antes, periodo } = req.query;
-
-    let dataCorte = null;
-    if (antes) {
-      dataCorte = new Date(antes);
-    } else if (periodo) {
-      const agora = new Date();
-      const mapa = { "1d": 1, "7d": 7, "15d": 15, "1m": 30 };
-      const dias = mapa[periodo];
-      if (!dias) return res.status(400).json({ message: "Período inválido. Use 1d, 7d, 15d ou 1m." });
-      dataCorte = new Date(agora.getTime() - dias * 24 * 60 * 60 * 1000);
-    } else {
-      return res.status(400).json({ message: "Informe 'antes' (data) ou 'periodo' (1d, 7d, 15d, 1m)." });
-    }
-    if (isNaN(dataCorte.getTime())) return res.status(400).json({ message: "Data inválida." });
-
-    const clientesVisiveis = await Cliente.find({ ...filtroPerfil(req), monitoradoBackup: true }).select("_id");
-    const idsVisiveis = clientesVisiveis.map(c => c._id);
-    const filtro = { clienteId: { $in: idsVisiveis }, dataBackup: { $lt: dataCorte } };
-    if (clienteId) filtro.clienteId = clienteId;
-
-    const result = await Backup.deleteMany(filtro);
-    res.json({ ok: true, removidos: result.deletedCount, dataCorte });
-  } catch (err) { res.status(500).json({ message: err.message }); }
-});
-
 // --------------------
 // CLIENTES — extras para backup
 // --------------------
@@ -580,9 +550,14 @@ app.get("/api/clientes-backup", verificarToken, verificarPermBackup, async (req,
       .sort({ nome: 1 });
     const comStatus = clientes.map(c => {
       const obj = c.toObject();
-      const sc = statusServicoComputado(c);
-      obj.servicoStatusComputado = sc.status;
-      obj.servicoOnline = sc.online;
+      if (c.monitoradoBackup) {
+        const sc = statusServicoComputado(c);
+        obj.servicoStatusComputado = sc.status;
+        obj.servicoOnline = sc.online;
+      } else {
+        obj.servicoStatusComputado = "desconhecido";
+        obj.servicoOnline = false;
+      }
       return obj;
     });
     res.json(comStatus);
@@ -654,16 +629,21 @@ app.post("/api/clientes/:id/ack-executar-backup", verificarToken, async (req, re
 // --------------------
 // HEARTBEAT / STATUS DO SERVIÇO (reportado periodicamente pelo Backup Agent)
 // --------------------
+// Só registra heartbeat para clientes marcados como "Monitorar" na tela de backup —
+// para os demais, o status do serviço não é usado/armazenado.
 app.post("/api/clientes/:id/status-servico", verificarToken, async (req, res) => {
   try {
+    const cliente = await Cliente.findById(req.params.id).select("monitoradoBackup");
+    if (!cliente) return res.status(404).json({ message: "Cliente não encontrado" });
+    if (!cliente.monitoradoBackup) return res.json({ ok: true, ignorado: true, motivo: "Cliente não está marcado para monitorar" });
+
     const { status, mensagem } = req.body;
     const statusValidos = ["rodando", "parado", "pausado", "erro", "desconhecido"];
-    const att = await Cliente.findByIdAndUpdate(req.params.id, {
+    await Cliente.findByIdAndUpdate(req.params.id, {
       servicoStatus: statusValidos.includes(status) ? status : "desconhecido",
       servicoAtualizadoEm: new Date(),
       servicoMensagem: mensagem || null
-    }, { new: true });
-    if (!att) return res.status(404).json({ message: "Cliente não encontrado" });
+    });
     res.json({ ok: true });
   } catch (err) { res.status(400).json({ message: err.message }); }
 });
@@ -672,8 +652,9 @@ app.post("/api/clientes/:id/status-servico", verificarToken, async (req, res) =>
 app.get("/api/clientes/:id/status-servico", verificarToken, verificarPermBackup, async (req, res) => {
   try {
     const cliente = await Cliente.findOne({ _id: req.params.id, ...filtroPerfil(req) })
-      .select("servicoStatus servicoAtualizadoEm servicoMensagem nome");
+      .select("servicoStatus servicoAtualizadoEm servicoMensagem monitoradoBackup nome");
     if (!cliente) return res.status(404).json({ message: "Cliente não encontrado" });
+    if (!cliente.monitoradoBackup) return res.json({ status: "desconhecido", online: false, atualizadoEm: null, mensagem: "Cliente não está marcado para monitorar" });
     const sc = statusServicoComputado(cliente);
     res.json({ status: sc.status, online: sc.online, atualizadoEm: sc.atualizadoEm, mensagem: cliente.servicoMensagem || null });
   } catch (err) { res.status(500).json({ message: err.message }); }
