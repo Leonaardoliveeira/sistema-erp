@@ -181,7 +181,6 @@
             <th>Cliente</th>
             <th style="width:140px;">Monitorar</th>
             <th style="width:180px;">Suspensão</th>
-            <th style="width:160px;">Status do Serviço</th>
             <th style="width:160px;">Backup Remoto</th>
             <th>ObjectID (Backup Agent)</th>
           </tr>
@@ -213,9 +212,7 @@ Content-Type: application/json
         O <code>clienteId</code> é o <strong>ObjectID</strong> obtido na tabela acima.<br>
         Verifique se o backup está suspenso ou foi solicitado remotamente:
         <code>GET /api/clientes/:id/status-backup</code> (retorna <code>bloqueado</code> e <code>executarAgora</code>).<br>
-        Confirme o recebimento do disparo remoto: <code>POST /api/clientes/:id/ack-executar-backup</code><br>
-        Reporte o status do serviço periodicamente: <code>POST /api/clientes/:id/status-servico</code>
-        <span style="opacity:.8;">{ "status": "rodando", "mensagem": "opcional" }</span>
+        Confirme o recebimento do disparo remoto: <code>POST /api/clientes/:id/ack-executar-backup</code>
       </p>
     </div>
 

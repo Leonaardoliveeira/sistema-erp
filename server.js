@@ -74,25 +74,11 @@ const ClienteSchema = new mongoose.Schema({
   executarBackupSolicitadoEm: { type: Date },
   executarBackupSolicitadoPor: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario" },
 
-  // Heartbeat do serviço do Backup Agent (reportado periodicamente pelo agente)
-  servicoStatus: { type: String, enum: ["rodando", "parado", "pausado", "erro", "desconhecido"], default: "desconhecido" },
-  servicoAtualizadoEm: { type: Date },
-  servicoMensagem: { type: String },
 
   usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
   criadoEm: { type: Date, default: Date.now }
 });
 
-// Janela de tolerância do heartbeat: sem contato do agente nesse intervalo, considera offline
-const HEARTBEAT_OFFLINE_MS = 20 * 60 * 1000; // 20 minutos
-
-// Calcula o status "real" do serviço levando em conta a idade do último heartbeat
-function statusServicoComputado(cliente) {
-  if (!cliente.servicoAtualizadoEm) return { status: "desconhecido", online: false, atualizadoEm: null };
-  const idadeMs = Date.now() - new Date(cliente.servicoAtualizadoEm).getTime();
-  if (idadeMs > HEARTBEAT_OFFLINE_MS) return { status: "offline", online: false, atualizadoEm: cliente.servicoAtualizadoEm };
-  return { status: cliente.servicoStatus || "desconhecido", online: true, atualizadoEm: cliente.servicoAtualizadoEm };
-}
 
 const SpedSchema = new mongoose.Schema({
   clienteId: { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
@@ -546,21 +532,9 @@ app.delete("/api/backup", verificarToken, verificarPermBackup, async (req, res) 
 app.get("/api/clientes-backup", verificarToken, verificarPermBackup, async (req, res) => {
   try {
     const clientes = await Cliente.find(filtroPerfil(req))
-      .select("_id nome monitoradoBackup suspenderBackup executarBackupAgora executarBackupSolicitadoEm servicoStatus servicoAtualizadoEm servicoMensagem")
+      .select("_id nome monitoradoBackup suspenderBackup executarBackupAgora executarBackupSolicitadoEm")
       .sort({ nome: 1 });
-    const comStatus = clientes.map(c => {
-      const obj = c.toObject();
-      if (c.monitoradoBackup) {
-        const sc = statusServicoComputado(c);
-        obj.servicoStatusComputado = sc.status;
-        obj.servicoOnline = sc.online;
-      } else {
-        obj.servicoStatusComputado = "desconhecido";
-        obj.servicoOnline = false;
-      }
-      return obj;
-    });
-    res.json(comStatus);
+    res.json(clientes);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
@@ -624,40 +598,6 @@ app.post("/api/clientes/:id/ack-executar-backup", verificarToken, async (req, re
     if (!att) return res.status(404).json({ message: "Cliente não encontrado" });
     res.json({ ok: true });
   } catch (err) { res.status(400).json({ message: err.message }); }
-});
-
-// --------------------
-// HEARTBEAT / STATUS DO SERVIÇO (reportado periodicamente pelo Backup Agent)
-// --------------------
-// Só registra heartbeat para clientes marcados como "Monitorar" na tela de backup —
-// para os demais, o status do serviço não é usado/armazenado.
-app.post("/api/clientes/:id/status-servico", verificarToken, async (req, res) => {
-  try {
-    const cliente = await Cliente.findById(req.params.id).select("monitoradoBackup");
-    if (!cliente) return res.status(404).json({ message: "Cliente não encontrado" });
-    if (!cliente.monitoradoBackup) return res.json({ ok: true, ignorado: true, motivo: "Cliente não está marcado para monitorar" });
-
-    const { status, mensagem } = req.body;
-    const statusValidos = ["rodando", "parado", "pausado", "erro", "desconhecido"];
-    await Cliente.findByIdAndUpdate(req.params.id, {
-      servicoStatus: statusValidos.includes(status) ? status : "desconhecido",
-      servicoAtualizadoEm: new Date(),
-      servicoMensagem: mensagem || null
-    });
-    res.json({ ok: true });
-  } catch (err) { res.status(400).json({ message: err.message }); }
-});
-
-// Consulta o status do serviço de um cliente (para a tela de monitoramento)
-app.get("/api/clientes/:id/status-servico", verificarToken, verificarPermBackup, async (req, res) => {
-  try {
-    const cliente = await Cliente.findOne({ _id: req.params.id, ...filtroPerfil(req) })
-      .select("servicoStatus servicoAtualizadoEm servicoMensagem monitoradoBackup nome");
-    if (!cliente) return res.status(404).json({ message: "Cliente não encontrado" });
-    if (!cliente.monitoradoBackup) return res.json({ status: "desconhecido", online: false, atualizadoEm: null, mensagem: "Cliente não está marcado para monitorar" });
-    const sc = statusServicoComputado(cliente);
-    res.json({ status: sc.status, online: sc.online, atualizadoEm: sc.atualizadoEm, mensagem: cliente.servicoMensagem || null });
-  } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
 // --------------------

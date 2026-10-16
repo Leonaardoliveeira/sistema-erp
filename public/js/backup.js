@@ -19,7 +19,6 @@ async function inicializarBackup() {
     if (!perm.visualizar) { window.location.href = "dashboard.html"; return; }
     aplicarPermissaoUI();
     await Promise.all([carregarResumo(), carregarTodosClientes(), carregarBackups()]);
-    iniciarPollStatusServico();
 }
 
 async function carregarPermissao() {
@@ -93,38 +92,13 @@ async function carregarTodosClientes() {
     } catch (e) { console.error(e); }
 }
 
-// Atualiza em segundo plano apenas o status do serviço / backup remoto, sem
-// re-renderizar a tabela de histórico (evita "piscar" a tela a cada poll).
-let _pollStatusTimer = null;
-function iniciarPollStatusServico() {
-    if (_pollStatusTimer) clearInterval(_pollStatusTimer);
-    _pollStatusTimer = setInterval(async () => {
-        if (!perm.editar) return;
-        try {
-            const r = await fetch("/api/clientes-backup", { headers: hdr() });
-            if (!r.ok) return;
-            todosClientes = await r.json();
-            monitorados = todosClientes.filter(c => c.monitoradoBackup);
-            renderizarGerenciar(todosClientes);
-        } catch (e) { }
-    }, 30000); // 30s
-}
 
 // ─── gerenciar clientes monitorados ──────────────────────────────────────────
-const SERVICO_INFO = {
-    rodando: { label: "🟢 Rodando", classe: "servico-ok" },
-    parado: { label: "🔴 Parado", classe: "servico-erro" },
-    pausado: { label: "🟡 Pausado", classe: "servico-alerta" },
-    erro: { label: "🔴 Erro", classe: "servico-erro" },
-    offline: { label: "⚫ Offline", classe: "servico-erro" },
-    desconhecido: { label: "⚪ Sem dados", classe: "servico-desconhecido" }
-};
-
 function renderizarGerenciar(lista) {
     const tbody = document.getElementById("tabelaGerenciar");
     if (!tbody) return;
     if (!lista.length) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted);">Nenhum cliente cadastrado.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted);">Nenhum cliente cadastrado.</td></tr>`;
         return;
     }
     tbody.innerHTML = lista.map(c => {
@@ -134,17 +108,6 @@ function renderizarGerenciar(lista) {
         const btnSusp = susp
             ? `<button class="bkp-btn-suspensao bkp-btn-reativar"  onclick="toggleSuspensaoCliente('${id}', false, this)">✅ Reativar</button>`
             : `<button class="bkp-btn-suspensao bkp-btn-suspender" onclick="toggleSuspensaoCliente('${id}', true,  this)">⛔ Suspender</button>`;
-
-        let badgeServico;
-        if (!c.monitoradoBackup) {
-            badgeServico = `<span class="backup-servico-badge servico-desconhecido" title="Ative o monitoramento deste cliente para acompanhar o status do serviço.">— Não monitorado</span>`;
-        } else {
-            const infoServico = SERVICO_INFO[c.servicoStatusComputado] || SERVICO_INFO.desconhecido;
-            const tituloServico = c.servicoAtualizadoEm
-                ? `Última atualização: ${new Date(c.servicoAtualizadoEm).toLocaleString("pt-BR")}${c.servicoMensagem ? " — " + c.servicoMensagem : ""}`
-                : "Agente ainda não reportou status";
-            badgeServico = `<span class="backup-servico-badge ${infoServico.classe}" title="${tituloServico}">${infoServico.label}</span>`;
-        }
 
         const pendente = c.executarBackupAgora;
         const btnExecutar = pendente
@@ -160,7 +123,6 @@ function renderizarGerenciar(lista) {
             </label>
           </td>
           <td data-label="Suspensão">${btnSusp}</td>
-          <td data-label="Status do Serviço">${badgeServico}</td>
           <td data-label="Backup Remoto">${btnExecutar}</td>
           <td data-label="ObjectID" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <code style="font-size:11px;color:var(--text-muted);word-break:break-all;">${id}</code>
