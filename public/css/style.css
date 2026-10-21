@@ -701,7 +701,8 @@ h1, h2, h3, .logo, .brand-mark {
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   margin-top: 20px;
   width: 100%;
 }
@@ -756,7 +757,8 @@ tbody td {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 tbody tr:hover {
@@ -989,7 +991,7 @@ button:active {
 .status-pills {
   display: flex;
   gap: 5px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
 }
 
